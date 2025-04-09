@@ -1,0 +1,8 @@
+.vault_passwrd
+roles/infothrill.rpi_boot_config
+roles/pyronear.openvpn
+init_script/.env
+*__pycache__*
+*.pem
+.vscode
+cameras.csv

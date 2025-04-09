@@ -1,0 +1,11 @@
+---
+roles:
+  - name: geerlingguy.docker
+    version: 7.4.4
+  - name: infothrill.rpi_boot_config
+    version: 4.3.0
+  - name: pyronear.openvpn
+    src: pyronear.openvpn
+    version: main
+collections:
+  - name: ansible.utils

@@ -1,0 +1,12 @@
+---
+- name: Install the watchdog package
+  ansible.builtin.apt:
+    pkg: watchdog
+    state: present
+
+- name: Configure watchdog daemon
+  ansible.builtin.template:
+    src: watchdog.conf.j2
+    dest: /etc/watchdog.conf
+    mode: '0600'
+  notify: "Restart watchdog"

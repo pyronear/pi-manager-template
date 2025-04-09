@@ -1,0 +1,77 @@
+---
+# Name of the watchdog service according to the target hosts' init system.
+whiskerlabs_watchdog_service_name: watchdog.service
+
+# See watchdog.conf manpage [1] for details on watchdog configuration options.
+#
+# [1] http://linux.die.net/man/5/watchdog.conf
+
+# Path to the watchdog device.
+whiskerlabs_watchdog_device: /dev/watchdog
+
+# Email address to to which to send admin mail.
+whiskerlabs_watchdog_admin: ""
+
+# Interval between writes to the watchdog device, in seconds.
+whiskerlabs_watchdog_interval: ""
+
+# Number of intervals skipped before logging messages (see
+# watchdog.conf manpage).
+whiskerlabs_watchdog_logtick: ""
+
+# Directory in which to capture the stdout and stderr from
+# repair-binary and test-binary execution.
+whiskerlabs_watchdog_log_dir: ""
+
+# Whether or not to lock the watchdog in memory so that it is never
+# swapped out.
+whiskerlabs_watchdog_realtime: yes
+
+# Scheduler priority for realtime mode.
+whiskerlabs_watchdog_priority: 1
+
+# A list of IP addresses to be used with ping mode.
+# e.g. [192.168.0.1]
+whiskerlabs_watchdog_ping_addrs: []
+
+# A list of network interfaces naems to be used with network mode.
+# e.g. [eth0]
+whiskerlabs_watchdog_interfaces: []
+
+# A list of file items to be used with file mode. Items must contain a
+# `name` field and optionally a `change` field (see watchdog.conf
+# manpage).
+# e.g. - { name: "/var/run/thing.pid", change: 60 }
+whiskerlabs_watchdog_files: []
+
+# A list of pidfiles to be used with server test mode.
+# e.g. [/var/run/syslogd.pid]
+whiskerlabs_watchdog_pidfiles: []
+
+# Maximum allowed load averages, over one-, five-, and 15-minute
+# spans.
+whiskerlabs_watchdog_max_load_1: ""
+whiskerlabs_watchdog_max_load_5: ""
+whiskerlabs_watchdog_max_load_15: ""
+
+# Minimum amount of virtual memory, in number of pages.
+whiskerlabs_watchdog_min_memory: ""
+
+# Binary used to execute user-defined repair actions.
+whiskerlabs_watchdog_repair_binary: ""
+
+# Maximum duration over which user-defined repair actions are allowed
+# to run.
+whiskerlabs_watchdog_repair_timeout: ""
+
+# Binary used to execute user-defined tests.
+whiskerlabs_watchdog_test_binary: ""
+
+# Maximum duration over which user-defined tests are allowed to run.
+whiskerlabs_watchdog_test_timeout: ""
+
+# Path to the temperature device.
+whiskerlabs_watchdog_temperature_device: ""
+
+# Maximum allowed device temperature.
+whiskerlabs_watchdog_max_temperature: ""

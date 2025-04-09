@@ -1,0 +1,43 @@
+---
+- name: Verify Ansible version and setup servers
+  hosts: alert_server:alert_server_test:platform_server:openvpn:annotation_server
+  become: true
+  tasks:
+    - name: Ensure Ansible version is 2.17 or higher
+      ansible.builtin.assert:
+        that:
+          - ansible_version.minor | int >= 17
+        fail_msg: "Ansible version must be 2.17 or higher."
+
+  roles:
+    - check_vars
+    - common
+    - docker
+
+- name: Deploy Docker Compose Servers
+  hosts: openvpn
+  become: true
+  roles:
+    - pyronear.openvpn
+
+- name: Deploy Docker Compose Servers
+  hosts: alert_server:alert_server_test:platform_server
+  become: true
+  roles:
+    - servers
+
+- name: Initialize tables and admin user
+  hosts: alert_server:alert_server_test
+  become: true
+  tasks:
+    - name: Check if 'user' table exists in PostgreSQL
+      ansible.builtin.command: >
+        sudo docker exec -t postgres psql -U {{ POSTGRES_USER }} -d {{ POSTGRES_DB }} -c
+        "SELECT to_regclass('public.user');"
+      register: check_user_table
+      changed_when: false
+
+    - name: Initialization
+      ansible.builtin.command: sudo docker exec -ti api python app/db.py
+      when: "'user' not in check_user_table.stdout"
+      changed_when: false

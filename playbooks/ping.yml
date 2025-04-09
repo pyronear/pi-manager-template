@@ -1,0 +1,6 @@
+---
+- name: Ping all hosts in the "tous" group
+  hosts: tous
+  tasks:
+    - name: Ping hosts to check connectivity
+      ansible.builtin.ping:

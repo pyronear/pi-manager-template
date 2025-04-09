@@ -1,0 +1,61 @@
+services:
+
+  traefik:
+    image: traefik:v2.9.6
+    container_name: traefik
+    ports:
+      # http(s) traffic
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - type: bind
+        source: ./acme.json
+        target: /acme.json
+    labels:
+      - "traefik.http.middlewares.strip-www.redirectregex.regex=^https?://(www\\.)(.+)"
+      - "traefik.http.middlewares.strip-www.redirectregex.replacement=https://$${2}"
+      - "traefik.http.middlewares.strip-www.redirectregex.permanent=true"
+    command:
+      # Enable the Traefik log, for configurations and errors
+      - "--log.level=INFO"
+      # Enable Docker in Traefik, so that it reads labels from Docker services
+      - "--providers.docker=true"
+      # Enable assets
+      - "--providers.file.directory=/etc/traefik/dynamic"
+      - "--providers.file.watch=true"
+      # Do not expose all Docker services, only the ones explicitly exposed
+      - "--providers.docker.exposedbydefault=false"
+      # HTTPS
+      - "--entryPoints.websecure.address=:443"
+      # Certificate
+      - "--certificatesresolvers.pyroresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.pyroresolver.acme.email=contact@pyronear.org"
+      - "--certificatesresolvers.default.acme.storage=/acme.json"
+    restart: always
+    healthcheck:
+      test: "wget --no-verbose --tries=1 --spider  https://platform{{prefix}}.pyronear.org/ || exit 1"
+      interval: 20s
+      timeout: 10s
+      retries: 10
+    depends_on:
+      - frontend
+
+  frontend:
+    image: 'pyronear/pyro-platform:{{pyronear_version}}'
+    container_name: platform
+    expose:
+      - 8050
+    command: python ./index.py --host 0.0.0.0 --port 8050
+    environment:
+      - API_URL=${API_URL}
+      - API_LOGIN=${API_LOGIN}
+      - API_PWD=${API_PWD}
+      - LOGIN=${LOGIN}
+      - SENTRY_DSN=${SENTRY_DSN}
+      - DEBUG=true
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`platform{{prefix}}.pyronear.org`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls.certresolver=pyroresolver"
+      - "traefik.http.services.frontend.loadbalancer.server.port=8050"

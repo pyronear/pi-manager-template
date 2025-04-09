@@ -1,0 +1,26 @@
+---
+- name: Verify Ansible version and setup servers
+  hosts: engine_servers
+  become: true
+  tasks:
+    - name: Ensure Ansible version is 2.17 or higher
+      ansible.builtin.assert:
+        that:
+          - ansible_version.minor | int >= 17
+        fail_msg: "Ansible version must be 2.17 or higher."
+
+  roles:
+    - common
+    - docker
+
+- name: Deploy Docker Compose applications
+  hosts: engine_servers
+  become: true
+  tasks:
+    - name: Run client-specific tasks
+      ansible.builtin.include_role:
+        name: pyronear.openvpn
+        tasks_from: install_client.yml
+
+    - name: Unconditionally reboot the machine with all defaults
+      ansible.builtin.reboot:

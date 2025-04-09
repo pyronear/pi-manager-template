@@ -1,0 +1,50 @@
+# Title: Automation tool for Raspberry Pi management
+Status:  Mender rejected, Ansible approved
+Deciders: Ronan Sy
+Date: July 2024
+
+## Context and Problem Statement
+We need an automation tool in order to update regularly all the Raspberry Pi (Rpi) and check their status.
+
+
+## Decision Drivers
+- Simplicity : the tool should be maintainable and usable by Mateo and FG
+- Centralization of information : we should be able to check the status of all Raspberry Pi easily in an interface
+
+## Considered Options
+We have considered two options : Mender and Ansible
+
+1. Mender
+Pros:
+- the Mender's client installed in the Rpi will automatically register in the centralized server which has an interface well designed to see the state of all the Rpi
+- very cool API allowing to get information of the rpi connected
+
+Cons:
+- the production setup required a Kubernetes cluster (could be K8S but anyway)
+
+More :
+- Mender is using regular script to send in the Rpi
+- We could have created an Rpi image with Mender already installed, this would have fit well with our goal to provide a ready to use Rpi to our collaborators
+
+2. Ansible
+pros:
+- this tool is widely used in the open source community and we don't have anything to develop (configuration as code)
+- can be used locally, without any installation in rpi
+- the management of variables and groups is much more advanced than in Mender
+- can also be used for the automatisation of our other application
+
+cons:
+- we have to use a scd tool, Semaphore, in order to have an interface, which is not really suited for our need (fleet monitoring) but we can create specific playbook as a workaround
+- we have to maintain the list of each Rpi's hostname
+
+
+## Decision Outcome
+I don't think  we will want to create bash or python script one day in order to do everything that ansible is doing so in my opinion if we try mender again it will only be for the interface.
+
+## Pros and Cons  of the decision taken
+- The interface is bad but the history of the action taken is usefull
+- We will have to maintain a list of hosts. Maybe it won't be scalable in the future.
+
+## Mitigation strategy
+- I already tried Ansible AWX and Semaphore but it's seems to be pretty much the same.
+- We already wanted to create our own Rpi image and our API si our strength so when we will want to open the project for individual user it should not be that hard to create a small client which will register itself in our API and use it to manage the host automatically.

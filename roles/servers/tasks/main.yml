@@ -1,0 +1,37 @@
+---
+# Tasks to deploy Docker Compose files
+- name: Create a directory if it does not exist
+  ansible.builtin.file:
+    path: /home/{{ app_name }}
+    state: directory
+    mode: '0755'
+
+- name: Create empty acme file
+  ansible.builtin.copy:
+    content: ""
+    dest: /home/{{ app_name }}/acme.json
+    force: false
+    group: sys
+    mode: 0600
+
+- name: Copy .env file
+  ansible.builtin.template:
+    src: ".env.{{ app_name }}.j2"
+    dest: /home/{{ app_name }}/.env
+    mode: '0644'
+
+- name: Copy docker-compose file
+  ansible.builtin.template:
+    src: "docker-compose.{{ app_name }}.yml.j2"
+    dest: /home/{{ app_name }}/docker-compose.yml
+    mode: '0644'
+
+- name: Log into DockerHub
+  community.docker.docker_login:
+    username: pyronear
+    password: '{{ dockerhub_password }}'
+
+- name: Ensure Docker Compose containers are running
+  community.docker.docker_compose_v2:
+    project_src: /home/{{ app_name }}/
+    wait: true

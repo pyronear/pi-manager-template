@@ -1,0 +1,76 @@
+---
+- name: Loading environment variables
+  tags: always
+  ansible.builtin.set_fact:
+    admin_login: '{{ lookup("env", "SUPERADMIN_LOGIN") }}'
+    admin_pwd: '{{ lookup("env", "SUPERADMIN_PWD") }}'
+    admin_org: '{{ lookup("env", "SUPERADMIN_ORG") }}'
+
+- name: Check Engine variables
+  ansible.builtin.fail:
+    msg: "Variable {{ item }} is empty or None."
+  loop:
+    - "{{ api_dns }}"             # group_var/all
+    - "{{ CAM_USER }}"            # group_var/all
+    - "{{ CAM_PWD }}"             # group_var/all
+    - "{{ config_json }}"         # host_var
+    - "{{ ansible_password }}"    # host_var
+    - "{{ admin_login }}"         # .env
+    - "{{ admin_pwd }}"           # .env
+    - "{{ S3_ENDPOINT_URL }}"     # inventory vars
+    - "{{ S3_ACCESS_KEY }}"       # inventory vars
+    - "{{ S3_SECRET_KEY }}"       # inventory vars
+    - "{{ S3_REGION }}"           # inventory vars
+  when:
+    - inventory_hostname in groups["engine_servers"]
+    - item is none or item | length == 0
+  no_log: true
+
+- name: Check API variables. no_log=true
+  ansible.builtin.fail:
+    msg: item is empty or None.
+  loop:
+    - "{{ admin_login }}"
+    - "{{ admin_pwd }}"
+    - "{{ admin_org }}"
+    - "{{ S3_ENDPOINT_URL }}"
+    - "{{ S3_ACCESS_KEY }}"
+    - "{{ S3_SECRET_KEY }}"
+    - "{{ S3_REGION }}"
+    # - "{{ S3_PROXY_URL }}"
+    - "{{ POSTGRES_USER }}"
+    - "{{ POSTGRES_PASSWORD }}"
+    - "{{ POSTGRES_DB }}"
+    - "{{ prefix }}"
+  when:
+    - inventory_hostname in groups["alert_server"]
+    - item is none or item | length == 0
+  no_log: true
+
+- name: Check Plateform variables. no_log=true
+  ansible.builtin.fail:
+    msg: item is empty or None.
+  loop:
+    - "{{ api_dns }}"
+    - "{{ admin_login }}" # DOES THE PLATFORM REALLY NEED ADMIN PWD ?
+    - "{{ admin_pwd }}"
+    - "{{ prefix }}"
+  when:
+    - inventory_hostname in groups["platform_server"]
+    - item is none or item | length == 0
+  no_log: true
+
+- name: Récupérer la liste des groupes
+  ansible.builtin.set_fact:
+    group_list:
+      - openvpn
+      - platform_server
+      - alert_server
+
+- name: Vérifier que chaque groupe contient un seul hôte
+  ansible.builtin.assert:
+    that:
+      - "groups[item] | length <= 1"
+    fail_msg: "Le groupe '{{ item }}' contient plus d'un serveur."
+    success_msg: "Le groupe '{{ item }}' contient bien un seul serveur."
+  loop: "{{ group_list }}"

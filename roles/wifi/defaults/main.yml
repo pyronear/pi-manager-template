@@ -1,0 +1,5 @@
+---
+wifi_ssid: "Pyronear"         # Name of the Wi-Fi network
+wifi_password: "Pyronear"     # Wi-Fi password
+wifi_static_ethernet_ip: "169.254.40.99"
+wifi_default_dns: "8.8.8.8 8.8.4.4"

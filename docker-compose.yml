@@ -1,0 +1,23 @@
+---
+services:
+  semaphore:
+    container_name: semaphore
+    ports:
+      - 3000:3000
+    image: semaphoreui/semaphore:latest
+    environment:
+      SEMAPHORE_DB_DIALECT: bolt
+      SEMAPHORE_ADMIN_PASSWORD: changeme
+      SEMAPHORE_ADMIN_NAME: admin
+      SEMAPHORE_ADMIN_EMAIL: admin@localhost
+      SEMAPHORE_ADMIN: admin
+    volumes:
+      - ./:/app
+      - semaphore-config:/etc/semaphore # config.json location
+      - semaphore-database:/var/lib/semaphore # database.boltdb location
+      - ~/.ssh:/root/.ssh/:ro,z
+volumes:
+  semaphore-config:
+    driver: local
+  semaphore-database:
+    driver: local

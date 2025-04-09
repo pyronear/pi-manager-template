@@ -1,0 +1,176 @@
+---
+# Tasks to setup Engine
+- name: Create a cronjob to restart the Raspberry Pi every day at midnight
+  ansible.builtin.cron:
+    name: "Restart Raspberry Pi"
+    minute: "0"
+    hour: "0"
+    job: "/sbin/shutdown -r now"
+    user: "root"
+
+- name: Git checkout
+  ansible.builtin.git:
+    repo: 'https://github.com/pyronear/{{ project_name }}.git'
+    dest: /home/{{ project_name }}
+    version: '{{ engine_branch }}'
+    accept_hostkey: true
+
+- name: Log into DockerHub
+  community.docker.docker_login:
+    username: pyronear
+    password: '{{ dockerhub_password }}'
+
+- name: Build image locally # noqa no-handler
+  community.docker.docker_image:
+    name: pyronear/pyro-engine:{{ pyronear_version }}
+    build:
+      path: /home/{{ project_name }}/
+    force_tag: true
+    force_source: true
+    source: build
+
+- name: Create a directory if it does not exist
+  ansible.builtin.file:
+    path: /home/{{ app_name }}/data
+    state: directory
+    mode: '0755'
+    recurse: true
+  changed_when: false
+
+- name: Get API token
+  ansible.builtin.uri:
+    url: "https://{{ api_dns }}/api/v1/login/creds"
+    method: POST
+    body_format: form-urlencoded
+    body:
+      username: "{{ admin_login }}"
+      password: "{{ admin_pwd }}"
+    return_content: yes
+    timeout: 5
+    status_code: 200
+  register: response
+
+- name: Parse JSON response to get the access token
+  ansible.builtin.set_fact:
+    admin_token: "{{ response.json.access_token }}"
+
+- name: Parse config_json as JSON
+  ansible.builtin.set_fact.set_fact:
+    json_file_content: "{{ config_json }}"
+
+# - name: Validate credentials.json against JSON Schema
+#  ansible.utils.validate:
+#    data: "{{ json_file_content }}"
+#    criteria: "{{ engine_json_schema }}"
+#    engine: ansible.utils.jsonschema
+#  failed_when: false
+#  changed_when: False
+
+- name: Loop through cameras and get tokens
+  vars:
+    updated_json: "{{ json_file_content }}"
+  block:
+    - name: Get API token for each camera
+      ansible.builtin.uri:
+        url: "https://{{ api_dns }}/api/v1/cameras/{{ item.value.id }}/token"
+        method: POST
+        headers:
+          Authorization: "Bearer {{ admin_token }}"
+          accept: "application/json"
+        return_content: yes
+        timeout: 5
+        status_code: 200
+      register: response
+      with_dict: "{{ json_file_content }}"
+      loop_control:
+        label: "{{ item.key }}"
+
+    - name: Update tokens in the JSON structure
+      ansible.builtin.set_fact:
+        updated_json: >-
+          {{
+            updated_json | combine({
+              item.item.key: item.item.value | combine({
+                'token': item.json.access_token
+              })
+            })
+          }}
+      loop: "{{ response.results }}"
+      loop_control:
+        label: "{{ item.item.key }}"
+
+- name: Write updated credentials.json
+  ansible.builtin.copy:
+    content: "{{ updated_json | to_nice_json }}"
+    dest: /home/{{ app_name }}/data/credentials.json
+    mode: '0600'
+
+# download occlusion masks
+- name: Install botocore
+  ansible.builtin.apt:
+    name: python3-botocore
+    state: present
+
+- name: Install boto3
+  ansible.builtin.apt:
+    name: python3-boto3
+    state: present
+
+- name: Créer le dossier local pour les images
+  ansible.builtin.file:
+    path: /home/{{ app_name }}/data/occlusion-masks
+    state: directory
+    mode: '0755'
+
+- name: Télécharger les images pour les devices statiques
+  amazon.aws.s3_object:
+    bucket: "occlusion-masks"
+    object: "{{ inventory_hostname }}/{{ item.key }}.jpg"
+    dest: "/home/{{ app_name }}/data/occlusion-masks/{{ item.key }}.jpg"
+    mode: get
+    endpoint_url: "{{ S3_ENDPOINT_URL }}"
+    region: "{{ S3_REGION }}"
+  loop: "{{ json_file_content | dict2items | selectattr('value.type', 'equalto', 'static') }}"
+  environment:
+    AWS_ACCESS_KEY_ID: "{{ S3_ACCESS_KEY }}"
+    AWS_SECRET_ACCESS_KEY: "{{ S3_SECRET_KEY }}"
+  register: command_result
+
+- name: Set fact for ptz devices
+  ansible.builtin.set_fact:
+    json_ptz_content: "{{ json_file_content | dict2items | selectattr('value.type', 'equalto', 'ptz') | subelements('value.poses') }}"
+
+- name: Télécharger les images pour les devices ptz
+  amazon.aws.s3_object:
+    bucket: "occlusion-masks"
+    object: "{{ inventory_hostname }}/{{ item[0].key }}_{{ item[1] }}.jpg"
+    dest: "/home/{{ app_name }}/data/occlusion-masks/{{ item[0].key }}_{{ item[1] }}.jpg"
+    mode: get
+    endpoint_url: "{{ S3_ENDPOINT_URL }}"
+    region: "{{ S3_REGION }}"
+  loop: "{{ json_ptz_content }}"
+  environment:
+    AWS_ACCESS_KEY_ID: "{{ S3_ACCESS_KEY }}"
+    AWS_SECRET_ACCESS_KEY: "{{ S3_SECRET_KEY }}"
+  register: command_result
+  failed_when: "'No such' in command_result"
+
+- name: Copy .env file
+  ansible.builtin.template:
+    src: ".env.{{ app_name }}.j2"
+    dest: /home/{{ app_name }}/.env
+    mode: '0644'
+
+- name: Copy docker-compose file
+  ansible.builtin.template:
+    src: "docker-compose.{{ app_name }}.yml.j2"
+    dest: /home/{{ app_name }}/docker-compose.yml
+    mode: '0644'
+
+# - name: Run the camera manager script
+#  ansible.builtin.script: setup_reolink_camera.py
+
+- name: Ensure Docker Compose containers are running
+  community.docker.docker_compose_v2:
+    project_src: /home/{{ app_name }}/
+    wait: true

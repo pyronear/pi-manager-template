@@ -1,0 +1,65 @@
+---
+- name: Install nmcli
+  ansible.builtin.apt:
+    name: network-manager
+    state: present
+
+- name: Check if Wi-Fi connection exists
+  ansible.builtin.command: nmcli -t -f NAME con show
+  register: nmcli_connections
+  changed_when: false
+
+- name: Configure Wi-Fi if SSID is provided and not already configured
+  ansible.builtin.shell: >
+    nmcli con add type wifi ifname wlan0 con-name {{ wifi_ssid }}
+    ssid {{ wifi_ssid }} wifi-sec.key-mgmt wpa-psk
+    wifi-sec.psk {{ wifi_password }} connection.autoconnect yes
+  when:
+    - wifi_ssid != ""
+    - wifi_ssid not in nmcli_connections.stdout.splitlines()
+  register: wifi_result
+  ignore_errors: yes
+  changed_when: wifi_result.rc == 0
+
+- name: Debug Wi-Fi result
+  ansible.builtin.debug:
+    var: wifi_result
+
+- name: Check if static Ethernet connection exists
+  ansible.builtin.command: nmcli -t -f NAME con show
+  register: ethernet_connections
+  changed_when: false
+
+- name: Add static IP configuration for Ethernet if not already set
+  ansible.builtin.command: >
+    nmcli connection add type ethernet ifname eth0 con-name static-eth0
+    ipv4.addresses {{ wifi_static_ethernet_ip }}/16 ipv4.method manual
+  when:
+    - '"static-eth0" not in ethernet_connections.stdout.splitlines()'
+  register: ethernet_result
+  ignore_errors: yes
+  changed_when: ethernet_result.rc == 0
+
+- name: Configure DNS for static Ethernet if needed
+  ansible.builtin.command: >
+    nmcli connection modify static-eth0 ipv4.dns "{{ wifi_default_dns }}"
+  when:
+    - '"static-eth0" not in ethernet_connections.stdout.splitlines()'
+  ignore_errors: yes
+  register: dns_result
+  changed_when: dns_result.rc == 0
+
+- name: Bring up static Ethernet connection if it exists
+  ansible.builtin.command: nmcli connection up static-eth0
+  when:
+    - '"static-eth0" not in ethernet_connections.stdout.splitlines()'
+  ignore_errors: yes
+  register: ethernet_up_result
+  changed_when: ethernet_up_result.rc == 0
+
+- name: Debug Ethernet configuration results
+  ansible.builtin.debug:
+    msg:
+      - "Ethernet result: {{ ethernet_result }}"
+      - "DNS result: {{ dns_result }}"
+      - "Ethernet up result: {{ ethernet_up_result }}"

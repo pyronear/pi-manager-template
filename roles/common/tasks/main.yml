@@ -1,0 +1,13 @@
+---
+# Common tasks for all servers
+- name: Update and upgrade apt packages
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: dist
+    autoremove: true
+
+# Common tasks for all servers
+- name: Install git
+  ansible.builtin.apt:
+    name: git
+    state: present

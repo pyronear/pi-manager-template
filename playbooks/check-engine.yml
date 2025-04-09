@@ -1,0 +1,19 @@
+---
+- name: Check status of Docker Compose containers
+  hosts: engine_servers:!alert_server:!platform_server
+  become: yes
+  tasks:
+    - name: Gather information on Docker containers
+      community.docker.docker_container_info:
+        name: "engine"  # Specify the container name or part of the name
+      register: container_info
+
+    - name: Fail if Docker container is not running
+      ansible.builtin.fail:
+        msg: "Container engine is not running!"
+      when: container_info.container.State.Status != 'running'
+
+    - name: Fail if Docker container is not running
+      ansible.builtin.fail:
+        msg: "Container engine is not Healthy!"
+      when: container_info.container.State.Health.Status != 'healthy'

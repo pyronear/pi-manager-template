@@ -1,0 +1,24 @@
+---
+### it was to fix an error with " no package matchin docker-ce" in my rpi but I didn't reproduce the error in production pi
+
+# Tasks to install Docker and Docker Compose
+# - name: "Check if Raspberry Pi"
+#  ansible.builtin.command: cat /proc/cpuinfo
+#  register: cpuinfo_output
+#  changed_when: false
+
+# - name: Add Docker official GPG key
+#  ansible.builtin.apt_key:
+#    url: https://download.docker.com/linux/debian/gpg
+#    state: present
+#  when: "'Raspberry Pi' in cpuinfo_output.stdout"
+
+# - name: Add Docker repository for ARM architecture
+#  ansible.builtin.apt_repository:
+#    repo: deb [arch=arm64] https://download.docker.com/linux/debian buster stable
+#    state: present
+#  when: "'Raspberry Pi' in cpuinfo_output.stdout"
+
+- name: Run geerlingguy.docker
+  ansible.builtin.include_role:
+    name: geerlingguy.docker

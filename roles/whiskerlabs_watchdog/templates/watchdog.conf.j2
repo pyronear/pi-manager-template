@@ -1,0 +1,68 @@
+# {{ ansible_managed }}
+
+{% if whiskerlabs_watchdog_device %}
+watchdog-device	   = {{whiskerlabs_watchdog_device}}
+{% endif %}
+{% if whiskerlabs_watchdog_admin %}
+admin              = {{whiskerlabs_watchdog_admin}}
+{% endif %}
+{% if whiskerlabs_watchdog_interval %}
+interval           = {{whiskerlabs_watchdog_interval}}
+{% endif %}
+{% if whiskerlabs_watchdog_realtime %}
+realtime           = {{ "yes" if whiskerlabs_watchdog_realtime == True else whiskerlabs_watchdog_realtime }}
+{% endif %}
+{% if whiskerlabs_watchdog_priority %}
+priority           = {{whiskerlabs_watchdog_priority}}
+{% endif %}
+{% if whiskerlabs_watchdog_logtick %}
+logtick            = {{whiskerlabs_watchdog_logtick}}
+{% endif %}
+{% if whiskerlabs_watchdog_log_dir %}
+log-dir	           = {{whiskerlabs_watchdog_log_dir}}
+{% endif %}
+{% for ping_addr in whiskerlabs_watchdog_ping_addrs %}
+ping               = {{ping_addr}}
+{% endfor %}
+{% for interface in whiskerlabs_watchdog_interfaces %}
+interface          = {{interface}}
+{% endfor %}
+{% for file in whiskerlabs_watchdog_files %}
+file               = {{file.name}}
+{% if file.change %}
+change             = {{file.change}}
+{% endif %}
+{% endfor %}
+{% for pidfile in whiskerlabs_watchdog_pidfiles %}
+pidfile            = {{pidfile}}
+{% endfor %}
+{% if whiskerlabs_watchdog_max_load_1 %}
+max-load-1         = {{whiskerlabs_watchdog_max_load_1}}
+{% endif %}
+{% if whiskerlabs_watchdog_max_load_5 %}
+max-load-5         = {{whiskerlabs_watchdog_max_load_5}}
+{% endif %}
+{% if whiskerlabs_watchdog_max_load_15 %}
+max-load-15        = {{whiskerlabs_watchdog_max_load_15}}
+{% endif %}
+{% if whiskerlabs_watchdog_min_memory %}
+min-memory         = {{whiskerlabs_watchdog_min_memory}}
+{% endif %}
+{% if whiskerlabs_watchdog_repair_binary %}
+repair-binary      = {{whiskerlabs_watchdog_repair_binary}}
+{% endif %}
+{% if whiskerlabs_watchdog_repair_timeout %}
+repair-timeout     = {{whiskerlabs_watchdog_repair_timeout}}
+{% endif %}
+{% if whiskerlabs_watchdog_test_binary %}
+test-binary        = {{whiskerlabs_watchdog_test_binary}}
+{% endif %}
+{% if whiskerlabs_watchdog_test_timeout %}
+test-timeout       = {{whiskerlabs_watchdog_test_timeout}}
+{% endif %}
+{% if whiskerlabs_watchdog_temperature_device %}
+temperature-device = {{whiskerlabs_watchdog_temperature_device}}
+{% endif %}
+{% if whiskerlabs_watchdog_max_temperature %}
+max-temperature    = 120
+{% endif %}

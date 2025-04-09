@@ -1,0 +1,10 @@
+SUPERADMIN_LOGIN=
+SUPERADMIN_PWD=
+
+# USE FOR CREATION OF AN ORGANISATION
+API_URL=
+organization_name=
+# USE FOR CREATION OF A USER
+api_pwd=
+api_login=
+role=

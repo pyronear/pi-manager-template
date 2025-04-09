@@ -1,0 +1,18 @@
+---
+- name: Stop watchdog daemon
+  ansible.builtin.systemd:
+    name: "{{ whiskerlabs_watchdog_service_name }}"
+    state: stopped
+  listen: "Restart watchdog"
+
+- name: Wait before restarting watchdog
+  ansible.builtin.pause:
+    seconds: 3
+  listen: "Restart watchdog"
+
+- name: Restart watchdog daemon
+  ansible.builtin.systemd:
+    name: "{{ whiskerlabs_watchdog_service_name }}"
+    state: restarted
+    daemon_reload: yes
+  listen: "Restart watchdog"

@@ -1,0 +1,63 @@
+---
+- name: Verify Ansible version and setup servers
+  hosts: engine_servers
+  become: true
+  tasks:
+    - name: Ensure Ansible version is 2.17 or higher
+      ansible.builtin.assert:
+        that:
+          - ansible_version.minor | int >= 17
+        fail_msg: "Ansible version must be 2.17 or higher : {{ ansible_version.minor }}"
+
+  roles:
+    - check_vars
+    - common
+    - wifi
+    - docker
+
+- name: Deploy Docker Compose applications
+  hosts: engine_servers
+  become: true
+  tasks:
+    - name: "Check if Raspberry Pi"
+      ansible.builtin.command: cat /proc/cpuinfo
+      register: cpuinfo_output
+      changed_when: false
+
+    - name: 'Enable watchdog in boot/config.txt'
+      ansible.builtin.import_role:
+        name: infothrill.rpi_boot_config
+      vars:
+        boot_config_lines: # noqa var-naming[no-role-prefix]
+          - "dtparam=watchdog=on"
+      when: "'Raspberry Pi' in cpuinfo_output.stdout"
+
+    - name: 'Configure the watchdog'
+      ansible.builtin.import_role:
+        name: whiskerlabs_watchdog
+      vars:
+        whiskerlabs_watchdog_device: /dev/watchdog
+        whiskerlabs_watchdog_realtime: yes
+        whiskerlabs_watchdog_priority: 1
+        whiskerlabs_watchdog_max_load_1: 24
+        whiskerlabs_watchdog_ping_addrs:
+          - 8.8.8.8 # google
+      when: "'Raspberry Pi' in cpuinfo_output.stdout"
+
+- name: Deploy Docker Compose Engines
+  hosts: engine_servers
+  become: true
+  roles:
+    - engine
+
+# - name: Deploy Docker Compose applications
+#  hosts: engine_servers
+#  become: true
+#  tasks:
+#    - name: Run client-specific tasks
+#      ansible.builtin.include_role:
+#        name: pyronear.openvpn
+#        tasks_from: install_client.yml
+#
+#    - name: Unconditionally reboot the machine with all defaults
+#      ansible.builtin.reboot:
