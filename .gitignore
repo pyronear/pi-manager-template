@@ -5,4 +5,4 @@ init_script/.env
 *__pycache__*
 *.pem
 .vscode
-cameras.csv
+init_script/cameras.csv
