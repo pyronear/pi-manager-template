@@ -6,3 +6,5 @@ init_script/.env
 *.pem
 .vscode
 init_script/cameras.csv
+inventory/inventory
+inventory/host_vars/
