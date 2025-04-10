@@ -1,13 +1,5 @@
 ---
 # Tasks to setup Engine
-- name: Create a cronjob to restart the Raspberry Pi every day at midnight
-  ansible.builtin.cron:
-    name: "Restart Raspberry Pi"
-    minute: "0"
-    hour: "0"
-    job: "/sbin/shutdown -r now"
-    user: "root"
-
 - name: Git checkout
   ansible.builtin.git:
     repo: 'https://github.com/pyronear/{{ project_name }}.git'
