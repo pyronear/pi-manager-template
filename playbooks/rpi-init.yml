@@ -1,5 +1,4 @@
 ---
-# SHOULD BE LAUNCHED ON ONE PI ONLY
 - name: Verify Ansible version and setup servers
   hosts: engine_servers
   become: true
@@ -13,11 +12,18 @@
   roles:
     - common
     - docker
+
+- name: Apply reverse SSH role one host at a time
+  hosts: engine_servers
+  become: true
+  serial: 1
+  roles:
     - reverse_ssh
 
 - name: Deploy Docker Compose applications
   hosts: engine_servers
   become: true
+  serial: 1
   tasks:
     - name: Run client-specific tasks
       ansible.builtin.include_role:
