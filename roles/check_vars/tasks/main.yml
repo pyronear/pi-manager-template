@@ -21,6 +21,7 @@
     - "{{ S3_ACCESS_KEY }}"       # inventory vars
     - "{{ S3_SECRET_KEY }}"       # inventory vars
     - "{{ S3_REGION }}"           # inventory vars
+    - "{{ alloy_config }}"        # group_var/engine
   when:
     - inventory_hostname in groups["engine_servers"]
     - item is none or item | length == 0

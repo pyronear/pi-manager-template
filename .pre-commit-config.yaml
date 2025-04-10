@@ -10,4 +10,3 @@ repos:
     rev: v24.7.0  # Use the latest stable version or specify a version you prefer
     hooks:
       - id: ansible-lint
-        args: [--exclude=roles/geerlinguy.docker/*, --exclude=roles/infothrill.rpi_boot_config]

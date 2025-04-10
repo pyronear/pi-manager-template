@@ -8,6 +8,7 @@ exclude_paths:
   - .github/
   - geerlingguy.docker/
   - vault.yml
+  - infothrill.rpi_boot_config/
 # Ansible-lint does not fail on warnings from the rules or tags listed below
 warn_list:
   - command-instead-of-module

@@ -9,3 +9,7 @@ roles:
     version: main
 collections:
   - name: ansible.utils
+  - name: grafana.grafana
+    version: 5.7.0
+  - name: community.docker
+  - name: amazon.aws
