@@ -8,3 +8,4 @@ init_script/.env
 init_script/cameras.csv
 inventory/inventory
 inventory/host_vars/
+.ansible/
