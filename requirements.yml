@@ -13,3 +13,5 @@ collections:
     version: 5.7.0
   - name: community.docker
   - name: amazon.aws
+  - name: community.crypto
+  - name: ansible.posix

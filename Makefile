@@ -26,14 +26,17 @@ ping: copy-inventory
 check-engines: copy-inventory
 	@ansible-playbook -i inventory/inventory playbooks/check-engine.yml --vault-password-file=.vault_passwrd -l engine_servers
 
+init-engine: copy-inventory
+	@bash -c 'set -a; source init_script/.env; set +a; ansible-playbook -i inventory/inventory playbooks/rpi-init.yml -l mateo_local --vault-password-file=.vault_passwrd'
+
 install-engines: copy-inventory
-	@bash -c 'set -a; source init_script/.env; set +a; ansible-playbook -i inventory/inventory playbooks/deploy-engines.yml -l mateo_local --vault-password-file=.vault_passwrd'
+	@bash -c 'set -a; source init_script/.env; set +a; ansible-playbook -i inventory/inventory playbooks/deploy-engines.yml -l engine_servers --vault-password-file=.vault_passwrd'
 
 down: copy-inventory
-	@bash -c 'set -a; source init_script/.env; set +a; ansible-playbook -i inventory/inventory playbooks/down-engines.yml -l mateo_local --vault-password-file=.vault_passwrd'
+	@bash -c 'set -a; source init_script/.env; set +a; ansible-playbook -i inventory/inventory playbooks/down-engines.yml -l engine_servers --vault-password-file=.vault_passwrd'
 
 up: copy-inventory
-	@bash -c 'set -a; source init_script/.env; set +a; ansible-playbook -i inventory/inventory playbooks/up-engines.yml -l mateo_local --vault-password-file=.vault_passwrd'
+	@bash -c 'set -a; source init_script/.env; set +a; ansible-playbook -i inventory/inventory playbooks/up-engines.yml -l engine_servers --vault-password-file=.vault_passwrd'
 
 semaphore-up:
 	@docker compose up -d #admin /changeme

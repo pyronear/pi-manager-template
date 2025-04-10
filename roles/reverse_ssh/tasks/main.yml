@@ -1,0 +1,49 @@
+---
+- name: Check reverse ssh variables. no_log=true
+  ansible.builtin.fail:
+    msg: item is empty or None.
+  loop:
+    - "{{ reverse_ssh_server }}"
+  when:
+    - item is none or item | length == 0
+
+- name: Check revser ssh variables. no_log=true
+  ansible.builtin.fail:
+    msg: item is empty or None.
+  loop:
+    - "{{ reverse_ssh_port }}"
+  when:
+    - item == None
+
+- name: Generate an OpenSSH keypair with the default values (4096 bits, rsa)
+  community.crypto.openssh_keypair:
+    path: ~/.ssh/id_ssh_rsa
+
+- name: Read generated public key into a variable
+  ansible.builtin.slurp:
+    src: ~/.ssh/id_ssh_rsa.pub
+  register: ssh_pub_key_raw
+
+- name: Decode public key
+  ansible.builtin.set_fact:
+    ssh_pub_key: "{{ ssh_pub_key_raw['content'] | b64decode }}"
+
+- name: Add public key to authorized_keys on reverse SSH server
+  ansible.posix.authorized_key:
+    user: ubuntu
+    key: "{{ ssh_pub_key }}"
+  delegate_to: "{{ reverse_ssh_server }}"
+  become: true
+
+- name: Copy docker-compose file
+  ansible.builtin.template:
+    src: "reverse-ssh.service.j2"
+    dest: /etc/systemd/system/reverse-ssh.service
+    mode: '0644'
+
+- name: Restart service reverse-ssh
+  ansible.builtin.systemd_service:
+    state: restarted
+    enabled: true
+    daemon_reload: true
+    name: reverse-ssh

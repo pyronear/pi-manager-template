@@ -11,9 +11,7 @@
 
   roles:
     - check_vars
-    - common
     - wifi
-    - docker
 
 - name: Verify Ansible version and setup servers
   hosts: engine_servers
@@ -65,15 +63,3 @@
   become: true
   roles:
     - engine
-
-# - name: Deploy Docker Compose applications
-#  hosts: engine_servers
-#  become: true
-#  tasks:
-#    - name: Run client-specific tasks
-#      ansible.builtin.include_role:
-#        name: pyronear.openvpn
-#        tasks_from: install_client.yml
-#
-#    - name: Unconditionally reboot the machine with all defaults
-#      ansible.builtin.reboot:
