@@ -2,7 +2,5 @@
 SENTRY_DSN: 'https://b4000144be7d4463a7849df8355ede77@o630060.ingest.sentry.io/4503994807353344'
 SENTRY_SERVER_NAME: 'ovh-dev'
 ansible_user: ubuntu
-#api_dns: "alert{{prefix}}.pyronear.org" moved in host file
 ansible_python_interpreter: /usr/bin/python3
 collocation: false
-openvpn_server_dns: "bastion{{ prefix }}.pyronear.org"

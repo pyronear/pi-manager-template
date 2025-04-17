@@ -1,6 +1,6 @@
 ---
 - name: Verify Ansible version and setup servers
-  hosts: alert_server:alert_server_test:platform_server:openvpn:annotation_server
+  hosts: alert_server:alert_server_test:platform_server:openvpn
   become: true
   tasks:
     - name: Ensure Ansible version is 2.17 or higher
