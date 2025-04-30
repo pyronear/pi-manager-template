@@ -39,4 +39,3 @@ for camera in cameras.itertuples(index=False):
     response = api_request("post", f"{api_url}/api/v1/cameras/", superuser_auth, payload)
     camera_id = response["id"]
     print(f"Camera '{camera.name}' créée avec succès avec l'id : '{camera_id}'.")
-    print(response.text) #This send back the created adress

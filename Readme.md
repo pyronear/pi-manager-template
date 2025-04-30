@@ -23,7 +23,7 @@ To add a new Raspberry Pi to this repository, follow these steps:
   Create the .env file :
   ```yml
   cd init_script/
-  cp .env.example .env
+  cp .env.ex .env
   ```
 
   Store you admin login and admin password in the init_script/.env file (you can use the .env.ex as a template)
