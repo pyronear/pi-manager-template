@@ -1,0 +1,10 @@
+---
+- name: Update configuration of Mediamtx
+  hosts: mediamtx
+  become: true
+  serial: 1
+  tasks:
+    - name: Run client-specific tasks
+      ansible.builtin.include_role:
+        name: mediamtx
+        tasks_from: update_conf.yml

@@ -1,0 +1,6 @@
+---
+mediamtx_config_path: /opt/mediamtx
+mediamtx_config_file: "{{ mediamtx_config_path }}/mediamtx.yml"
+mediamtx_image: bluenviron/mediamtx
+mediamtx_users: []
+mediamtx_paths: []

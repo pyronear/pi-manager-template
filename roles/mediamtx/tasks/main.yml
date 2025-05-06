@@ -1,0 +1,23 @@
+---
+- name: Ensure config directory exists
+  ansible.builtin.file:
+    path: "{{ mediamtx_config_path }}"
+    state: directory
+    mode: '0755'
+
+- name: Deploy MediaMTX configuration
+  ansible.builtin.template:
+    src: mediamtx.yml.j2
+    dest: "{{ mediamtx_config_file }}"
+    mode: '0644'
+
+- name: Run MediaMTX Docker container
+  community.docker.docker_container:
+    name: mediamtx
+    image: "{{ mediamtx_image }}"
+    state: started
+    restart_policy: unless-stopped
+    network_mode: host
+    volumes:
+      - "{{ mediamtx_config_file }}:/mediamtx.yml:ro"
+    command: "/mediamtx.yml"

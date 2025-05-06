@@ -14,11 +14,17 @@
     - common
     - docker
 
-- name: Deploy Docker Compose Servers
+- name: Deploy Openvpn
   hosts: openvpn
   become: true
   roles:
     - pyronear.openvpn
+
+- name: Deploy Mediamtx
+  hosts: mediamtx
+  become: true
+  roles:
+    - mediamtx
 
 - name: Deploy Docker Compose Servers
   hosts: alert_server:alert_server_test:platform_server

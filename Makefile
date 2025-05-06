@@ -41,6 +41,12 @@ up: copy-inventory
 install-openvpn: copy-inventory
 	@bash -c 'set -a; source init_script/.env; set +a; ansible-playbook -i inventory/inventory playbooks/deploy-servers.yml -l openvpn --vault-password-file=.vault_passwrd'
 
+install-mediamtx: copy-inventory
+	@bash -c 'set -a; source init_script/.env; set +a; ansible-playbook -i inventory/inventory playbooks/deploy-servers.yml -l mediamtx --vault-password-file=.vault_passwrd'
+
+update-mediamtx-conf: copy-inventory
+	@bash -c 'set -a; source init_script/.env; set +a; ansible-playbook -i inventory/inventory playbooks/update-mediamtx.yml -l mediamtx --vault-password-file=.vault_passwrd'
+
 semaphore-up:
 	@docker compose up -d #admin /changeme
 	@docker exec -ti semaphore git config --global --add safe.directory /app/.git
