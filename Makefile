@@ -38,6 +38,9 @@ down: copy-inventory
 up: copy-inventory
 	@bash -c 'set -a; source init_script/.env; set +a; ansible-playbook -i inventory/inventory playbooks/up-engines.yml -l engine_servers --vault-password-file=.vault_passwrd'
 
+install-servers: copy-inventory
+	@bash -c 'set -a; source init_script/.env; set +a; ansible-playbook -i inventory/inventory playbooks/deploy-servers.yml -l alert-api-test --vault-password-file=.vault_passwrd'
+
 install-openvpn: copy-inventory
 	@bash -c 'set -a; source init_script/.env; set +a; ansible-playbook -i inventory/inventory playbooks/deploy-servers.yml -l openvpn --vault-password-file=.vault_passwrd'
 
