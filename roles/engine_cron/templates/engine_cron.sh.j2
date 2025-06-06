@@ -1,0 +1,15 @@
+#!/bin/bash
+
+set -e
+
+cd {{ engine_cron_working_dir }}
+
+echo "[INFO] Pulling latest code"
+git pull origin {{ engine_branch }}
+
+echo "[INFO] Building Docker image"
+docker build -t {{ engine_cron_docker_image_name }} .
+
+echo "[INFO] Restarting docker-compose"
+docker compose down
+docker compose up -d

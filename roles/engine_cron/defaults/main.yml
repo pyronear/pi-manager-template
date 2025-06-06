@@ -1,0 +1,3 @@
+---
+engine_cron_working_dir: "/home/scripts"
+engine_cron_docker_image_name: "pyronear/pyro-engine:{{ pyronear_version }}"

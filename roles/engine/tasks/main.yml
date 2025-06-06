@@ -12,11 +12,20 @@
     username: pyronear
     password: '{{ dockerhub_password }}'
 
-- name: Build image locally # noqa no-handler
+- name: Build image pyro-engine locally # noqa no-handler
   community.docker.docker_image:
     name: pyronear/pyro-engine:{{ pyronear_version }}
     build:
       path: /home/{{ project_name }}/
+    force_tag: true
+    force_source: true
+    source: build
+
+- name: Build image live-stream locally # noqa no-handler
+  community.docker.docker_image:
+    name: pyronear/live-stream:{{ pyronear_version }}
+    build:
+      path: /home/{{ project_name }}/live_stream_api
     force_tag: true
     force_source: true
     source: build
@@ -97,56 +106,6 @@
     dest: /home/{{ app_name }}/data/credentials.json
     mode: '0600'
 
-# download occlusion masks
-- name: Install botocore
-  ansible.builtin.apt:
-    name: python3-botocore
-    state: present
-
-- name: Install boto3
-  ansible.builtin.apt:
-    name: python3-boto3
-    state: present
-
-- name: Créer le dossier local pour les images
-  ansible.builtin.file:
-    path: /home/{{ app_name }}/data/occlusion-masks
-    state: directory
-    mode: '0755'
-
-- name: Télécharger les images pour les devices statiques
-  amazon.aws.s3_object:
-    bucket: "occlusion-masks"
-    object: "{{ inventory_hostname }}/{{ item.key }}.jpg"
-    dest: "/home/{{ app_name }}/data/occlusion-masks/{{ item.key }}.jpg"
-    mode: get
-    endpoint_url: "{{ S3_ENDPOINT_URL }}"
-    region: "{{ S3_REGION }}"
-  loop: "{{ json_file_content | dict2items | selectattr('value.type', 'equalto', 'static') }}"
-  environment:
-    AWS_ACCESS_KEY_ID: "{{ S3_ACCESS_KEY }}"
-    AWS_SECRET_ACCESS_KEY: "{{ S3_SECRET_KEY }}"
-  register: command_result
-
-- name: Set fact for ptz devices
-  ansible.builtin.set_fact:
-    json_ptz_content: "{{ json_file_content | dict2items | selectattr('value.type', 'equalto', 'ptz') | subelements('value.poses') }}"
-
-- name: Télécharger les images pour les devices ptz
-  amazon.aws.s3_object:
-    bucket: "occlusion-masks"
-    object: "{{ inventory_hostname }}/{{ item[0].key }}_{{ item[1] }}.jpg"
-    dest: "/home/{{ app_name }}/data/occlusion-masks/{{ item[0].key }}_{{ item[1] }}.jpg"
-    mode: get
-    endpoint_url: "{{ S3_ENDPOINT_URL }}"
-    region: "{{ S3_REGION }}"
-  loop: "{{ json_ptz_content }}"
-  environment:
-    AWS_ACCESS_KEY_ID: "{{ S3_ACCESS_KEY }}"
-    AWS_SECRET_ACCESS_KEY: "{{ S3_SECRET_KEY }}"
-  register: command_result
-  failed_when: "'No such' in command_result"
-
 - name: Copy .env file
   ansible.builtin.template:
     src: ".env.{{ app_name }}.j2"
@@ -159,8 +118,15 @@
     dest: /home/{{ app_name }}/docker-compose.yml
     mode: '0644'
 
-# - name: Run the camera manager script
-#  ansible.builtin.script: setup_reolink_camera.py
+- name: Remove old engine container manually
+  community.docker.docker_container:
+    name: engine
+    state: absent
+
+- name: Remove old live_stream container manually
+  community.docker.docker_container:
+    name: live_stream
+    state: absent
 
 - name: Ensure Docker Compose containers are running
   community.docker.docker_compose_v2:

@@ -1,0 +1,40 @@
+---
+- name: Ensure working directory exists
+  ansible.builtin.file:
+    path: "{{ engine_cron_working_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Copy cron job for downloading image
+  ansible.builtin.template:
+    src: engine_cron.sh.j2
+    dest: "{{ engine_cron_working_dir }}/engine_cron.sh"
+    mode: '0755'
+
+- name: Add cron job
+  ansible.builtin.cron:
+    name: "Daily engine update and restart"
+    minute: "0"
+    hour: "2"
+    day: "*"
+    month: "*"
+    weekday: "*"
+    job: "{{ engine_cron_working_dir }}/engine_cron.sh"
+    user: root
+
+- name: Copy cron job for internet connection
+  ansible.builtin.template:
+    src: check_internet_connection.sh.j2
+    dest: "{{ engine_cron_working_dir }}/check_internet_connection.sh"
+    mode: '0755'
+
+- name: Add cron job
+  ansible.builtin.cron:
+    name: "Check internet connection"
+    minute: "*/10"
+    hour: "*"
+    day: "*"
+    month: "*"
+    weekday: "*"
+    job: "{{ engine_cron_working_dir }}/check_internet_connection.sh"
+    user: root

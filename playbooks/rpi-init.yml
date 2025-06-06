@@ -11,6 +11,7 @@
 
   roles:
     - common
+    - wifi
     - docker
 
 - name: Apply reverse SSH role one host at a time
