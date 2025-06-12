@@ -15,13 +15,21 @@
   when:
     - item == None
 
+- name: Create a directory if it does not exist
+  ansible.builtin.file:
+    path: /home/{{ ansible_user }}/.ssh/
+    state: directory
+    mode: '0700'
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+
 - name: Generate an OpenSSH keypair with the default values (4096 bits, rsa)
   community.crypto.openssh_keypair:
-    path: ~/.ssh/id_ssh_rsa
+    path: /home/{{ ansible_user }}/.ssh/id_rsa
 
 - name: Read generated public key into a variable
   ansible.builtin.slurp:
-    src: ~/.ssh/id_ssh_rsa.pub
+    src: /home/{{ ansible_user }}/.ssh/id_rsa.pub
   register: ssh_pub_key_raw
 
 - name: Decode public key
@@ -33,12 +41,45 @@
     user: ubuntu
     key: "{{ ssh_pub_key }}"
   delegate_to: "{{ reverse_ssh_server }}"
-  become: true
 
-- name: Copy docker-compose file
+- name: Create a directory if it does not exist
+  ansible.builtin.file:
+    path: /home/{{ ansible_user }}/.ssh/known_hosts
+    state: touch
+    mode: '0644'
+
+- name: Add remote server pub print in known_hosts
+  ansible.builtin.known_hosts:
+    path: /home/{{ ansible_user }}/.ssh/known_hosts
+    name: "{{ reverse_ssh_server }}"
+    key: "{{ lookup('pipe', 'ssh-keyscan -t ed25519 {{ reverse_ssh_server }}') }}"
+    state: present
+
+- name: Copy reverse-ssh.service file
   ansible.builtin.template:
     src: "reverse-ssh.service.j2"
     dest: /etc/systemd/system/reverse-ssh.service
+    mode: '0644'
+
+- name: Fix permissions on private key
+  ansible.builtin.file:
+    path: /home/{{ ansible_user }}/.ssh/id_rsa
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0600'
+
+- name: Fix permissions on public key
+  ansible.builtin.file:
+    path: /home/{{ ansible_user }}/.ssh/id_rsa.pub
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0644'
+
+- name: Fix permissions on known_hosts
+  ansible.builtin.file:
+    path: /home/{{ ansible_user }}/.ssh/known_hosts
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
     mode: '0644'
 
 - name: Restart service reverse-ssh
