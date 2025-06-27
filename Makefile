@@ -30,7 +30,7 @@ init-engine: copy-inventory
 	@bash -c 'set -a; source init_script/.env; set +a; ansible-playbook -i inventory/inventory playbooks/rpi-init.yml -l testldd --vault-password-file=.vault_passwrd'
 
 install-engines: copy-inventory
-	@bash -c 'set -a; source init_script/.env; set +a; ansible-playbook -i inventory/inventory playbooks/deploy-engines.yml -l engine_servers --vault-password-file=.vault_passwrd'
+	@bash -c 'set -a; source init_script/.env; set +a; ./bin/pyro-ansible playbook deploy-engines.yml -l engine_servers --vault-password-file=.vault_passwrd'
 
 down: copy-inventory
 	@bash -c 'set -a; source init_script/.env; set +a; ansible-playbook -i inventory/inventory playbooks/down-engines.yml -l engine_servers --vault-password-file=.vault_passwrd'

@@ -1,0 +1,108 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+# ============ CONFIGURATION ============
+# Chemin vers le second dépôt git à surveiller (modifie cette variable)
+SECOND_REPO="/home/sy/Desktop/pyronear/test_update_pi"
+REQUIRED_BRANCH="main"
+# =======================================
+
+usage() {
+  cat <<EOF
+Usage: pyro-ansible playbook <arguments>
+
+Ce script vérifie deux dépôts Git avant d'exécuter une commande ansible-playbook.
+Conditions vérifiées :
+- Pas de changements non commités
+- Branche actuelle = '$REQUIRED_BRANCH'
+- HEAD local == HEAD distant (origin)
+
+Arguments :
+  playbook <args>   : Pass-through à ansible-playbook
+  --skip-git-checks : Ignore les vérifications Git
+  -h, --help        : Affiche cette aide
+EOF
+  exit 0
+}
+
+error() {
+  echo -e "\033[1;31m[ERROR]\033[0m $*" >&2
+}
+
+success() {
+  echo -e "\033[1;32m[SUCCESS]\033[0m $*"
+}
+
+check_git_repo() {
+  local repo_path="$1"
+  echo "[INFO] Checking repository at $repo_path"
+
+  pushd "$repo_path" > /dev/null
+
+  local current_branch
+  current_branch=$(git rev-parse --abbrev-ref HEAD)
+
+  if [ "$current_branch" != "$REQUIRED_BRANCH" ]; then
+    error "Branch is '$current_branch', expected '$REQUIRED_BRANCH'"
+    exit 1
+  fi
+
+  if [[ -n "$(git status --porcelain)" ]]; then
+    error "Uncommitted changes in $repo_path"
+    exit 1
+  fi
+
+  local local_head remote_head
+  git fetch origin "$REQUIRED_BRANCH" --quiet
+  local_head=$(git rev-parse HEAD)
+  remote_head=$(git rev-parse origin/"$REQUIRED_BRANCH")
+
+  if [ "$local_head" != "$remote_head" ]; then
+    error "Local and remote HEAD differ in $repo_path"
+    exit 1
+  fi
+
+  success "$repo_path is clean and up to date"
+  popd > /dev/null
+}
+
+# ============================
+# ==== ARGUMENT PARSING =====
+# ============================
+SKIP_GIT_CHECKS="false"
+
+if [ $# -lt 1 ]; then
+  usage
+fi
+
+case "$1" in
+  -h|--help)
+    usage
+    ;;
+  --skip-git-checks)
+    SKIP_GIT_CHECKS="true"
+    shift
+    ;;
+esac
+
+if [ "${1:-}" != "playbook" ]; then
+  error "Unsupported command: $1"
+  usage
+fi
+shift
+
+# Détermination du chemin du dépôt courant
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LOCAL_REPO="$(dirname "$SCRIPT_DIR")"
+
+# Run Git checks
+if [ "$SKIP_GIT_CHECKS" == "false" ]; then
+  check_git_repo "$LOCAL_REPO"
+  check_git_repo "$SECOND_REPO"
+else
+  echo "[INFO] Skipping Git checks"
+fi
+
+# Execute Ansible
+echo "[INFO] Executing ansible-playbook $*"
+ansible-playbook "$@"
