@@ -2,8 +2,6 @@
 
 set -e
 
-cd {{ engine_cron_working_dir }}
-
 echo "[INFO] Pulling latest code"
 git pull origin {{ engine_branch }}
 

@@ -1,7 +1,7 @@
 ---
 - name: Récupérer les données des Raspberry Pi
   ansible.builtin.set_fact:
-    mediamtx_users: "{{ mediamtx_users | default([]) + [{'user': item, 'pass': hostvars[item]['mediamtx_pass']}] }}"
+    # mediamtx_users: "{{ mediamtx_users | default([]) + [{'user': item, 'pass': hostvars[item]['mediamtx_pass']}] }}"
     mediamtx_paths: "{{ mediamtx_paths | default([]) + [{'name': item}] }}"
   loop: "{{ groups['engine_servers'] }}"
 
@@ -12,7 +12,7 @@
     mode: '0644'
     backup: yes
 
-- name: Redémarrer le conteneur MediaMTX
-  community.docker.docker_container:
-    name: mediamtx
-    restart: true
+# - name: Redémarrer le conteneur MediaMTX
+#  community.docker.docker_container:
+#    name: mediamtx
+#    restart: true

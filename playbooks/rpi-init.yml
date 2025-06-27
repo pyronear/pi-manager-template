@@ -22,6 +22,16 @@
     - reverse_ssh
 
 - name: Deploy Docker Compose applications
+  hosts: mediamtx_server
+  become: true
+  tasks:
+
+    - name: Run client-specific tasks
+      ansible.builtin.include_role:
+        name: mediamtx
+        tasks_from: update_conf.yml
+
+- name: Deploy Docker Compose applications
   hosts: engine_servers
   become: true
   serial: 1
@@ -30,6 +40,11 @@
       ansible.builtin.include_role:
         name: pyronear.openvpn
         tasks_from: install_client.yml
+
+    - name: Run client-specific tasks
+      ansible.builtin.include_role:
+        name: mediamtx
+        tasks_from: update_conf.yml
 
     - name: Unconditionally reboot the machine with all defaults
       ansible.builtin.reboot:

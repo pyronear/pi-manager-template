@@ -5,7 +5,7 @@
     state: directory
     mode: '0755'
 
-- name: Copy cron job for downloading image
+- name: Copy cron job for building container image
   ansible.builtin.template:
     src: engine_cron.sh.j2
     dest: "{{ engine_cron_working_dir }}/engine_cron.sh"

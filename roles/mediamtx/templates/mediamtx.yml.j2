@@ -2,14 +2,6 @@ rtsp: no
 rtmp: no
 hls: no
 
-authInternalUsers:
-{% for user in mediamtx_users %}
-  - user: {{ user.user }}
-    pass: {{ user.pass }}
-    permissions:
-      - action: publish
-{% endfor %}
-
 paths:
 {% for path in mediamtx_paths %}
   {{ path.name }}:
