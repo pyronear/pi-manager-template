@@ -24,31 +24,31 @@ ping: copy-inventory
 	@ansible all -i inventory/inventory -m ping --vault-password-file=.vault_passwrd
 
 check-engines: copy-inventory
-	@ansible-playbook -i inventory/inventory playbooks/check-engine.yml --vault-password-file=.vault_passwrd -l engine_servers
+	@./bin/pyro-ansible playbook playbooks/check-engine.yml -i inventory/inventory -l engine_servers --vault-password-file=.vault_passwrd
 
 init-engine: copy-inventory
-	@bash -c 'set -a; source init_script/.env; set +a; ansible-playbook -i inventory/inventory playbooks/rpi-init.yml -l testldd --vault-password-file=.vault_passwrd'
+	@bash -c 'set -a; source init_script/.env; set +a; ./bin/pyro-ansible playbook playbooks/rpi-init.yml -i inventory/inventory -l testldd --vault-password-file=.vault_passwrd'
 
 install-engines: copy-inventory
 	@bash -c 'set -a; source init_script/.env; set +a; ./bin/pyro-ansible playbook playbooks/deploy-engines.yml -i inventory/inventory -l engine_servers --vault-password-file=.vault_passwrd'
 
 down: copy-inventory
-	@bash -c 'set -a; source init_script/.env; set +a; ansible-playbook -i inventory/inventory playbooks/down-engines.yml -l engine_servers --vault-password-file=.vault_passwrd'
+	@bash -c 'set -a; source init_script/.env; set +a; ./bin/pyro-ansible playbook playbooks/down-engines.yml -i inventory/inventory -l engine_servers --vault-password-file=.vault_passwrd'
 
 up: copy-inventory
-	@bash -c 'set -a; source init_script/.env; set +a; ansible-playbook -i inventory/inventory playbooks/up-engines.yml -l engine_servers --vault-password-file=.vault_passwrd'
+	@bash -c 'set -a; source init_script/.env; set +a; ./bin/pyro-ansible playbook playbooks/up-engines.yml -i inventory/inventory -l engine_servers --vault-password-file=.vault_passwrd'
 
 install-servers: copy-inventory
-	@bash -c 'set -a; source init_script/.env; set +a; ansible-playbook -i inventory/inventory playbooks/deploy-servers.yml -l alert-api-test --vault-password-file=.vault_passwrd'
+	@bash -c 'set -a; source init_script/.env; set +a; ./bin/pyro-ansible playbook playbooks/deploy-servers.yml -i inventory/inventory -l alert-api-test --vault-password-file=.vault_passwrd'
 
 install-openvpn: copy-inventory
-	@bash -c 'set -a; source init_script/.env; set +a; ansible-playbook -i inventory/inventory playbooks/deploy-servers.yml -l openvpn --vault-password-file=.vault_passwrd'
+	@bash -c 'set -a; source init_script/.env; set +a; ./bin/pyro-ansible playbook playbooks/deploy-servers.yml -i inventory/inventory -l openvpn --vault-password-file=.vault_passwrd'
 
 install-mediamtx: copy-inventory
-	@bash -c 'set -a; source init_script/.env; set +a; ansible-playbook -i inventory/inventory playbooks/deploy-servers.yml -l mediamtx --vault-password-file=.vault_passwrd'
+	@bash -c 'set -a; source init_script/.env; set +a; ./bin/pyro-ansible playbook playbooks/deploy-servers.yml -i inventory/inventory -l mediamtx --vault-password-file=.vault_passwrd'
 
 update-mediamtx-conf: copy-inventory
-	@bash -c 'set -a; source init_script/.env; set +a; ansible-playbook -i inventory/inventory playbooks/update-mediamtx.yml -l mediamtx --vault-password-file=.vault_passwrd'
+	@bash -c 'set -a; source init_script/.env; set +a; ./bin/pyro-ansible playbook playbooks/update-mediamtx.yml -i inventory/inventory -l mediamtx --vault-password-file=.vault_passwrd'
 
 semaphore-up:
 	@docker compose up -d #admin /changeme
