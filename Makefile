@@ -1,5 +1,6 @@
 # Prompt for the path to the other repository
 REPO_PATH = "../test_update_pi"
+LIMIT ?= st_peray_1
 
 # Check if REPO_PATH is provided
 ifeq ($(REPO_PATH),)
@@ -31,6 +32,9 @@ init-engine: copy-inventory
 
 install-engines: copy-inventory
 	@bash -c 'set -a; source init_script/.env; set +a; ./bin/pyro-ansible playbook playbooks/deploy-engines.yml -i inventory/inventory -l engine_servers --vault-password-file=.vault_passwrd'
+
+install-engines-filtered:
+	@bash -c 'set -a; source init_script/.env; set +a; ./bin/pyro-ansible playbook playbooks/deploy-engines.yml -i inventory/inventory -l $(LIMIT) --vault-password-file=.vault_passwrd'
 
 down: copy-inventory
 	@bash -c 'set -a; source init_script/.env; set +a; ./bin/pyro-ansible playbook playbooks/down-engines.yml -i inventory/inventory -l engine_servers --vault-password-file=.vault_passwrd'
