@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 # ============ CONFIGURATION ============
 # Chemin vers le second dépôt git à surveiller (modifie cette variable)
-SECOND_REPO="/home/sy/Desktop/pyronear/test_update_pi"
+SECOND_REPO="../test_update_pi"
 REQUIRED_BRANCH="main"
 # =======================================
 
