@@ -1,0 +1,10 @@
+---
+- name: Deploy Docker Compose applications
+  hosts: mediamtx_server
+  become: true
+  tasks:
+
+    - name: Run client-specific tasks
+      ansible.builtin.include_role:
+        name: mediamtx
+        tasks_from: update_conf.yml
