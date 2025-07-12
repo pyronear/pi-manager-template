@@ -41,10 +41,5 @@
         name: pyronear.openvpn
         tasks_from: install_client.yml
 
-    - name: Run client-specific tasks
-      ansible.builtin.include_role:
-        name: mediamtx
-        tasks_from: update_conf.yml
-
     - name: Unconditionally reboot the machine with all defaults
       ansible.builtin.reboot:
