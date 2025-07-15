@@ -21,11 +21,11 @@
     force_source: true
     source: build
 
-- name: Build image live-stream locally # noqa no-handler
+- name: Build image reolink-api locally # noqa no-handler
   community.docker.docker_image:
-    name: pyronear/live-stream:{{ pyronear_version }}
+    name: pyronear/reolink-api:{{ pyronear_version }}
     build:
-      path: /home/{{ project_name }}/live_stream_api
+      path: /home/{{ project_name }}/reolink_api
     force_tag: true
     force_source: true
     source: build
