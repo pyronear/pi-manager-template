@@ -29,8 +29,8 @@ services:
       start_period: 10s
       timeout: 5s
   reolink_api:
-    image: pyronear/reolink_api:latest
-    container_name: reolink_api
+    image: 'pyronear/reolink-api:{{pyronear_version}}'
+    container_name: reolink-api
     environment:
       - CAM_USER=${CAM_USER}
       - CAM_PWD=${CAM_PWD}
