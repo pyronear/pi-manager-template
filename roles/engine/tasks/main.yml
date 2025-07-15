@@ -1,4 +1,5 @@
 ---
+
 # Tasks to setup Engine
 - name: Git checkout
   ansible.builtin.git:
@@ -125,7 +126,7 @@
 
 - name: Remove old live_stream container manually
   community.docker.docker_container:
-    name: live_stream
+    name: reolink-api
     state: absent
 
 - name: Ensure Docker Compose containers are running
