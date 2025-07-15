@@ -124,7 +124,7 @@
     name: engine
     state: absent
 
-- name: Remove old live_stream container manually
+- name: Remove old reolink-api container manually
   community.docker.docker_container:
     name: reolink-api
     state: absent
