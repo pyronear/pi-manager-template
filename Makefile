@@ -28,7 +28,7 @@ check-engines: copy-inventory
 	@./bin/pyro-ansible playbook playbooks/check-engine.yml -i inventory/inventory -l engine_servers --vault-password-file=.vault_passwrd
 
 init-engine: copy-inventory
-	@bash -c 'set -a; source init_script/.env; set +a; ./bin/pyro-ansible playbook playbooks/rpi-init.yml -i inventory/inventory -l st_peray --vault-password-file=.vault_passwrd'
+	@bash -c 'set -a; source init_script/.env; set +a; ./bin/pyro-ansible playbook playbooks/rpi-init.yml -i inventory/inventory -l engine_servers --vault-password-file=.vault_passwrd'
 
 init-engine-filtered: copy-inventory
 	@bash -c 'set -a; source init_script/.env; set +a; ./bin/pyro-ansible playbook playbooks/rpi-init.yml -i inventory/inventory -l $(LIMIT) --vault-password-file=.vault_passwrd'
