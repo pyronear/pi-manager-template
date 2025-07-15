@@ -12,7 +12,7 @@ services:
       sh -c '
         echo "Sleeping 15 seconds to wait for reolink_api to capture one image per pose...";
         sleep 15;
-        python run.py
+        python run.py 2>&1 | tee -a engine.log
       '
     volumes:
       - ./data:/usr/src/app/data
