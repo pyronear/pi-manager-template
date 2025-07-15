@@ -10,8 +10,6 @@ services:
     - MEDIAMTX_SERVER_IP=${MEDIAMTX_SERVER_IP}
     command: >
       sh -c '
-        echo "Sleeping 5 seconds to wait for reolink_api to capture one image per pose...";
-        sleep 5;
         python run.py 2>&1 | tee -a engine.log
       '
     volumes:
