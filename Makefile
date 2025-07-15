@@ -1,6 +1,6 @@
 # Prompt for the path to the other repository
 REPO_PATH = "../test_update_pi"
-LIMIT ?= st_peray_1
+LIMIT ?= st-peray
 
 # Check if REPO_PATH is provided
 ifeq ($(REPO_PATH),)
