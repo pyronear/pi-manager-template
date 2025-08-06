@@ -115,3 +115,6 @@ services:
       - "traefik.http.services.frontend.loadbalancer.server.port=8080"
     volumes:
       - ./mydata:/label-studio/data
+
+volumes:
+  postgres_data:
