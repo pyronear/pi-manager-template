@@ -57,7 +57,7 @@ services:
         retries: 3
 
   backend:
-    container: pyronear/annotation-api:latest
+    image: pyronear/annotation-api:latest
     depends_on:
       db:
         condition: service_healthy
