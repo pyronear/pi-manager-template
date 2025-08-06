@@ -57,6 +57,9 @@ install-mediamtx: copy-inventory
 update-mediamtx-conf: copy-inventory
 	@bash -c 'set -a; source init_script/.env; set +a; ./bin/pyro-ansible playbook playbooks/update-mediamtx.yml -i inventory/inventory -l mediamtx --vault-password-file=.vault_passwrd'
 
+install-annotation-server: copy-inventory
+	@bash -c 'set -a; source init_script/.env; set +a; ./bin/pyro-ansible playbook playbooks/deploy-servers.yml -i inventory/inventory -l annotation_server --vault-password-file=.vault_passwrd'
+
 semaphore-up:
 	@docker compose up -d #admin /changeme
 	@docker exec -ti semaphore git config --global --add safe.directory /app/.git

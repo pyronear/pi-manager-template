@@ -27,7 +27,7 @@
     - mediamtx
 
 - name: Deploy Docker Compose Servers
-  hosts: alert_server:alert_server_test:platform_server
+  hosts: alert_server:alert_server_test:platform_server:annotation_server
   become: true
   roles:
     - servers
