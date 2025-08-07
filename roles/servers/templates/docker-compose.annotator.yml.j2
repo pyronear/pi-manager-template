@@ -99,6 +99,7 @@ services:
       - S3_ACCESS_KEY=${S3_ACCESS_KEY}
       - S3_SECRET_KEY=${S3_SECRET_KEY}
       - S3_REGION=${S3_REGION}
+      - USE_ENFORCE_CSRF_CHECKS=false
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`labelstudio.pyronear.org`)"
