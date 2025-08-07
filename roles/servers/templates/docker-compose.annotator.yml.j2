@@ -76,6 +76,7 @@ services:
       - "traefik.http.routers.backend.tls.certresolver=pyroresolver"
       - "traefik.http.services.backend.loadbalancer.server.port=5050"
     restart: always
+    command: "sh -c 'python app/db.py && uvicorn app.main:app --host 0.0.0.0 --port 5050 --proxy-headers'"
     healthcheck:
       test: ["CMD-SHELL", "curl http://localhost:5050/status"]
       interval: 10s
