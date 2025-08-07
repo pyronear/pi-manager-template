@@ -5,13 +5,14 @@ else
   $(error ".env file not found.")
 endif
 
-# for the path to the other repository
-include .env
-export
-
 # Check if REPO_PATH is provided
 ifeq ($(REPO_PATH),)
   $(error "Repository path is required. Please provide the path to the other repository.")
+endif
+
+# Check if .vault_passwrd is provided
+ifeq ("$(wildcard .vault_passwrd)","")
+  $(error ".vault_passwrd is required but was not found.")
 endif
 
 # Copy the necessary files from the specified repository
