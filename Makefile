@@ -1,6 +1,13 @@
-# Prompt for the path to the other repository
-REPO_PATH = "../test_update_pi"
-LIMIT ?= st-peray
+ifneq ("$(wildcard .env)","")
+  include .env
+  export
+else
+  $(error ".env file not found.")
+endif
+
+# for the path to the other repository
+include .env
+export
 
 # Check if REPO_PATH is provided
 ifeq ($(REPO_PATH),)
