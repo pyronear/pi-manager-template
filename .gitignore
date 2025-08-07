@@ -10,3 +10,4 @@ inventory/inventory
 inventory/host_vars/
 .ansible/
 .env
+.vault_passwrd*
