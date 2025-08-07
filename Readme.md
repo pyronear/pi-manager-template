@@ -6,14 +6,13 @@ This repository contains Ansible playbooks and configuration files to manage and
 
 ### Pre-requisites
 
-Before using this repository, ensure the following tools are installed:
+1) git clone the pi-manager-X repository, corresponding to the github repository containing your inventory and host_vars file.
+2) create a .env file in the root of this repository (used by your Makefile) and set the REPO_PATH variable accordingly (for ex : ../pi-manager-X)
+3) create the .vault_passwrd file containing your ansible vault password
 
-- **Ansible** (v10.3.0)
-- **sshpass** for password-based SSH login (for Ansible) :
-```bash
-  sudo apt-get install sshpass
-```
-- use the Makefile "dependencies" command.
+Ensure the following tools are installed by using the Makefile "dependencies" command.
+
+YOU WILL NEVER NEED TO MODIFY THIS REPOSITORY. All the modification must to be done by the pyronear team. If you want to install a new raspberry pi, you only need to modify the files in your pi-manager-X repository.
 
 ### Installing a new Raspberry Pi
 
@@ -71,7 +70,7 @@ To add a new Raspberry Pi to this repository, follow these steps:
   ```
 
 1. **Update the Ansible Inventory**:
-  Add the hostname  and the ip adress of the new Raspberry Pi to the `inventory/fr_inventory` file. By default the linux user name will be "pi"
+  Add the hostname  and the ip adress of the new Raspberry Pi to the `inventory/inventory` file, in your pi-manager-X respository. By default the linux user name will be "pi"
   ```yml
   tour_mateo:  # TEST rpi
     ansible_host: 192.168.1.23
