@@ -8,6 +8,8 @@ init_script/.env
 init_script/cameras.csv
 inventory/inventory
 inventory/host_vars/
+inventory/group_vars/all/vault
+inventory/group_vars/engine_servers/vault
 .ansible/
 .env
 .vault_passwrd*
