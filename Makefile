@@ -20,6 +20,8 @@ copy-inventory:
 	@echo "Copying inventory files from $(REPO_PATH)..."
 	@cp $(REPO_PATH)/inventory/inventory inventory/
 	@cp -r $(REPO_PATH)/inventory/host_vars inventory/
+	@cp $(REPO_PATH)/inventory/all_vault inventory/group_vars/all/vault
+	@cp -r $(REPO_PATH)/inventory/host_vars inventory/group_vars/engine_servers/vault
 
 dependencies:
 	@pip install ansible==10.3.0
