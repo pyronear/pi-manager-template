@@ -10,9 +10,10 @@ ifeq ($(REPO_PATH),)
   $(error "Repository path is required. Please provide the path to the other repository.")
 endif
 
-# Check if .vault_passwrd is provided
-ifeq ("$(wildcard .vault_passwrd)","")
-  $(error ".vault_passwrd is required but was not found.")
+VAULT_PASSWORD_FILE := $(REPO_PATH)/.vault_passwrd
+
+ifeq ($(wildcard $(VAULT_PASSWORD_FILE)),)
+  $(error "$(VAULT_PASSWORD_FILE) is required but was not found.")
 endif
 
 # Copy the necessary files from the specified repository
