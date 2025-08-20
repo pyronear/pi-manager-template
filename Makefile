@@ -10,7 +10,7 @@ ifeq ($(REPO_PATH),)
   $(error "Repository path is required. Please provide the path to the other repository.")
 endif
 
-VAULT_PASSWORD_FILE := $(REPO_PATH)/$(VAULT_PASSWORD_FILE)
+VAULT_PASSWORD_FILE := $(REPO_PATH)/.vault_passwrd
 
 ifeq ($(wildcard $(VAULT_PASSWORD_FILE)),)
   $(error "$(VAULT_PASSWORD_FILE) is required but was not found.")
