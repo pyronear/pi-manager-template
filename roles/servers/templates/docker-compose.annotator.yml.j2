@@ -89,7 +89,7 @@ services:
       backend:
         condition: service_healthy
     expose:
-      - 3000
+      - 80
     environment:
       # Configure API base URL for backend communication within Docker network
       - VITE_API_BASE_URL=http://backend:5050
@@ -99,7 +99,7 @@ services:
       - "traefik.http.routers.frontend.rule=Host(`labelstudio.pyronear.org`)"
       - "traefik.http.routers.frontend.entrypoints=websecure"
       - "traefik.http.routers.frontend.tls.certresolver=pyroresolver"
-      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/"]
