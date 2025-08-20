@@ -90,10 +90,6 @@ services:
         condition: service_healthy
     expose:
       - 80
-    args:
-      # Configure API base URL for backend communication within Docker network
-      - VITE_API_BASE_URL=https://apidev.pyronear.org
-      - VITE_ENVIRONMENT=production
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`labelstudio.pyronear.org`)"
