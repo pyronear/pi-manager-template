@@ -61,8 +61,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    ports:
-      - "5050:5050"
+    expose:
+      - 5050
     environment:
       - POSTGRES_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB}
       - S3_ENDPOINT_URL=${S3_ENDPOINT_URL}
@@ -83,30 +83,32 @@ services:
       timeout: 20s
       retries: 10
 
-  labelstudio:
-    image: heartexlabs/label-studio:latest
+  frontend:
+    image: pyronear/annotation-app:latest
     depends_on:
-      db:
+      backend:
         condition: service_healthy
-    ports:
-      - "8080:8080"
+    expose:
+      - 3000
     environment:
-      - POSTGRE_NAME=${POSTGRES_DB}
-      - POSTGRE_USER=${POSTGRES_USER}
-      - POSTGRE_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRE_PORT=5432
-      - POSTGRE_HOST=db
-      - S3_ENDPOINT_URL=${S3_ENDPOINT_URL}
-      - S3_ACCESS_KEY=${S3_ACCESS_KEY}
-      - S3_SECRET_KEY=${S3_SECRET_KEY}
-      - S3_REGION=${S3_REGION}
-      - USE_ENFORCE_CSRF_CHECKS=false
+      # Configure API base URL for backend communication within Docker network
+      - VITE_API_BASE_URL=http://backend:5050
+      - VITE_ENVIRONMENT=production
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.frontend.rule=Host(`labelstudio.pyronear.org`)"
       - "traefik.http.routers.frontend.entrypoints=websecure"
       - "traefik.http.routers.frontend.tls.certresolver=pyroresolver"
-      - "traefik.http.services.frontend.loadbalancer.server.port=8080"
+      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+
 
 volumes:
   postgres_data:
