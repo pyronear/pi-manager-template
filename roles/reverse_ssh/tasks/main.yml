@@ -43,8 +43,8 @@
 - name: Add remote server pub print in known_hosts
   ansible.builtin.known_hosts:
     path: /home/{{ ansible_user }}/.ssh/known_hosts
-    name: "{{ hostvars[reverse_ssh_server]['ansible_host'] }}"
-    key: "{{ lookup('pipe', 'ssh-keyscan -t ed25519 ' ~ hostvars[reverse_ssh_server]['ansible_host']) }}"
+    name: "{{ hostvars['reverse_ssh_server']['ansible_host'] }}"
+    key: "{{ lookup('pipe', 'ssh-keyscan -t ed25519 ' ~ hostvars['reverse_ssh_server']['ansible_host']) }}"
     state: present
 
 - name: Copy reverse-ssh.service file
