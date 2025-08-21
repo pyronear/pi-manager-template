@@ -16,8 +16,12 @@ ifeq ($(wildcard $(VAULT_PASSWORD_FILE)),)
   $(error "$(VAULT_PASSWORD_FILE) is required but was not found.")
 endif
 
+confirm:
+	@echo "⚠️  Attention : vous allez lancer une commande sur \033[1;33m$(REPO_PATH)\033[0m"
+	@read -p "Êtes-vous sûr ? Appuyez sur Entrée pour continuer, Ctrl+C pour annuler..." dummy
+
 # Copy the necessary files from the specified repository
-copy-inventory:
+copy-inventory: confirm
 	@echo "Copying inventory files from $(REPO_PATH)..."
 	@cp $(REPO_PATH)/inventory/inventory inventory/
 	@cp -r $(REPO_PATH)/inventory/host_vars inventory/
