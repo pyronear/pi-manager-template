@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 User=pi
-ExecStart=/usr/bin/ssh -o "ExitOnForwardFailure=yes" -N -R {{ reverse_ssh_port }}:localhost:22 ubuntu@{{ reverse_ssh_server }}
+ExecStart=/usr/bin/ssh -o "ExitOnForwardFailure=yes" -N -R {{ reverse_ssh_port }}:localhost:22 ubuntu@{{ hostvars['reverse_ssh_server']['ansible_host'] }}
 Restart=always
 RestartSec=30
 StandardOutput=journal
