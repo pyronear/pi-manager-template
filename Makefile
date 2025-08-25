@@ -61,7 +61,7 @@ up: copy-inventory
 	@SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/up-engines.yml -i inventory/inventory -l engine_servers --vault-password-file=$(VAULT_PASSWORD_FILE)
 
 install-servers: copy-inventory
-	@bash -c 'set -a; source init_script/.env; set +a;SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/deploy-servers.yml -i inventory/inventory -l alert-api-test --vault-password-file=$(VAULT_PASSWORD_FILE)'
+	@bash -c 'set -a; source init_script/.env; set +a;SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/deploy-servers.yml -i inventory/inventory -l $(LIMIT) --vault-password-file=$(VAULT_PASSWORD_FILE)'
 
 install-openvpn: copy-inventory
 	@bash -c 'set -a; source init_script/.env; set +a;SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/deploy-servers.yml -i inventory/inventory -l openvpn --vault-password-file=$(VAULT_PASSWORD_FILE)'
