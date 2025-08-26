@@ -58,6 +58,7 @@ services:
 
   backend:
     image: pyronear/annotation-api:latest
+    container_name: annotation-api
     depends_on:
       db:
         condition: service_healthy
