@@ -1,5 +1,11 @@
 ---
 # Tasks to deploy Docker Compose files
+- name: Stop all services
+  community.docker.docker_compose_v2:
+    project_src: /home/{{ app_name }}/
+    state: absent
+    remove_images: all
+
 - name: Create a directory if it does not exist
   ansible.builtin.file:
     path: /home/{{ app_name }}
@@ -31,10 +37,6 @@
     username: pyronear
     password: '{{ dockerhub_password }}'
 
-- name: Stop all services
-  community.docker.docker_compose_v2:
-    project_src: /home/{{ app_name }}/
-    state: stopped
 
 - name: Ensure Docker Compose containers are running
   community.docker.docker_compose_v2:
