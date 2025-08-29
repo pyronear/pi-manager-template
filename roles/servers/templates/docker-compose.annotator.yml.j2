@@ -97,7 +97,7 @@ services:
       - 80
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`labelstudio.pyronear.org`)"
+      - "traefik.http.routers.frontend.rule=Host(`annotator.pyronear.org`)"
       - "traefik.http.routers.frontend.entrypoints=websecure"
       - "traefik.http.routers.frontend.tls.certresolver=pyroresolver"
       - "traefik.http.services.frontend.loadbalancer.server.port=80"
