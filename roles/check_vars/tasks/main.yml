@@ -59,7 +59,6 @@
   when:
     - inventory_hostname in groups["platform_server"]
     - item is none or item | length == 0
-  no_log: true
 
 - name: Récupérer la liste des groupes
   ansible.builtin.set_fact:
