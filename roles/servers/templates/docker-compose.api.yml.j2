@@ -108,6 +108,7 @@ services:
       - API_PWD=${API_PWD}
       - LOGIN=${LOGIN}
       - SENTRY_DSN=${SENTRY_DSN}
+      - MEDIAMTX_SERVER_URL=${MEDIAMTX_SERVER_URL}
       - DEBUG={{ DEBUG | default('false') }}
     labels:
       - "traefik.enable=true"
