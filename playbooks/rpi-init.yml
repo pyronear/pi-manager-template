@@ -11,8 +11,8 @@
 
   roles:
     - common
-#    - wifi
-#    - docker
+    - wifi
+    - docker
 
 - name: Apply reverse SSH role one host at a time
   hosts: engine_servers
@@ -31,15 +31,15 @@
         name: mediamtx
         tasks_from: update_conf.yml
 
-# - name: Deploy Docker Compose applications
-#  hosts: engine_servers
-#  become: true
-#  serial: 1
-#  tasks:
-#    - name: Run client-specific tasks
-#      ansible.builtin.include_role:
-#        name: pyronear.openvpn
-#        tasks_from: install_client.yml
-#
-#    - name: Unconditionally reboot the machine with all defaults
-#      ansible.builtin.reboot:
+- name: Deploy Docker Compose applications
+  hosts: engine_servers
+  become: true
+  serial: 1
+  tasks:
+    - name: Run client-specific tasks
+      ansible.builtin.include_role:
+        name: pyronear.openvpn
+        tasks_from: install_client.yml
+
+    - name: Unconditionally reboot the machine with all defaults
+      ansible.builtin.reboot:
