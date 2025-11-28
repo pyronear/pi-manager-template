@@ -124,6 +124,11 @@
     name: engine
     state: absent
 
+- name: Remove old reolink-api container manually
+  community.docker.docker_container:
+    name: reolink-api
+    state: absent
+
 - name: Remove old pyro-camera-api container manually
   community.docker.docker_container:
     name: pyro-camera-api
