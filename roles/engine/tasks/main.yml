@@ -22,11 +22,11 @@
     force_source: true
     source: build
 
-- name: Build image reolink-api locally # noqa no-handler
+- name: Build image pyro-camera-api locally # noqa no-handler
   community.docker.docker_image:
-    name: pyronear/reolink-api:{{ pyronear_version }}
+    name: pyronear/pyro-camera-api:{{ pyronear_version }}
     build:
-      path: /home/{{ project_name }}/reolink_api
+      path: /home/{{ project_name }}/pyro_camera_api
     force_tag: true
     force_source: true
     source: build
@@ -124,9 +124,9 @@
     name: engine
     state: absent
 
-- name: Remove old reolink-api container manually
+- name: Remove old pyro-camera-api container manually
   community.docker.docker_container:
-    name: reolink-api
+    name: pyro-camera-api
     state: absent
 
 - name: Ensure Docker Compose containers are running

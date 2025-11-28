@@ -26,9 +26,9 @@ services:
       retries: 3
       start_period: 10s
       timeout: 5s
-  reolink_api:
-    image: 'pyronear/reolink-api:{{pyronear_version}}'
-    container_name: reolink-api
+  pyro-camera-api:
+    image: 'pyronear/pyro-camera-api:{{pyronear_version}}'
+    container_name: pyro-camera-api
     environment:
       - CAM_USER=${CAM_USER}
       - CAM_PWD=${CAM_PWD}
