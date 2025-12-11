@@ -1,6 +1,6 @@
 ---
 - name: Check status of Docker Compose containers
-  hosts: engine_servers:!alert_server:!platform_server
+  hosts: engine_servers:!alert_server:!platform_py_server
   become: yes
   tasks:
     - name: Gather information on Docker containers

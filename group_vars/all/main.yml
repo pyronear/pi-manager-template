@@ -4,3 +4,9 @@ SENTRY_SERVER_NAME: 'ovh-dev'
 ansible_user: ubuntu
 ansible_python_interpreter: /usr/bin/python3
 collocation: false
+
+# Attributes to override
+prefix: "PREFIX"
+openvpn_server_host: "HOST_OPENVPN"
+ca_password: !vault |
+  ANSIBLE_VAULT

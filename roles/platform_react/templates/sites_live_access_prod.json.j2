@@ -1,0 +1,6 @@
+{
+{% for organisation in platform_react_sites_per_organization %}
+  "{{ organisation.name }}": {{ organisation.sites | to_nice_json }}
+  {% if not loop.last%}, {% endif%}
+{% endfor %}
+}

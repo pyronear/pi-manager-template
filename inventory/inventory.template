@@ -1,31 +1,23 @@
 all:
   hosts:
-
-
-  vars:
-    prefix: "PREFIX"
-    openvpn_server_host: "HOST_OPENVPN"
-    ca_password: !vault |
-          ANSIBLE_VAULT
-
   children:
-    engine_servers_test:
+    engine_servers:
       hosts:
-
-
-    engine_servers_prod:
-      hosts: {}
 
     alert_server:
       hosts:
 
-    platform_server:
+    platform_py_server:
+      hosts:
+
+    platform_react_server:
       hosts:
 
     openvpn:
       hosts:
 
-    engine_servers:
-      children:
-        engine_servers_test:
-        engine_servers_prod:
+    annotation_server:
+      hosts:
+
+    mediamtx_server:
+      hosts:

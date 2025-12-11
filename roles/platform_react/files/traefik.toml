@@ -1,0 +1,58 @@
+
+[entryPoints]
+    [entryPoints.web]
+        address = ":80"
+        [entryPoints.web.http]
+            [entryPoints.web.http.redirections]
+                [entryPoints.web.http.redirections.entryPoint]
+                    to = "websecure"
+                    scheme = "https"
+                    permanent = true
+
+    [entryPoints.websecure]
+        address = ":443"
+            [entryPoints.websecure.http.tls]
+                certResolver = "default"
+
+[providers]
+    [providers.docker]
+        watch = true
+        exposedByDefault = false
+        network = "web"
+
+[certificatesResolvers]
+    [certificatesResolvers.pyroresolver]
+        [certificatesResolvers.pyroresolver.acme]
+            tlschallenge = true
+            email = "contact@pyronear.org"
+            storage = "acme.json"
+            caServer = "https://acme-v02.api.letsencrypt.org/directory"
+
+
+[http]
+    [http.routers]
+        [http.routers.platform]
+            rule = "Host(`platformv3.pyronear.org`)"
+            service = "platform"
+            entryPoints = ["websecure"]
+            [http.routers.platform.tls]
+                certResolver = "pyroresolver"
+
+[log]
+    filePath = "/var/log/log-file.log"
+    level = "INFO"
+    format = "json"
+
+[accessLog]
+    format = "json"
+    filePath = "/var/log/access.log"
+    [accessLog.filters]
+        statusCodes = ["200", "400-404", "500-503"]
+    [accessLog.fields]
+        [accessLog.fields.names]
+            ClientUsername = "drop"
+        [accessLog.fields.headers]
+            defaultMode = "keep"
+            [accessLog.fields.headers.names]
+                "User-Agent" = "redact"
+                "Content-Type" = "keep"
