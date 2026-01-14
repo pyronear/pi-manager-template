@@ -50,7 +50,7 @@ To add a new Raspberry Pi to this repository, follow these steps:
   After that you can launch the following command to create a venv and install the dependencies :
   ```python
   python -m venv venv
-  source venv/bin/active
+  source venv/bin/activate
   pip install -r requirements.txt
   ```
 
