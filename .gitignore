@@ -6,6 +6,8 @@ init_script/.env
 *.pem
 .vscode
 init_script/cameras.csv
+init_script/venv
+venv/
 inventory/inventory
 inventory/host_vars/
 inventory/group_vars/all/vault
