@@ -47,14 +47,14 @@ To add a new Raspberry Pi to this repository, follow these steps:
   name,angle_of_view,elevation,lat,lon,is_trustable
   ```
 
-  After that you can launch the following command to create a venv and install the dependencies :
+  After that, at the root of the repo, you can launch the following command to create a venv and install the dependencies :
   ```python
   python -m venv venv
-  source venv/bin/active
-  pip install -r requirements.txt
+  source venv/bin/activate
+  pip install -r init_script/requirements.txt
   ```
 
-  Now, if you need it, you can create an organisation with :
+  Now, going back to `init_script/`, if you need it, you can create an organisation with :
   ```python
   python create_orga.py
   ```
