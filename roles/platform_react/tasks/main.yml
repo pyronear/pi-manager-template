@@ -47,7 +47,6 @@
     mode: "0644"
   with_items:
     - app-config-prod.js
-    - sites_infos_prod.json
     - sites_live_access_prod.json
 
 - name: Create empty acme file for traefik

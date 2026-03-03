@@ -1,8 +1,0 @@
-{
-{% for site in platform_react_sites_infos %}
-  "{{ site.key }}": {
-    "ip": "{{ site.ip }}",
-    "name": "{{ site.name }}"
-  }{% if not loop.last%}, {% endif%}
-{% endfor %}
-}

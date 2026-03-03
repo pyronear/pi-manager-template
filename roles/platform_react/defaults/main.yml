@@ -4,10 +4,6 @@ platform_react_docker_compose_url: https://raw.githubusercontent.com/pyronear/ne
 platform_react_url_backend: TO_CHANGE
 platform_react_url_livestream: TO_CHANGE
 platform_react_docker_image: pyronear/pyro-platform-react:0.1.2
-platform_react_sites_infos:
-  - key: site1
-    ip: "0.0.0.0"
-    name: "My Site"
 platform_react_sites_per_organization:
   - name: orga1
     sites: ["site1"]
