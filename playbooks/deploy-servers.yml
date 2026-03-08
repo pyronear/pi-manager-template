@@ -67,7 +67,7 @@
     - name: Unconditionally reboot the machine with all defaults
       ansible.builtin.reboot:
 
-- name: Deploy platform_react_server
+- name: Deploy vpn for platform_react_server
   hosts: platform_react_server
   become: true
   tasks:
@@ -85,7 +85,7 @@
     - name: Unconditionally reboot the machine with all defaults
       ansible.builtin.reboot:
 
-- name: Deploy platform_react_server
+- name: Deploy service platform_react_server
   hosts: platform_react_server
   become: true
   roles:
