@@ -1,6 +1,6 @@
 ---
 - name: Verify Ansible version and setup servers
-  hosts: alert_server:alert_server_test:platform_server:openvpn:mediamtx
+  hosts: alert_server:platform_py_server:platform_react_server:openvpn:mediamtx_server
   become: true
   tasks:
     - name: Ensure Ansible version is 2.17 or higher
@@ -21,19 +21,19 @@
     - pyronear.openvpn
 
 - name: Deploy Mediamtx
-  hosts: mediamtx
+  hosts: mediamtx_server
   become: true
   roles:
     - mediamtx
 
 - name: Deploy Docker Compose Servers
-  hosts: alert_server:alert_server_test:platform_server:annotation_server
+  hosts: alert_server:platform_py_server:annotation_server
   become: true
   roles:
     - servers
 
 - name: Initialize tables and admin user
-  hosts: alert_server:alert_server_test
+  hosts: alert_server
   become: true
   tasks:
     - name: Check if 'user' table exists in PostgreSQL
@@ -49,7 +49,7 @@
       changed_when: false
 
 - name: Deploy Docker Compose applications
-  hosts: platform_server
+  hosts: platform_py_server
   become: true
   serial: 1
   tasks:
@@ -66,3 +66,29 @@
 
     - name: Unconditionally reboot the machine with all defaults
       ansible.builtin.reboot:
+
+- name: Deploy vpn for platform_react_server
+  hosts: platform_react_server
+  become: true
+  tasks:
+    - name: Run client-specific tasks
+      ansible.builtin.include_role:
+        name: pyronear.openvpn
+        tasks_from: install_client.yml
+
+    - name: Remplacer 'redirect-gateway def1' par 'route 192.168.255.0 255.255.255.0'
+      ansible.builtin.replace:
+        path: /etc/openvpn/client.conf
+        regexp: '^redirect-gateway def1$'
+        replace: 'route 192.168.255.0 255.255.255.0'
+
+    - name: Unconditionally reboot the machine with all defaults
+      ansible.builtin.reboot:
+
+- name: Deploy service platform_react_server
+  hosts: platform_react_server
+  become: true
+  roles:
+    - role: platform_react
+      tags:
+        - app
