@@ -1,30 +1,12 @@
-ifneq ("$(wildcard .env)","")
-  include .env
-  export
-else
-  $(error ".env file not found.")
-endif
 
-# Check if REPO_PATH is provided
-ifeq ($(REPO_PATH),)
-  $(error "Repository path is required. Please provide the path to the other repository.")
-endif
+semaphore-up:
+	@docker compose up -d #admin /changeme
+	@docker exec -ti semaphore git config --global --add safe.directory /app/.git
+	@docker exec -ti --user root semaphore cp -r /root/.ssh /home/semaphore/
+	@docker exec -ti --user root semaphore chown -R semaphore /home/semaphore/.ssh
 
-ifeq ($(wildcard $(VAULT_PASSWORD_FILE)),)
-  $(error "$(VAULT_PASSWORD_FILE) is required but was not found.")
-endif
-
-confirm:
-	@echo "⚠️  Attention : vous allez lancer une commande sur \033[1;33m$(REPO_PATH)\033[0m"
-	@read -p "Êtes-vous sûr ? Appuyez sur Entrée pour continuer, Ctrl+C pour annuler..." dummy
-
-dependencies:
-	@pip install ansible==10.3.0
-	@pip install netaddr
-	@ansible-galaxy role install -r requirements.yml
-	@ansible-galaxy collection install -r requirements.yml
-	cp hooks/pre-commit .git/hooks/pre-commit
-	@chmod +x .git/hooks/pre-commit
+semaphore-stop:
+	@docker compose stop
 
 ping: prepare
 	@ansible all -i inventory/hosts_prod -m ping --vault-password-file=$(VAULT_PASSWORD_FILE)
@@ -66,5 +48,6 @@ install-annotation-server: prepare
 	@SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l annotation_server --vault-password-file=$(VAULT_PASSWORD_FILE)
 
 install-platform-react-server: prepare
-	@SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l platform_react_server --vault-password-file=$(VAULT_PASSWORD_FILE)
+	@SECOND_REPO=$(REPO_PATH) ansible-playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -t test -l platform_react_server --vault-password-file=$(VAULT_PASSWORD_FILE)
+
 

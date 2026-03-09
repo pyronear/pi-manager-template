@@ -8,10 +8,12 @@ init_script/.env
 init_script/cameras.csv
 init_script/venv
 venv/
+host_vars/
 inventory/inventory
-inventory/host_vars/
-inventory/group_vars/all/vault
-inventory/group_vars/engine_servers/vault
+inventory/hosts_*
+group_vars
+!group_vars/template
+id_rsa
 .ansible/
 .env
 .vault_passwrd*

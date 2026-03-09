@@ -9,7 +9,7 @@ RUN apt update ; \
   pip install netaddr; \
     pip install ansible==10.3.0;
 
-RUN mkdir /ansible && mkdir -p ~/.ssh
+RUN mkdir /ansible && mkdir -p /ansible/.ssh
 
 WORKDIR /ansible
 
