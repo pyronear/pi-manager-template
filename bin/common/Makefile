@@ -57,3 +57,5 @@ install-annotation-server: prepare
 install-platform-react-server: prepare
 	ansible-playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l platform_react_server
 
+install-alert-api-server: prepare
+	ansible-playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l alert_server

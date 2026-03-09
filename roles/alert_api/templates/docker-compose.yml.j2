@@ -1,0 +1,80 @@
+name: alert-api
+
+services:
+  traefik:
+    image: traefik:v3.6.6
+    container_name: traefik
+    ports:
+      # http(s) traffic
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "{{ alert_api_working_dir_traefik }}/acme.json:/acme.json"
+      - "{{ alert_api_working_dir_traefik }}/traefik.toml:/etc/traefik/traefik.toml"
+      - "{{ alert_api_working_dir_traefik }}/dynamic_assets.toml:/etc/traefik/dynamic/assets.toml"
+      - "{{ alert_api_working_dir_traefik }}/logs:/var/log"
+    labels:
+      - "traefik.http.middlewares.strip-www.redirectregex.regex=^https?://(www\\.)(.+)"
+      - "traefik.http.middlewares.strip-www.redirectregex.replacement=https://$${2}"
+      - "traefik.http.middlewares.strip-www.redirectregex.permanent=true"
+    command:
+      # StaticResponse
+      - "--experimental.plugins.staticresponse.modulename=github.com/jdel/staticresponse"
+      - "--experimental.plugins.staticresponse.version=v0.0.1"
+    restart: always
+
+  db:
+    image: postgres:15-alpine
+    expose:
+      - 5432
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    healthcheck:
+        test: ["CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}'"]
+        interval: 10s
+        timeout: 3s
+        retries: 3
+
+  backend:
+    image: pyronear/alert-api:{{ alert_api_docker_version }}
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - 5050
+    environment:
+      - POSTGRES_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db/${POSTGRES_DB}
+      - SUPERADMIN_LOGIN=${SUPERADMIN_LOGIN}
+      - SUPERADMIN_PWD=${SUPERADMIN_PWD}
+      - SUPERADMIN_ORG=${SUPERADMIN_ORG}
+      - JWT_SECRET=${JWT_SECRET}
+      - SUPPORT_EMAIL=${SUPPORT_EMAIL}
+      - DEBUG=false
+      - PROMETHEUS_ENABLED=false
+      - SQLALCHEMY_SILENCE_UBER_WARNING=1
+      - S3_ENDPOINT_URL=${S3_ENDPOINT_URL}
+      - S3_ACCESS_KEY=${S3_ACCESS_KEY}
+      - S3_SECRET_KEY=${S3_SECRET_KEY}
+      - S3_REGION=${S3_REGION:-us-east-1}
+      - S3_PROXY_URL=${S3_PROXY_URL}
+      - SERVER_NAME=${SERVER_NAME}
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`{{ alert_api_proxy_url }}`)"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.tls.certresolver=pyroresolver"
+      - "traefik.http.services.backend.loadbalancer.server.port=5050"
+    command: "sh -c 'python app/db.py && uvicorn app.main:app --reload --host 0.0.0.0 --port 5050 --proxy-headers --use-colors'"
+    healthcheck:
+      test: ["CMD-SHELL", "curl http://localhost:5050/status"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+volumes:
+  postgres_data:

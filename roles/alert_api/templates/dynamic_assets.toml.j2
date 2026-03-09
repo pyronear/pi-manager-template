@@ -1,0 +1,27 @@
+[http]
+    [http.routers]
+        [http.routers.assets]
+            rule = "Host(`{{ alert_api_s3_proxy_url }}`)"
+            service = "assets"
+            entryPoints = ["websecure"]
+            [http.routers.assets.tls]
+                certResolver = "pyroresolver"
+
+        [http.routers.root]
+            rule = "Host(`{{ alert_api_s3_proxy_url }}`) && Path(`/`)"
+            service = "noop@internal"
+            entryPoints = ["websecure"]
+            middlewares = ["staticok"]
+            [http.routers.root.tls]
+                certResolver = "pyroresolver"
+
+    [http.services]
+        [http.services.assets]
+            [http.services.assets.loadBalancer]
+                passHostHeader = true
+                [[http.services.assets.loadBalancer.servers]]
+                    url = "{{ alert_api_s3_url }}"
+    [http.middlewares]
+      [http.middlewares.staticok.plugin.staticresponse]
+        statusCode = 200
+        body = "OK"
