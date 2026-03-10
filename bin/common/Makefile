@@ -8,6 +8,13 @@ semaphore-up:
 semaphore-stop:
 	@docker compose stop
 
+ansible-up:
+	@docker compose up -d pyro-ansible
+	@docker exec -it pyro-ansible sh
+
+ansible-stop:
+	@docker compose down pyro-ansible
+
 ping: prepare
 	@ansible all -i inventory/hosts_prod -m ping --vault-password-file=$(VAULT_PASSWORD_FILE)
 
@@ -48,6 +55,5 @@ install-annotation-server: prepare
 	@SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l annotation_server --vault-password-file=$(VAULT_PASSWORD_FILE)
 
 install-platform-react-server: prepare
-	@SECOND_REPO=$(REPO_PATH) ansible-playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -t test -l platform_react_server --vault-password-file=$(VAULT_PASSWORD_FILE)
-
+	ansible-playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l platform_react_server
 
