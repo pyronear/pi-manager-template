@@ -16,43 +16,43 @@ ansible-stop:
 	@docker compose down pyro-ansible
 
 ping: prepare
-	@ansible all -i inventory/hosts_prod -m ping --vault-password-file=$(VAULT_PASSWORD_FILE)
+	@ansible all -i inventory/hosts_prod -m ping
 
 check-engines: prepare
-	@SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/check-engine.yml -i inventory/hosts_prod -l engine_servers --vault-password-file=$(VAULT_PASSWORD_FILE)
+	@SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/check-engine.yml -i inventory/hosts_prod -l engine_servers
 
 init-engine: prepare
-	@bash -c 'set -a; source init_script/.env; set +a;SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/rpi-init.yml -i inventory/hosts_prod -l engine_servers --vault-password-file=$(VAULT_PASSWORD_FILE)'
+	@bash -c 'set -a; source init_script/.env; set +a;SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/rpi-init.yml -i inventory/hosts_prod -l engine_servers'
 
 init-engine-filtered: prepare
-	@bash -c 'set -a; source init_script/.env; set +a;SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/rpi-init.yml -i inventory/hosts_prod -l $(LIMIT) --vault-password-file=$(VAULT_PASSWORD_FILE)'
+	@bash -c 'set -a; source init_script/.env; set +a;SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/rpi-init.yml -i inventory/hosts_prod -l $(LIMIT)'
 
 install-engines: prepare
-	@bash -c 'set -a; source init_script/.env; set +a;SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/deploy-engines.yml -i inventory/hosts_prod -l engine_servers --vault-password-file=$(VAULT_PASSWORD_FILE)'
+	@bash -c 'set -a; source init_script/.env; set +a;SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/deploy-engines.yml -i inventory/hosts_prod -l engine_servers'
 
 install-engines-filtered: prepare
-	@bash -c 'set -a; source init_script/.env; set +a;SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/deploy-engines.yml -i inventory/hosts_prod -l $(LIMIT) --vault-password-file=$(VAULT_PASSWORD_FILE)'
+	@bash -c 'set -a; source init_script/.env; set +a;SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/deploy-engines.yml -i inventory/hosts_prod -l $(LIMIT)'
 
 down: prepare
-	@SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/down-engines.yml -i inventory/hosts_prod -l engine_servers --vault-password-file=$(VAULT_PASSWORD_FILE)
+	@SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/down-engines.yml -i inventory/hosts_prod -l engine_servers
 
 up: prepare
-	@SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/up-engines.yml -i inventory/hosts_prod -l engine_servers --vault-password-file=$(VAULT_PASSWORD_FILE)
+	@SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/up-engines.yml -i inventory/hosts_prod -l engine_servers
 
 install-servers: prepare
-	@bash -c 'set -a; source init_script/.env; set +a;SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l $(LIMIT) --vault-password-file=$(VAULT_PASSWORD_FILE)'
+	@bash -c 'set -a; source init_script/.env; set +a;SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l $(LIMIT)'
 
 install-openvpn: prepare
-	@bash -c 'set -a; source init_script/.env; set +a;SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l openvpn --vault-password-file=$(VAULT_PASSWORD_FILE)'
+	@bash -c 'set -a; source init_script/.env; set +a;SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l openvpn'
 
 install-mediamtx: prepare
-	@SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l mediamtx_server --vault-password-file=$(VAULT_PASSWORD_FILE)
+	@SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l mediamtx_server
 
 update-mediamtx-conf: prepare
-	@SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/update-mediamtx.yml -i inventory/hosts_prod -l mediamtx_server --vault-password-file=$(VAULT_PASSWORD_FILE)
+	@SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/update-mediamtx.yml -i inventory/hosts_prod -l mediamtx_server
 
 install-annotation-server: prepare
-	@SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l annotation_server --vault-password-file=$(VAULT_PASSWORD_FILE)
+	@SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l annotation_server
 
 install-platform-react-server: prepare
 	ansible-playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l platform_react_server
