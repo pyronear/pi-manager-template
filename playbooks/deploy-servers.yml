@@ -1,6 +1,6 @@
 ---
-- name: Verify Ansible version and setup servers
-  hosts: alert_server:platform_py_server:platform_react_server:openvpn:mediamtx_server
+- name: Verify Ansible version
+  hosts: all
   become: true
   tasks:
     - name: Ensure Ansible version is 2.17 or higher
@@ -8,6 +8,16 @@
         that:
           - ansible_version.minor | int >= 17
         fail_msg: "Ansible version must be 2.17 or higher."
+
+- name: Check vars
+  hosts: platform_py_server:openvpn:mediamtx_server
+  become: true
+  roles:
+    - check_vars
+
+- name: Upgrade, install git and docker
+  hosts: alert_server:platform_py_server:platform_react_server:openvpn:mediamtx_server
+  become: true
   roles:
     - common
     - docker
