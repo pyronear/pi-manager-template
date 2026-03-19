@@ -1,5 +1,4 @@
-# Copy the necessary files from the specified repository
-prepare: confirm
-	@echo "All set"
+prepare:
+	@echo "Nothing to prepare"
 
-include /ansible/bin/Makefile
+include /ansible/MakefileCommon

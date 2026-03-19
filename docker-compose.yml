@@ -2,26 +2,29 @@
 services:
   pyro-ansible:
     container_name: pyro-ansible
-    build: .
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
     volumes:
       - ./inventory/group_vars:/ansible/group_vars
       - ./playbooks:/ansible/playbooks
       - ./roles:/ansible/roles
       - ./docker/Makefile:/ansible/Makefile
+      - ./docker/ansible.cfg:/ansible/ansible.cfg:ro
+      - ${VAULT_PASSWORD_FILE}:/ansible/.vault_passwrd:ro
+      - ${SSH_PRIVATE_KEY_FILE}:/ansible/id_rsa:ro
+      - ./bin/common/Makefile:/ansible/MakefileCommon
       - ${REPO_PATH}/inventory/group_vars:/ansible/inventory/group_vars
       - ${REPO_PATH}/host_vars:/ansible/host_vars
       - ${REPO_PATH}/inventory:/ansible/inventory
     stdin_open: true
     tty: true
-    environment:
-      ANSIBLE_SSH_PRIVATE_KEY_FILE: "/ansible/.ssh/id_rsa"
-      ANSIBLE_VAULT_PASSWORD_FILE: "/ansible/.vault_passwrd"
-      ANSIBLE_CONFIG: "/ansible/ansible.cfg"
+    command: "sh"
 
   semaphore:
     container_name: semaphore
     ports:
-      - 3000:3000
+      - "3000:3000"
     image: semaphoreui/semaphore:latest
     environment:
       SEMAPHORE_DB_DIALECT: bolt
