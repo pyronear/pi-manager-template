@@ -30,9 +30,9 @@
     [certificatesResolvers.pyroresolver]
         [certificatesResolvers.pyroresolver.acme]
             tlschallenge = true
-            email = "contact@pyronear.org"
+            email = "{{ cert_resolver_mail }}"
             storage = "acme.json"
-            caServer = "https://acme-v02.api.letsencrypt.org/directory"
+            caServer = "{{ cert_resolver_url }}"
 
 # Enable the Traefik log, for configurations and errors
 [log]

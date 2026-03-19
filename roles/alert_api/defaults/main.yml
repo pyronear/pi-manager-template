@@ -20,3 +20,6 @@ alert_api_server_name:
 alert_api_sentry_dsn:
 alert_api_telegram_token:
 alert_api_posthog_key:
+
+cert_resolver_mail:
+cert_resolver_url:
