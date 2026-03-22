@@ -59,24 +59,6 @@
     - name: Unconditionally reboot the machine with all defaults
       ansible.builtin.reboot:
 
-- name: Deploy vpn for platform_react_server
-  hosts: platform_react_server
-  become: true
-  tasks:
-    - name: Run client-specific tasks
-      ansible.builtin.include_role:
-        name: pyronear.openvpn
-        tasks_from: install_client.yml
-
-    - name: Remplacer 'redirect-gateway def1' par 'route 192.168.255.0 255.255.255.0'
-      ansible.builtin.replace:
-        path: /etc/openvpn/client.conf
-        regexp: '^redirect-gateway def1$'
-        replace: 'route 192.168.255.0 255.255.255.0'
-
-    - name: Unconditionally reboot the machine with all defaults
-      ansible.builtin.reboot:
-
 - name: Deploy service platform_react_server
   hosts: platform_react_server
   become: true

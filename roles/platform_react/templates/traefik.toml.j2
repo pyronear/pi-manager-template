@@ -24,19 +24,9 @@
     [certificatesResolvers.pyroresolver]
         [certificatesResolvers.pyroresolver.acme]
             tlschallenge = true
-            email = "contact@pyronear.org"
+            email = "{{ cert_resolver_mail }}"
             storage = "acme.json"
-            caServer = "https://acme-v02.api.letsencrypt.org/directory"
-
-
-[http]
-    [http.routers]
-        [http.routers.platform]
-            rule = "Host(`platformv3.pyronear.org`)"
-            service = "platform"
-            entryPoints = ["websecure"]
-            [http.routers.platform.tls]
-                certResolver = "pyroresolver"
+            caServer = "{{ cert_resolver_url }}"
 
 [log]
     filePath = "/var/log/log-file.log"

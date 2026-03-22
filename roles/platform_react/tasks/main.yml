@@ -1,12 +1,5 @@
 ---
 
-# TODO : implements ansible task to :
-# - Set enn variables on the vm :
-#   - WORKING_DIR_REACT={{ platform_react_working_dir_react }}
-#   - WORKING_DIR_TRAEFIK={{ platform_react_working_dir_traefik }}
-#   - LOG_DIR={{ platform_react_log_dir }}
-# - Create network web
-
 - name: Create a network
   community.docker.docker_network:
     name: web
@@ -29,17 +22,11 @@
     remove_images: all
   ignore_errors: true
 
-- name: Download docker-compose.yml from github
-  ansible.builtin.get_url:
-    url: "{{ platform_react_docker_compose_url }}"
+- name: Copy docker-compose.yml
+  ansible.builtin.template:
+    src: "docker-compose.yml.j2"
     dest: "{{ platform_react_working_dir_react }}/docker-compose.yml"
-    force: true
-
-- name: Replace latest image with a tag
-  ansible.builtin.replace:
-    path: "{{ platform_react_working_dir_react }}/docker-compose.yml"
-    regexp: "^(.*)pyronear/pyro-platform-react:latest(.*)$"
-    replace: "\\g<1>{{ platform_react_docker_image }}"
+    mode: "0644"
 
 - name: Install config files
   ansible.builtin.template:
@@ -48,7 +35,6 @@
     mode: "0644"
   with_items:
     - app-config-prod.js
-    - sites_infos_prod.json
     - sites_live_access_prod.json
 
 - name: Create empty acme file for traefik
@@ -60,11 +46,11 @@
     mode: 0600
 
 - name: Create conf file for traefik
-  ansible.builtin.copy:
-    src: traefik.toml
+  ansible.builtin.template:
+    src: traefik.toml.j2
     dest: "{{ platform_react_working_dir_traefik }}/traefik.toml"
     group: sys
-    mode: 0600
+    mode: "0600"
 
 - name: Docker Compose start and verify containers are running
   community.docker.docker_compose_v2:
