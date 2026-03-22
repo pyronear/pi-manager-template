@@ -1,7 +1,7 @@
 platform_react_working_dir_react: /home/pyro_platform_react
 platform_react_working_dir_traefik: /home/traefik
 platform_react_docker_image: pyronear/pyro-platform-react
-platform_react_docker_version: 0.2.0
+platform_react_docker_version: 0.2.1
 
 platform_react_url_frontend: TO_CHANGE
 platform_react_url_backend: TO_CHANGE
