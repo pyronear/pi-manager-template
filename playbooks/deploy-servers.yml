@@ -41,7 +41,7 @@
     - servers
 
 - name: Deploy Docker Compose applications
-  hosts: platform_py_server
+  hosts: platform_py_server:alert_server
   become: true
   serial: 1
   tasks:
