@@ -28,16 +28,6 @@
             storage = "acme.json"
             caServer = "{{ cert_resolver_url }}"
 
-
-[http]
-    [http.routers]
-        [http.routers.platform]
-            rule = "Host(`{{ platform_react_url_frontend }}`)"
-            service = "platform"
-            entryPoints = ["websecure"]
-            [http.routers.platform.tls]
-                certResolver = "pyroresolver"
-
 [log]
     filePath = "/var/log/log-file.log"
     level = "INFO"

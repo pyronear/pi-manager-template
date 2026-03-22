@@ -22,23 +22,11 @@
     remove_images: all
   ignore_errors: true
 
-- name: Download docker-compose.yml from github
-  ansible.builtin.get_url:
-    url: "{{ platform_react_docker_compose_url }}"
-    dest: "{{ platform_react_working_dir_react }}/docker-compose.yml"
-    force: true
-
-- name: Install env file
+- name: Copy docker-compose.yml
   ansible.builtin.template:
-    src: ".env.j2"
-    dest: "{{ platform_react_working_dir_react }}/.env"
+    src: "docker-compose.yml.j2"
+    dest: "{{ platform_react_working_dir_react }}/docker-compose.yml"
     mode: "0644"
-
-- name: Replace latest image with a tag
-  ansible.builtin.replace:
-    path: "{{ platform_react_working_dir_react }}/docker-compose.yml"
-    regexp: "^(.*)pyronear/pyro-platform-react:latest(.*)$"
-    replace: "\\g<1>{{ platform_react_docker_image }}"
 
 - name: Install config files
   ansible.builtin.template:

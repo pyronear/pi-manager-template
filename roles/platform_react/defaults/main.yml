@@ -1,10 +1,11 @@
 platform_react_working_dir_react: /home/pyro_platform_react
 platform_react_working_dir_traefik: /home/traefik
-platform_react_docker_compose_url: https://raw.githubusercontent.com/pyronear/new-pyro-platform/refs/heads/main/docker-compose.yml
+platform_react_docker_image: pyronear/pyro-platform-react
+platform_react_docker_version: 0.2.0
+
 platform_react_url_frontend: TO_CHANGE
 platform_react_url_backend: TO_CHANGE
 platform_react_url_livestream: TO_CHANGE
-platform_react_docker_image: pyronear/pyro-platform-react:0.2.0
 platform_react_sites_per_organization:
   - name: orga1
     sites: ["site1"]

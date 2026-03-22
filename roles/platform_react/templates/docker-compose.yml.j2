@@ -1,0 +1,43 @@
+services:
+  reverse-proxy:
+    image: traefik:v3.6.6
+    container_name: traefik
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - {{ platform_react_working_dir_traefik }}/traefik.toml:/etc/traefik/traefik.toml
+      - {{ platform_react_working_dir_traefik }}/acme.json:/acme.json
+      - {{ platform_react_working_dir_traefik }}/logs:/var/log
+    labels:
+      - "traefik.http.middlewares.strip-www.redirectregex.regex=^https?://(www\\.)(.+)"
+      - 'traefik.http.middlewares.strip-www.redirectregex.replacement=https://$${2}'
+      - 'traefik.http.middlewares.strip-www.redirectregex.permanent=true'
+    restart: always
+    networks:
+      - web
+
+  platform:
+    image: {{ platform_react_docker_image }}:{{ platform_react_docker_version}}
+    container_name: platform
+    ports:
+      - 8080:8080
+    expose:
+      - 8080
+    volumes:
+      - {{ platform_react_working_dir_react }}/config/sites_live_access_prod.json:/usr/share/nginx/html/config/sites_live_access_prod.json
+      - {{ platform_react_working_dir_react }}/config/app-config-prod.js:/usr/share/nginx/html/config/app-config.js
+    networks:
+      - web
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.platform.rule=Host(`{{ platform_react_url_frontend }}`)'
+      - 'traefik.http.routers.platform.entrypoints=websecure'
+      - "traefik.http.routers.platform.tls.certresolver=pyroresolver"
+      - 'traefik.http.services.platform.loadbalancer.server.scheme=http'
+      - 'traefik.http.services.platform.loadbalancer.server.port=8080'
+
+networks:
+  web:
+    external: true
