@@ -1,0 +1,51 @@
+---
+
+- name: Create a network
+  community.docker.docker_network:
+    name: web
+
+- name: Create working directory if it does not exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  with_items:
+    - "{{ alert_api_working_dir }}"
+    - "{{ alert_api_working_dir_traefik }}"
+
+- name: Stop all services
+  community.docker.docker_compose_v2:
+    project_src: "{{ alert_api_working_dir }}"
+    state: absent
+    remove_images: all
+  ignore_errors: true
+
+- name: Create empty acme file for traefik
+  ansible.builtin.copy:
+    content: ""
+    dest: "{{ alert_api_working_dir_traefik }}/acme.json"
+    force: false
+    mode: 0600 # required by traefik
+
+- name: Create static dynamic conf file for traefik
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ alert_api_working_dir_traefik }}/dynamic_assets.toml"
+    mode: 0600
+  with_items:
+    - "traefik.toml"
+    - "dynamic_assets.toml"
+
+- name: Copy docker-compose.yml and .env for alert_api
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ alert_api_working_dir }}/{{ item }}"
+    mode: 0644
+  with_items:
+    - "docker-compose.yml"
+    - ".env"
+
+- name: Docker Compose start and verify containers are running
+  community.docker.docker_compose_v2:
+    project_src: "{{ alert_api_working_dir }}"
+    wait: true

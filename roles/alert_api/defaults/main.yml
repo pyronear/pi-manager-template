@@ -1,0 +1,25 @@
+alert_api_working_dir: /home/alert_api
+alert_api_working_dir_traefik: /home/traefik
+alert_api_docker_version: latest
+
+alert_api_proxy_url:
+alert_api_s3_proxy_url:
+alert_api_postgres_user:
+alert_api_postgres_pwd:
+alert_api_postgres_db:
+alert_api_superuser_login:
+alert_api_superuser_pwd:
+alert_api_superuser_org:
+alert_api_jwt_secret:
+alert_api_mail_support:
+alert_api_s3_access_key:
+alert_api_s3_secret_key:
+alert_api_s3_region:
+alert_api_s3_url:
+alert_api_server_name:
+alert_api_sentry_dsn:
+alert_api_telegram_token:
+alert_api_posthog_key:
+
+cert_resolver_mail:
+cert_resolver_url:

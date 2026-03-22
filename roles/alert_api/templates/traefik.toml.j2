@@ -1,0 +1,47 @@
+# HTTPS
+[entryPoints]
+    [entryPoints.web]
+        address = ":80"
+        [entryPoints.web.http]
+            [entryPoints.web.http.redirections]
+                [entryPoints.web.http.redirections.entryPoint]
+                    to = "websecure"
+                    scheme = "https"
+                    permanent = true
+
+    [entryPoints.websecure]
+        address = ":443"
+            [entryPoints.websecure.http.tls]
+                certResolver = "pyroresolver"
+
+[providers]
+    # Enable Docker in Traefik, so that it reads labels from Docker services
+    [providers.docker]
+        watch = true
+        # Do not expose all Docker services, only the ones explicitly exposed
+        exposedByDefault = false
+    # Proxy config
+    [providers.file]
+        watch = true
+        filename = "/etc/traefik/dynamic/assets.toml"
+
+# Certificate
+[certificatesResolvers]
+    [certificatesResolvers.pyroresolver]
+        [certificatesResolvers.pyroresolver.acme]
+            tlschallenge = true
+            email = "{{ cert_resolver_mail }}"
+            storage = "acme.json"
+            caServer = "{{ cert_resolver_url }}"
+
+# Enable the Traefik log, for configurations and errors
+[log]
+    filePath = "/var/log/log-file.log"
+    level = "INFO"
+    format = "json"
+
+[accessLog]
+    format = "json"
+    filePath = "/var/log/access.log"
+    [accessLog.filters]
+        statusCodes = ["400-404", "500-503"]
