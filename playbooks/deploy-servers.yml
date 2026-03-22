@@ -40,7 +40,7 @@
   roles:
     - servers
 
-- name: Deploy Docker Compose applications
+- name: Add VPN client
   hosts: platform_py_server:alert_server
   become: true
   serial: 1
