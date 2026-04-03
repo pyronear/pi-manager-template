@@ -32,6 +32,16 @@
         name: mediamtx
         tasks_from: update_conf.yml
 
+- name: Install Alloy monitoring agent
+  hosts: engine_servers
+  become: true
+  tasks:
+    - name: Install Alloy
+      ansible.builtin.include_role:
+        name: grafana.grafana.alloy
+      vars:
+        config: "{{ alloy_config }}"
+
 - name: Install OpenVPN client and reboot
   hosts: engine_servers
   become: true

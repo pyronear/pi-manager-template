@@ -13,16 +13,6 @@
   roles:
     - check_vars
 
-- name: Install Alloy monitoring agent
-  hosts: engine_servers
-  become: true
-  tasks:
-    - name: Install Alloy
-      ansible.builtin.include_role:
-        name: grafana.grafana.alloy
-      vars:
-        config: "{{ alloy_config }}"
-
 - name: Schedule daily reboot cron
   hosts: engine_servers
   become: true
