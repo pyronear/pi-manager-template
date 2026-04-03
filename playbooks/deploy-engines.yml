@@ -20,6 +20,8 @@
     - name: Install Alloy
       ansible.builtin.include_role:
         name: grafana.grafana.alloy
+      vars:
+        config: "{{ alloy_config }}"
 
 - name: Schedule daily reboot cron
   hosts: engine_servers

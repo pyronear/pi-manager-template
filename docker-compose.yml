@@ -8,7 +8,6 @@ services:
     env_file:
       - .env
     volumes:
-      - ./inventory/group_vars:/ansible/group_vars
       - ./playbooks:/ansible/playbooks
       - ./roles:/ansible/roles
       - ./docker/Makefile:/ansible/Makefile
