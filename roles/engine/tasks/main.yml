@@ -5,17 +5,13 @@
   ansible.builtin.git:
     repo: 'https://github.com/pyronear/{{ project_name }}.git'
     dest: /home/{{ project_name }}
-    version: '{{ engine_branch }}'
+    version: '{{ pyro_engine_git_ref }}'
     accept_hostkey: true
 
-- name: Log into DockerHub
-  community.docker.docker_login:
-    username: pyronear
-    password: '{{ dockerhub_password }}'
 
 - name: Build image pyro-engine locally # noqa no-handler
   community.docker.docker_image:
-    name: pyronear/pyro-engine:{{ pyronear_version }}
+    name: pyronear/pyro-engine:local
     build:
       path: /home/{{ project_name }}/
     force_tag: true
@@ -24,7 +20,7 @@
 
 - name: Build image pyro-camera-api locally # noqa no-handler
   community.docker.docker_image:
-    name: pyronear/pyro-camera-api:{{ pyronear_version }}
+    name: pyronear/pyro-camera-api:local
     build:
       path: /home/{{ project_name }}/pyro_camera_api
     force_tag: true
@@ -113,10 +109,11 @@
     dest: /home/{{ app_name }}/.env
     mode: '0644'
 
-- name: Copy docker-compose file
-  ansible.builtin.template:
-    src: "docker-compose.{{ app_name }}.yml.j2"
+- name: Copy docker-compose file from upstream repo
+  ansible.builtin.copy:
+    src: /home/{{ project_name }}/docker-compose.yml
     dest: /home/{{ app_name }}/docker-compose.yml
+    remote_src: true
     mode: '0644'
 
 - name: Remove old engine container manually
