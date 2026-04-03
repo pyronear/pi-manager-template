@@ -9,23 +9,17 @@
     accept_hostkey: true
 
 
-- name: Build image pyro-engine locally # noqa no-handler
+- name: Pull pyro-engine image from Docker Hub
   community.docker.docker_image:
-    name: pyronear/pyro-engine:local
-    build:
-      path: /home/{{ project_name }}/
-    force_tag: true
+    name: "pyronear/pyro-engine:{{ pyro_engine_docker_tag }}"
+    source: pull
     force_source: true
-    source: build
 
-- name: Build image pyro-camera-api locally # noqa no-handler
+- name: Pull pyro-camera-api image from Docker Hub
   community.docker.docker_image:
-    name: pyronear/pyro-camera-api:local
-    build:
-      path: /home/{{ project_name }}/pyro_camera_api
-    force_tag: true
+    name: "pyronear/pyro-camera-api:{{ pyro_engine_docker_tag }}"
+    source: pull
     force_source: true
-    source: build
 
 - name: Create a directory if it does not exist
   ansible.builtin.file:

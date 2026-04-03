@@ -11,7 +11,8 @@
     msg: "Variable '{{ item.name }}' is empty or None."
   loop:
     - { name: "api_dns",          value: "{{ api_dns }}" }             # group_var/all
-    - { name: "pyro_engine_git_ref", value: "{{ pyro_engine_git_ref }}" } # group_var/engine_servers
+    - { name: "pyro_engine_git_ref",    value: "{{ pyro_engine_git_ref }}" }    # group_var/engine_servers
+    - { name: "pyro_engine_docker_tag", value: "{{ pyro_engine_docker_tag }}" } # group_var/engine_servers
     - { name: "CAM_USER",         value: "{{ CAM_USER }}" }            # group_var/all
     - { name: "CAM_PWD",          value: "{{ CAM_PWD }}" }             # group_var/all
     - { name: "config_json",      value: "{{ config_json }}" }         # host_var
