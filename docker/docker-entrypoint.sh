@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e
-mkdir $HOME/.ssh
+mkdir -p $HOME/.ssh
 cp /ansible/id_rsa $HOME/.ssh/id_rsa
 cp /ansible/.vault_passwrd $HOME/.vault_passwrd
 
