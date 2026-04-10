@@ -18,7 +18,6 @@ services:
       - ${REPO_PATH}/inventory/group_vars:/ansible/inventory/group_vars
       - ${REPO_PATH}/host_vars:/ansible/inventory/host_vars
       - ${REPO_PATH}/inventory:/ansible/inventory
-      - ./backups:/ansible/backups
     stdin_open: true
     tty: true
     command: "sh"
