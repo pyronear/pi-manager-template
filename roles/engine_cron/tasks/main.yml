@@ -8,7 +8,7 @@
 - name: Generate main pi watchdog .env file
   ansible.builtin.template:
     src: watchdog_main.env.j2
-    dest: /home/pi/watchdog_main.env
+    dest: /home/pi/watchdog.env
     owner: pi
     group: pi
     mode: "0644"
