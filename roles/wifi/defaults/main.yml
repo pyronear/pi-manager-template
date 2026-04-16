@@ -1,5 +1,12 @@
 ---
-wifi_ssid: "Pyronear"         # Name of the Wi-Fi network
-wifi_password: "Pyronear"     # Wi-Fi password
-wifi_static_ethernet_ip: "169.254.40.99"
-wifi_default_dns: "8.8.8.8 8.8.4.4"
+wifi_connections: []
+# Example:
+# wifi_connections:
+#   - ssid: "PrimaryNetwork"
+#     password: "pass1"
+#     priority: 10
+#     static_ip_address: "192.168.1.50"  # optional — omit for DHCP
+#     static_ip_gateway: "192.168.1.1"   # optional — omit for DHCP
+#   - ssid: "BackupNetwork"
+#     password: "pass2"
+#     priority: 0                        # lower priority, DHCP
