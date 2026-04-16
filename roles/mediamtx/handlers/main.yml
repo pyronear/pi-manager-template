@@ -1,0 +1,5 @@
+---
+- name: Restart MediaMTX container
+  community.docker.docker_container:
+    name: mediamtx
+    restart: true

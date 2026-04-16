@@ -1,42 +1,53 @@
 ---
-- name: Verify Ansible version and setup servers
+- name: Base setup - check Ansible version then upgrade packages, git, WiFi, Docker
   hosts: engine_servers
   become: true
-  tasks:
+  pre_tasks:
     - name: Ensure Ansible version is 2.17 or higher
       ansible.builtin.assert:
         that:
           - ansible_version.minor | int >= 17
         fail_msg: "Ansible version must be 2.17 or higher."
+      run_once: true
 
   roles:
     - common
     - wifi
     - docker
 
-- name: Apply reverse SSH role one host at a time
+- name: Configure reverse SSH tunnel
   hosts: engine_servers
-  become: true
+  become: true 
   serial: 1
   roles:
     - reverse_ssh
 
-- name: Deploy Docker Compose applications
+- name: Register engine streams on mediamtx server
   hosts: mediamtx_server
   become: true
   tasks:
 
-    - name: Run client-specific tasks
+    - name: Update mediamtx config with new engine streams
       ansible.builtin.include_role:
         name: mediamtx
         tasks_from: update_conf.yml
 
-- name: Deploy Docker Compose applications
+- name: Install Alloy monitoring agent
+  hosts: engine_servers
+  become: true
+  tasks:
+    - name: Install Alloy
+      ansible.builtin.include_role:
+        name: grafana.grafana.alloy
+      vars:
+        config: "{{ alloy_config }}"
+
+- name: Install OpenVPN client and reboot
   hosts: engine_servers
   become: true
   serial: 1
   tasks:
-    - name: Run client-specific tasks
+    - name: Install OpenVPN client
       ansible.builtin.include_role:
         name: pyronear.openvpn
         tasks_from: install_client.yml

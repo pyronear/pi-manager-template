@@ -10,7 +10,7 @@
         fail_msg: "Ansible version must be 2.17 or higher : {{ ansible_version.minor }}"
 
 
-    - name: Ensure Docker Compose containers are running
+    - name: Ensure Docker Compose containers are stopped and removed
       community.docker.docker_compose_v2:
         project_src: /home/{{ app_name }}/
         state: absent

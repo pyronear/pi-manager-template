@@ -5,8 +5,9 @@ services:
     build:
       context: .
       dockerfile: ./docker/Dockerfile
+    env_file:
+      - .env
     volumes:
-      - ./inventory/group_vars:/ansible/group_vars
       - ./playbooks:/ansible/playbooks
       - ./roles:/ansible/roles
       - ./docker/Makefile:/ansible/Makefile
@@ -15,7 +16,7 @@ services:
       - ${SSH_PRIVATE_KEY_FILE}:/ansible/id_rsa:ro
       - ./bin/common/Makefile:/ansible/MakefileCommon
       - ${REPO_PATH}/inventory/group_vars:/ansible/inventory/group_vars
-      - ${REPO_PATH}/host_vars:/ansible/host_vars
+      - ${REPO_PATH}/host_vars:/ansible/inventory/host_vars
       - ${REPO_PATH}/inventory:/ansible/inventory
     stdin_open: true
     tty: true

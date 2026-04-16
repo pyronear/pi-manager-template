@@ -3,7 +3,7 @@ FROM python:3.10-slim
 USER root
 RUN apt update ; \
   apt upgrade -y ; \
-  apt install -y openssh-client; \
+  apt install -y openssh-client sshpass; \
   apt -y install make; \
   apt -y install vim; \
   apt -y install nano; \
