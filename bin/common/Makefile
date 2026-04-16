@@ -65,3 +65,6 @@ install-platform-react-server: prepare
 
 install-alert-api-server: prepare
 	ansible-playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l alert_server
+
+init-pi-zero:
+	ansible-playbook playbooks/rpi-init-pi-zero.yml -i inventory/hosts_prod -l $(SITE)
