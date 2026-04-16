@@ -1,0 +1,50 @@
+---
+- name: Ensure static IP vars are defined
+  ansible.builtin.assert:
+    that:
+      - static_ip_address != ""
+      - static_ip_gateway != ""
+    fail_msg: "static_ip_address and static_ip_gateway must be set in host_vars."
+
+# WiFi (Pi Zero): modify the existing connection profile named after the SSID
+- name: Set static IP on WiFi connection profile
+  ansible.builtin.command: >
+    nmcli con mod {{ wifi_ssid }}
+    ipv4.addresses {{ static_ip_address }}/{{ static_ip_prefix }}
+    ipv4.gateway {{ static_ip_gateway }}
+    ipv4.dns {{ static_ip_dns }}
+    ipv4.method manual
+  register: static_ip_result
+  changed_when: static_ip_result.rc == 0
+  when: static_ip_interface == "wlan0"
+
+# Ethernet (Engine): create a dedicated static connection profile on the interface
+- name: Check if static ethernet connection already has correct IP
+  ansible.builtin.shell: >
+    nmcli -g ipv4.addresses con show {{ static_ip_interface }}-static 2>/dev/null || echo ""
+  register: existing_eth_ip
+  changed_when: false
+  when: static_ip_interface == "eth0"
+
+- name: Set static IP on ethernet interface
+  ansible.builtin.shell: |
+    nmcli con delete {{ static_ip_interface }}-static 2>/dev/null || true
+    nmcli con add type ethernet ifname {{ static_ip_interface }} con-name {{ static_ip_interface }}-static \
+      ipv4.addresses {{ static_ip_address }}/{{ static_ip_prefix }} \
+      ipv4.gateway {{ static_ip_gateway }} \
+      ipv4.dns {{ static_ip_dns }} \
+      ipv4.method manual \
+      connection.autoconnect yes
+  register: static_ip_result
+  changed_when: true
+  when:
+    - static_ip_interface == "eth0"
+    - existing_eth_ip.stdout != static_ip_address + "/" + static_ip_prefix
+
+# Fire-and-forget reboot: host will come back on the new static IP.
+# After this playbook completes, update ansible_host in host_vars to {{ static_ip_address }}.
+- name: Reboot to apply static IP (fire and forget)
+  ansible.builtin.command: shutdown -r now
+  async: 1
+  poll: 0
+  when: static_ip_result is changed

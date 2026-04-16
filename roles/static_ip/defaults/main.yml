@@ -1,0 +1,6 @@
+---
+static_ip_address: ""       # e.g. 192.168.1.50 — set in host_vars
+static_ip_prefix: "24"
+static_ip_gateway: ""       # e.g. 192.168.1.1  — set in host_vars
+static_ip_dns: "8.8.8.8"
+static_ip_interface: "wlan0"  # wlan0 for pi_zero (wifi), eth0 for engines
