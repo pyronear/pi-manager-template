@@ -54,3 +54,10 @@
 
     - name: Unconditionally reboot the machine with all defaults
       ansible.builtin.reboot:
+
+- name: Configure static IP and reboot
+  hosts: engine_servers
+  become: true
+  serial: 1
+  roles:
+    - static_ip
