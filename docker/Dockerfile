@@ -21,6 +21,9 @@ COPY ./init_script /ansible/init_script
 COPY ./inventory /ansible/inventory
 COPY ./playbooks /ansible/playbooks
 COPY ./roles /ansible/roles
+COPY ./requirements.yml /ansible/requirements.yml
+RUN ansible-galaxy role install -r /ansible/requirements.yml -p /ansible/galaxy_roles \
+ && ansible-galaxy collection install -r /ansible/requirements.yml
 COPY ./docker/docker-entrypoint.sh /ansible/docker-entrypoint.sh
 
 ENTRYPOINT [ "/ansible/docker-entrypoint.sh" ]
