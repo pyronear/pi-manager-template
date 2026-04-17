@@ -5,19 +5,19 @@
     state: directory
     mode: '0755'
 
-- name: Copy cron job for internet connection
+- name: Generate main pi watchdog .env file
   ansible.builtin.template:
-    src: check_internet_connection.sh.j2
-    dest: "{{ engine_cron_working_dir }}/check_internet_connection.sh"
-    mode: '0755'
+    src: watchdog_main.env.j2
+    dest: /home/pi/watchdog.env
+    owner: pi
+    group: pi
+    mode: "0644"
+  when: pi_zero_hostname != ""
 
-- name: Add cron job
+- name: Add cron job for main pi watchdog
   ansible.builtin.cron:
-    name: "Check internet connection"
-    minute: "*/10"
-    hour: "*"
-    day: "*"
-    month: "*"
-    weekday: "*"
-    job: "{{ engine_cron_working_dir }}/check_internet_connection.sh"
-    user: root
+    name: "Main pi watchdog"
+    minute: "5,15,25,35,45,55"
+    job: "/usr/bin/python3 {{ engine_cron_working_dir }}/watchdog/main_pi/watchdog.py >> /home/pi/watchdog_main.log 2>&1"
+    user: pi
+  when: pi_zero_hostname != ""

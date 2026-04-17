@@ -1,0 +1,24 @@
+---
+- name: Upgrade packages and install git
+  hosts: pi_zero
+  become: true
+  roles:
+    - common
+
+- name: Configure WiFi
+  hosts: pi_zero
+  become: true
+  roles:
+    - wifi
+
+- name: Setup watchdog
+  hosts: pi_zero
+  become: true
+  roles:
+    - pi_zero_watchdog
+
+- name: Configure static IP and reboot
+  hosts: pi_zero
+  become: true
+  roles:
+    - static_ip

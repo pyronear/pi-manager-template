@@ -6,6 +6,8 @@ pyro_engine_docker_tag: "latest"
 
 ansible_user: pi
 
+pi_zero_hostname: ""  # set in host_vars if a Pi Zero is associated with this engine
+
 engine_json_schema: |
   {
     "$schema": "http://json-schema.org/draft-07/schema#",

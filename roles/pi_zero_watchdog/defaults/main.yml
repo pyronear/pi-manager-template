@@ -1,0 +1,7 @@
+---
+pi_zero_repo_url: "https://github.com/pyronear/pyro-engine.git"
+pi_zero_repo_branch: "watchdog_env"
+pi_zero_repo_dir: "/home/pi/pyro-engine"
+pi_zero_watchdog_script: "{{ pi_zero_repo_dir }}/watchdog/pi_zero/watchdog.py"
+pi_zero_log_file: "/home/pi/watchdog.log"
+pi_zero_cron_schedule: "*/10 * * * *"

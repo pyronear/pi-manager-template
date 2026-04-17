@@ -1,0 +1,58 @@
+---
+# WiFi (Pi Zero and sometimes Engine): loop over wifi_connections that have a static IP defined
+- name: Set static IP on some WiFi connections
+  ansible.builtin.command: >
+    nmcli con mod {{ item.ssid }}
+    ipv4.addresses {{ item.static_ip_address }}/{{ static_ip_prefix }}
+    ipv4.gateway {{ item.static_ip_gateway }}
+    ipv4.dns {{ static_ip_dns }}
+    ipv4.method manual
+  loop: "{{ wifi_connections }}"
+  when:
+    - static_ip_interface == "wlan0"
+    - item.static_ip_address is defined
+    - item.static_ip_gateway is defined
+  register: static_ip_wifi_result
+  changed_when: static_ip_wifi_result.rc == 0
+
+# Ethernet (Engine): create a dedicated static connection profile on the interface
+- name: Check if static ethernet connection already has correct IP
+  ansible.builtin.shell: >
+    nmcli -g ipv4.addresses con show {{ static_ip_interface }}-static 2>/dev/null || echo ""
+  register: existing_eth_ip
+  changed_when: false
+  when: static_ip_interface == "eth0"
+
+- name: Ensure static IP vars are defined for ethernet
+  ansible.builtin.assert:
+    that:
+      - static_ip_address != ""
+      - static_ip_gateway != ""
+    fail_msg: "static_ip_address and static_ip_gateway must be set in host_vars."
+  when: static_ip_interface == "eth0"
+
+- name: Set static IP on ethernet interface
+  ansible.builtin.shell: |
+    nmcli con delete {{ static_ip_interface }}-static 2>/dev/null || true
+    nmcli con add type ethernet ifname {{ static_ip_interface }} con-name {{ static_ip_interface }}-static \
+      ipv4.addresses {{ static_ip_address }}/{{ static_ip_prefix }} \
+      ipv4.gateway {{ static_ip_gateway }} \
+      ipv4.dns {{ static_ip_dns }} \
+      ipv4.method manual \
+      connection.autoconnect yes
+  register: static_ip_eth_result
+  changed_when: true
+  when:
+    - static_ip_interface == "eth0"
+    - existing_eth_ip.stdout != static_ip_address + "/" + static_ip_prefix
+
+# Fire-and-forget reboot: host will come back on the new static IP.
+# After this playbook completes, update ansible_host in host_vars to the static IP.
+- name: Reboot to apply static IP (fire and forget)
+  ansible.builtin.command: shutdown -r now
+  async: 1
+  poll: 0
+  when: >
+    (static_ip_interface == "wlan0" and static_ip_wifi_result is defined and static_ip_wifi_result is changed)
+    or
+    (static_ip_interface == "eth0" and static_ip_eth_result is defined and static_ip_eth_result is changed)

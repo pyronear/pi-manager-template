@@ -21,3 +21,6 @@ all:
 
     mediamtx_server:
       hosts:
+
+    pi_zero:
+      hosts:

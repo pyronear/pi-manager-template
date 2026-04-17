@@ -1,0 +1,5 @@
+# Static IP configuration managed by Ansible
+interface {{ static_ip_interface }}
+static ip_address={{ static_ip_address }}/{{ static_ip_prefix }}
+static routers={{ static_ip_gateway }}
+static domain_name_servers={{ static_ip_dns }}
