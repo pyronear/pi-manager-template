@@ -39,6 +39,9 @@ init-one-engine:
 deploy-one-engine:
 	ansible-playbook playbooks/deploy-engines.yml -i inventory/hosts_prod -l $(SITE)
 
+deploy-all-engines:
+	ansible-playbook playbooks/deploy-engines.yml -i inventory/hosts_prod -l engine_servers
+
 down: prepare
 	@SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/down-engines.yml -i inventory/hosts_prod -l engine_servers
 
