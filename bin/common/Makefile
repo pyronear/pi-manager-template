@@ -21,23 +21,14 @@ ping: prepare
 check-engines: prepare
 	@SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/check-engine.yml -i inventory/hosts_prod -l engine_servers
 
-init-engine: prepare
-	@bash -c 'set -a; source init_script/.env; set +a;SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/rpi-init.yml -i inventory/hosts_prod -l engine_servers'
-
-init-engine-filtered: prepare
-	@bash -c 'set -a; source init_script/.env; set +a;SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/rpi-init.yml -i inventory/hosts_prod -l $(LIMIT)'
-
-install-engines: prepare
-	@bash -c 'set -a; source init_script/.env; set +a;SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/deploy-engines.yml -i inventory/hosts_prod -l engine_servers'
-
-install-engines-filtered: prepare
-	@bash -c 'set -a; source init_script/.env; set +a;SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/deploy-engines.yml -i inventory/hosts_prod -l $(LIMIT)'
-
 init-one-engine:
 	ansible-playbook playbooks/rpi-init.yml -i inventory/hosts_prod -l $(SITE),mediamtx_server
 
 deploy-one-engine:
 	ansible-playbook playbooks/deploy-engines.yml -i inventory/hosts_prod -l $(SITE)
+
+deploy-all-engines:
+	ansible-playbook playbooks/deploy-engines.yml -i inventory/hosts_prod -l engine_servers
 
 down: prepare
 	@SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/down-engines.yml -i inventory/hosts_prod -l engine_servers
