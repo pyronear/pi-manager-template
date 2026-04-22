@@ -15,6 +15,10 @@ RUN mkdir /ansible && mkdir -p /ansible/.ssh
 
 WORKDIR /ansible
 
+COPY ./requirements.yml /ansible/requirements.yml
+RUN ansible-galaxy role install -r /ansible/requirements.yml -p /ansible/galaxy_roles \
+ && ansible-galaxy collection install -r /ansible/requirements.yml
+
 COPY ./group_vars /ansible/group_vars
 COPY ./hooks /ansible/hooks
 COPY ./init_script /ansible/init_script
