@@ -9,7 +9,7 @@ semaphore-stop:
 	@docker compose stop
 
 ansible-up:
-	@docker compose up -d pyro-ansible
+	@docker compose up -d --build pyro-ansible
 	@docker exec -it pyro-ansible sh
 
 ansible-stop:
