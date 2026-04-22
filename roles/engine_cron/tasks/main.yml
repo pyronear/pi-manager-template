@@ -12,7 +12,7 @@
     owner: pi
     group: pi
     mode: "0644"
-  when: pi_zero_hostname != ""
+  when: pi_zero_hostname | default("") | length > 0
 
 - name: Add cron job for main pi watchdog
   ansible.builtin.cron:
@@ -20,4 +20,4 @@
     minute: "5,15,25,35,45,55"
     job: "/usr/bin/python3 {{ engine_cron_working_dir }}/watchdog/main_pi/watchdog.py >> /home/pi/watchdog_main.log 2>&1"
     user: pi
-  when: pi_zero_hostname != ""
+  when: pi_zero_hostname | default("") | length > 0
