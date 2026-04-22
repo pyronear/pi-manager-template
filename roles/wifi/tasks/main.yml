@@ -4,19 +4,19 @@
     name: network-manager
     state: present
 
-- name: Check existing Wi-Fi connections
-  ansible.builtin.command: nmcli -t -f NAME con show
-  register: nmcli_connections
-  changed_when: false
-
 - name: Configure Wi-Fi connections
-  ansible.builtin.shell: >
-    nmcli con add type wifi ifname wlan0 con-name {{ item.ssid }}
-    ssid {{ item.ssid }} wifi-sec.key-mgmt wpa-psk
-    wifi-sec.psk {{ item.password }} connection.autoconnect yes
-    connection.autoconnect-priority {{ item.priority | default(0) }}
+  ansible.builtin.shell: |
+    if nmcli con show "{{ item.ssid }}" &>/dev/null; then
+      nmcli con mod "{{ item.ssid }}" \
+        wifi-sec.psk "{{ item.password }}" \
+        connection.autoconnect-priority {{ item.priority | default(0) }} \
+        connection.autoconnect-retries 0
+    else
+      nmcli con add type wifi ifname wlan0 con-name "{{ item.ssid }}" \
+        ssid "{{ item.ssid }}" wifi-sec.key-mgmt wpa-psk \
+        wifi-sec.psk "{{ item.password }}" connection.autoconnect yes \
+        connection.autoconnect-priority {{ item.priority | default(0) }} \
+        connection.autoconnect-retries 0
+    fi
   loop: "{{ wifi_connections }}"
-  when: item.ssid not in nmcli_connections.stdout.splitlines()
-  register: wifi_result
-  ignore_errors: true
-  changed_when: wifi_result.rc == 0
+  changed_when: true
