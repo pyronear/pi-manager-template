@@ -1,6 +1,6 @@
 alert_api_working_dir: /home/alert_api
 alert_api_working_dir_traefik: /home/traefik
-alert_api_docker_version: v1.0.1
+alert_api_docker_version: 1.0.1
 
 alert_api_proxy_url:
 alert_api_s3_proxy_url:
