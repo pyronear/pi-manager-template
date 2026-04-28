@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# ====== CONFIG ======
+# ====== CONFIG (overridable via env) ======
 INVENTORY="${INVENTORY:-inventory/hosts_prod}"
 GROUP="${GROUP:-alert_server}"
 SSH_USER="${SSH_USER:-ubuntu}"
@@ -9,18 +9,37 @@ CONTAINER="${CONTAINER:-alert-api-db-1}"
 ENV_FILE="${ENV_FILE:-/home/alert_api/.env}"
 DATE=$(date +%Y%m%d_%H%M)
 
-# ====== READ HOST FROM ANSIBLE INVENTORY ======
+# Run from repo root regardless of CWD
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$REPO_ROOT"
+
 if [ ! -f "${INVENTORY}" ]; then
   echo "ERROR: inventory '${INVENTORY}' not found — run 'make prepare' first" >&2
   exit 1
 fi
 
-SERVER_HOST=$(ansible-inventory -i "${INVENTORY}" --list | python3 -c "
+# ====== RESOLVE SERVER IP FROM INVENTORY ======
+# Allow manual override; otherwise try local ansible-inventory; fall back to docker container.
+if [ -z "${SERVER_HOST:-}" ]; then
+  echo "Resolving IP for group ${GROUP} via Ansible inventory..."
+
+  if command -v ansible-inventory >/dev/null 2>&1; then
+    INV_JSON=$(ansible-inventory -i "${INVENTORY}" --list)
+  else
+    echo "  ansible-inventory not in PATH — using pyro-ansible docker container"
+    INV_JSON=$(docker compose run --rm -T pyro-ansible \
+      ansible-inventory -i "${INVENTORY}" --list 2>/dev/null)
+  fi
+
+  SERVER_HOST=$(echo "${INV_JSON}" | python3 -c "
 import json, sys
-d = json.load(sys.stdin)
+data = sys.stdin.read()
+data = data[data.find('{'):]   # strip any entrypoint pre-output
+d = json.loads(data)
 host = d['${GROUP}']['hosts'][0]
 print(d['_meta']['hostvars'][host]['ansible_host'])
 ")
+fi
 
 echo "Target: ${SSH_USER}@${SERVER_HOST}"
 
