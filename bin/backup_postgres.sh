@@ -53,7 +53,7 @@ OUTPUT_FILE="${DB}_${DATE}.dump"
 # ====== BACKUP ======
 echo "Starting backup of ${DB} (user=${PGUSER}) → ${OUTPUT_FILE}..."
 ssh "${SSH_USER}@${SERVER_HOST}" \
-  "docker exec ${CONTAINER} pg_dump -U ${PGUSER} -d ${DB} -Fc" \
+  "sudo docker exec ${CONTAINER} pg_dump -U ${PGUSER} -d ${DB} -Fc" \
   > "${OUTPUT_FILE}"
 
 # ====== VERIFY ======
