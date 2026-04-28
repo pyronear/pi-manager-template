@@ -7,6 +7,7 @@ GROUP="${GROUP:-alert_server}"
 SSH_USER="${SSH_USER:-ubuntu}"
 CONTAINER="${CONTAINER:-alert-api-db-1}"
 ENV_FILE="${ENV_FILE:-/home/alert_api/.env}"
+OUTPUT_DIR="${OUTPUT_DIR:-backups}"
 DATE=$(date +%Y%m%d_%H%M)
 
 # Run from repo root regardless of CWD
@@ -66,7 +67,8 @@ fi
 Q_PGUSER=$(printf '%q' "${PGUSER}")
 Q_DB=$(printf '%q' "${DB}")
 
-OUTPUT_FILE="${DB}_${DATE}.dump"
+mkdir -p "${OUTPUT_DIR}"
+OUTPUT_FILE="${OUTPUT_DIR}/${DB}_${DATE}.dump"
 TMP_FILE="${OUTPUT_FILE}.tmp.$$"
 trap 'rm -f "${TMP_FILE}"' EXIT INT TERM
 
