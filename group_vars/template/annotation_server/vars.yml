@@ -1,2 +1,8 @@
 ---
 app_name: "annotator"
+
+# Public hostnames served by traefik on the annotation server.
+# Override per-environment in inventory (group_vars or host_vars).
+# Defaults applied in roles/servers/templates/docker-compose.annotator.yml.j2.
+annotation_api_host: "annotationapi.pyronear.org"
+annotation_app_host: "annotator.pyronear.org"

@@ -32,7 +32,7 @@ services:
         - "--certificatesresolvers.default.acme.storage=/acme.json"
       restart: always
       healthcheck:
-        test: "wget --no-verbose --tries=1 --spider  https://annotationdev.pyronear.org/status || exit 1"
+        test: "wget --no-verbose --tries=1 --spider  https://{{ annotation_api_host | default('annotationapi.pyronear.org') }}/status || exit 1"
         interval: 20s
         timeout: 20s
         retries: 10
@@ -76,7 +76,7 @@ services:
       - ACCESS_TOKEN_EXPIRE_HOURS=24
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`annotationdev.pyronear.org`)"
+      - "traefik.http.routers.backend.rule=Host(`{{ annotation_api_host | default('annotationapi.pyronear.org') }}`)"
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=pyroresolver"
       - "traefik.http.services.backend.loadbalancer.server.port=5050"
@@ -97,7 +97,7 @@ services:
       - 80
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`annotator.pyronear.org`)"
+      - "traefik.http.routers.frontend.rule=Host(`{{ annotation_app_host | default('annotator.pyronear.org') }}`)"
       - "traefik.http.routers.frontend.entrypoints=websecure"
       - "traefik.http.routers.frontend.tls.certresolver=pyroresolver"
       - "traefik.http.services.frontend.loadbalancer.server.port=80"
