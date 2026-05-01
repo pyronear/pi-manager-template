@@ -1,2 +1,9 @@
 ---
 app_name: "annotator"
+
+# Public hostnames served by traefik on the annotation server.
+# Override per-environment in inventory (group_vars or host_vars).
+# The j2 template falls back to these same production values when the
+# variables are unset, so leaving them empty in inventory is safe.
+annotation_api_host: "annotationapi.pyronear.org"
+annotation_app_host: "annotator.pyronear.org"
