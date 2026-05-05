@@ -49,3 +49,4 @@
   community.docker.docker_compose_v2:
     project_src: "{{ alert_api_working_dir }}"
     wait: true
+    wait_timeout: 120
