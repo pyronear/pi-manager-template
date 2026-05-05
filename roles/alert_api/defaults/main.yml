@@ -20,6 +20,10 @@ alert_api_server_name:
 alert_api_sentry_dsn:
 alert_api_telegram_token:
 alert_api_posthog_key:
+alert_api_risk_api_url:
+alert_api_risk_api_login:
+alert_api_risk_api_pwd:
+alert_api_risk_refresh_hour_utc: 4
 
 cert_resolver_mail:
 cert_resolver_url:
