@@ -77,7 +77,7 @@
     - { name: "POSTGRES_PASSWORD",              value: "{{ POSTGRES_PASSWORD | default('') }}" }
     - { name: "POSTGRES_DB",                    value: "{{ POSTGRES_DB | default('') }}" }
   when:
-    - inventory_hostname in groups["annotation_server"]
+    - inventory_hostname in groups.get("annotation_server", [])
     - item.value is none or item.value | length == 0
   no_log: true
 
