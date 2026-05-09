@@ -49,7 +49,7 @@ update-mediamtx-conf: prepare
 	@SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/update-mediamtx.yml -i inventory/hosts_prod -l mediamtx_server
 
 install-annotation-server: prepare
-	@SECOND_REPO=$(REPO_PATH) ./bin/pyro-ansible playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l annotation_server
+	ansible-playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l annotation_server
 
 install-platform-react-server: prepare
 	ansible-playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l platform_react_server
