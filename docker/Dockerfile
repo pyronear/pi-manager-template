@@ -7,8 +7,7 @@ RUN apt update ; \
   apt -y install make; \
   apt -y install vim; \
   apt -y install nano; \
-  pip install netaddr; \
-  pip install ansible==10.3.0; \
+  pip install netaddr ansible==10.3.0 cryptography==46.0.7; \
   ln -sf /bin/bash /bin/sh;
 
 RUN mkdir /ansible && mkdir -p /ansible/.ssh
