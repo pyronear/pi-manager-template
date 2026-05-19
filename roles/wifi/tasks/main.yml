@@ -6,7 +6,7 @@
 
 - name: Configure Wi-Fi connections
   ansible.builtin.shell: |
-    if nmcli con show "{{ item.ssid }}" &>/dev/null; then
+    if nmcli -t -f NAME con show | grep -qF "{{ item.ssid }}"; then
       nmcli con mod "{{ item.ssid }}" \
         wifi-sec.psk "{{ item.password }}" \
         connection.autoconnect-priority {{ item.priority | default(0) }} \

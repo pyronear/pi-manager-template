@@ -1,0 +1,6 @@
+---
+- name: Sync authorized SSH keys
+  hosts: all
+  become: true
+  roles:
+    - authorized_keys

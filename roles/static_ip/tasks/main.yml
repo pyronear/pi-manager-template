@@ -39,7 +39,8 @@
       ipv4.gateway {{ static_ip_gateway }} \
       ipv4.dns {{ static_ip_dns }} \
       ipv4.method manual \
-      connection.autoconnect yes
+      connection.autoconnect yes \
+      connection.autoconnect-priority 100
   register: static_ip_eth_result
   changed_when: true
   when:

@@ -14,12 +14,16 @@
     name: "pyronear/pyro-engine:{{ pyro_engine_docker_tag }}"
     source: pull
     force_source: true
+  retries: 3
+  delay: 10
 
 - name: Pull pyro-camera-api image from Docker Hub
   community.docker.docker_image:
     name: "pyronear/pyro-camera-api:{{ pyro_engine_docker_tag }}"
     source: pull
     force_source: true
+  retries: 3
+  delay: 10
 
 - name: Create a directory if it does not exist
   ansible.builtin.file:
@@ -128,4 +132,3 @@
 - name: Ensure Docker Compose containers are running
   community.docker.docker_compose_v2:
     project_src: /home/{{ app_name }}/
-    wait: true
