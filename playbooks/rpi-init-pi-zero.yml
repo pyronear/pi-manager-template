@@ -4,6 +4,7 @@
   become: true
   roles:
     - common
+    - authorized_keys
 
 - name: Configure WiFi
   hosts: pi_zero
