@@ -59,3 +59,6 @@ install-alert-api-server: prepare
 
 init-pi-zero:
 	ansible-playbook playbooks/rpi-init-pi-zero.yml -i inventory/hosts_prod -l $(SITE)
+
+sync-ssh-keys:
+	ansible-playbook playbooks/sync-ssh-keys.yml -i inventory/hosts_prod
