@@ -6,8 +6,11 @@ CAM_USER: "admin"
 CAM_PWD: "CHANGE_ME"
 
 # Default Wi-Fi (override per host in host_vars/<host>/vars.vault.yml).
-wifi_ssid: "Pyronear"
-wifi_password: "CHANGE_ME"
+# Consumed by the `wifi` role; entries with a static IP are also picked up by `static_ip`.
+wifi_connections:
+  - ssid: "Pyronear"
+    password: "CHANGE_ME"
+    priority: 10
 
 # Grafana Alloy config rendered into /etc/alloy/config.alloy by the
 # grafana.grafana.alloy role. Contains the remote_write basic-auth token,

@@ -16,29 +16,31 @@ YOU WILL NEVER NEED TO MODIFY THIS REPOSITORY. All the modification must to be d
 
 ### The pi-manager-X sister repo
 
-The sister repo holds your fleet's inventory and secrets. It is private, but its shape is fixed — every Make target runs `make prepare`, which copies these paths into this repo:
+The sister repo holds your fleet's inventory and secrets. It is private, but its shape is fixed:
 
 ```
 pi-manager-X/
-├── .vault_passwrd                 # ansible-vault password (referenced by ansible.cfg)
-├── id_rsa                         # SSH private key used to reach the hosts
+├── .vault_passwrd                 # ansible-vault password, read in place via VAULT_PASSWORD_FILE (.env)
+├── id_rsa                         # SSH private key, read in place via SSH_PRIVATE_KEY_FILE (.env)
 ├── inventory/
-│   ├── hosts_prod                 # production inventory
-│   ├── hosts_dev                  # dev inventory
-│   └── group_vars/
-│       ├── all/{vars.yml,vars.vault.yml}
-│       ├── alert_server/vars.yml
-│       ├── annotation_server/vars.yml
-│       ├── engine_servers/{vars.yml,vars.vault.yml}
-│       ├── envdev/vars.yml
-│       ├── envprod/vars.yml
-│       └── pi_zero/vars.yml
-└── host_vars/
+│   ├── hosts_prod                 # production inventory          ─┐
+│   ├── hosts_dev                  # dev inventory                  │  copied into this
+│   └── group_vars/                                                 │  repo by `make prepare`
+│       ├── all/{vars.yml,vars.vault.yml}                           │
+│       ├── alert_server/vars.yml                                   │
+│       ├── annotation_server/vars.yml                              │
+│       ├── engine_servers/{vars.yml,vars.vault.yml}                │
+│       ├── envdev/vars.yml                                         │
+│       ├── envprod/vars.yml                                        │
+│       └── pi_zero/vars.yml                                        │
+└── host_vars/                                                     ─┘
     ├── <engine-host>/{vars.yml,vars.vault.yml}
     ├── <pi-zero-host>/{vars.yml,vars.vault.yml}
     ├── <alert-server-host>/vars.vault.yml
     └── <annotation-server-host>/vars.vault.yml
 ```
+
+`make prepare` copies `inventory/hosts*`, `host_vars/`, and `inventory/group_vars/` into this repo on every run. The vault password file and SSH key stay in the sister repo and are referenced in place through `.env`.
 
 Worked examples for every file above ship with this repo as templates — copy them into your sister repo and edit:
 

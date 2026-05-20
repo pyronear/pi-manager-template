@@ -17,16 +17,12 @@ openvpn_client_password: "CHANGE_ME"
 # Optional — only if this engine pushes streams to mediamtx with a per-engine password.
 # mediamtx_pass: "CHANGE_ME"
 
-# Wi-Fi — two supported shapes, pick one.
-# Single network (used by the `wifi` role):
-wifi_ssid: "CHANGE_ME"
-wifi_password: "CHANGE_ME"
-
-# Or a prioritised list (NetworkManager-style), if the role variant supports it:
-# wifi_connections:
-#   - ssid: "Pyronear"
-#     password: "CHANGE_ME"
-#     priority: 10
-#   - ssid: "Backup-AP"
-#     password: "CHANGE_ME"
-#     priority: 8
+# Wi-Fi — the `wifi` role iterates over `wifi_connections` (nmcli-based).
+# Higher `priority` wins when several APs are visible.
+wifi_connections:
+  - ssid: "Pyronear"
+    password: "CHANGE_ME"
+    priority: 10
+  - ssid: "Backup-AP"
+    password: "CHANGE_ME"
+    priority: 8

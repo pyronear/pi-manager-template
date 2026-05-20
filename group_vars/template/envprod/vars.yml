@@ -5,7 +5,7 @@
 prefix: "fr"  # short, lowercase, used to derive resource names (e.g. bastion{{ prefix }}.pyronear.org)
 pyronear_version: latest
 api_dns: "alertapi.pyronear.org"
-mediamtx_server_ip: 0.0.0.0  # public IP of the mediamtx host
+mediamtx_server_ip: "CHANGE_ME"  # public IP of the mediamtx host (e.g. 91.134.47.14)
 openvpn_server_dns: "bastion{{ prefix }}.pyronear.org"
 openvpn_server_ansible_host: "fr_openvpn"  # inventory name of the OpenVPN host
 
