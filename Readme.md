@@ -6,13 +6,55 @@ This repository contains Ansible playbooks and configuration files to manage and
 
 ### Pre-requisites
 
-1) git clone the pi-manager-X repository, corresponding to the github repository containing your inventory and host_vars file.
+1) git clone the pi-manager-X repository, corresponding to the github repository containing your inventory and host_vars file. This repo is **private** — see [The pi-manager-X sister repo](#the-pi-manager-x-sister-repo) below for what it must contain.
 2) create a .env file in the root of this repository (used by your Makefile) and set the REPO_PATH variable accordingly (for ex : ../pi-manager-X)
 3) create the .vault_passwrd file containing your ansible vault password
 
 Ensure the following tools are installed by using the Makefile "dependencies" command.
 
 YOU WILL NEVER NEED TO MODIFY THIS REPOSITORY. All the modification must to be done by the pyronear team. If you want to install a new raspberry pi, you only need to modify the files in your pi-manager-X repository.
+
+### The pi-manager-X sister repo
+
+The sister repo holds your fleet's inventory and secrets. It is private, but its shape is fixed — every Make target runs `make prepare`, which copies these paths into this repo:
+
+```
+pi-manager-X/
+├── .vault_passwrd                 # ansible-vault password (referenced by ansible.cfg)
+├── id_rsa                         # SSH private key used to reach the hosts
+├── inventory/
+│   ├── hosts_prod                 # production inventory
+│   ├── hosts_dev                  # dev inventory
+│   └── group_vars/
+│       ├── all/{vars.yml,vars.vault.yml}
+│       ├── alert_server/vars.yml
+│       ├── annotation_server/vars.yml
+│       ├── engine_servers/{vars.yml,vars.vault.yml}
+│       ├── envdev/vars.yml
+│       ├── envprod/vars.yml
+│       └── pi_zero/vars.yml
+└── host_vars/
+    ├── <engine-host>/{vars.yml,vars.vault.yml}
+    ├── <pi-zero-host>/{vars.yml,vars.vault.yml}
+    ├── <alert-server-host>/vars.vault.yml
+    └── <annotation-server-host>/vars.vault.yml
+```
+
+Worked examples for every file above ship with this repo as templates — copy them into your sister repo and edit:
+
+- `inventory/inventory.template` — inventory groups skeleton (see `inventory/hosts_*` for fully filled-in examples).
+- `group_vars/template/` — one folder per group, including `vars.vault.yml` files listing the expected vault keys.
+- `host_vars/template/` — one folder per host kind (`engine`, `pi_zero`, `alert_server`, `annotation_server`).
+
+`vars.vault.yml` files in the templates are intentionally **plain YAML with `CHANGE_ME` placeholders** so the expected keys are visible. Encrypt each one before committing it to your sister repo:
+
+```bash
+ansible-vault encrypt host_vars/<host>/vars.vault.yml
+```
+
+Two extras worth knowing about:
+- The `static_ip_address` of each engine and pi_zero is referenced by name across host_vars (e.g. the pi_zero watchdog derives `MAIN_PI_IP` from `hostvars[relay_host]`), so keep the values consistent.
+- After the first run of `rpi-init-pi-zero.yml`, the Pi Zero reboots onto its static IP — update `ansible_host` in its `vars.yml` to match `static_ip_address` before the next run.
 
 ### Installing a new Raspberry Pi
 See [How to configure a new raspberry](./docs/howto/how-to-configure-a-new-raspberry.md)
