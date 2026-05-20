@@ -1,0 +1,18 @@
+---
+# Template for a Pi Zero host (watchdog companion to an engine).
+# Copy to your pi-manager-X repo under host_vars/<your-host>-pi-zero/.
+# Hostname must match the entry under pi_zero: in inventory/hosts_prod.
+
+# First boot uses DHCP — set ansible_host to the lease IP you find with `nmap`/router UI.
+# After the first run of rpi-init-pi-zero.yml the Pi Zero reboots onto its static IP;
+# update ansible_host below to match static_ip_address before the next run.
+ansible_host: 192.168.1.24  # DHCP ip first, then static after init
+
+# Engine that proxies SSH into this Pi Zero. Must be an inventory hostname under
+# engine_servers. The pi_zero_watchdog role derives MAIN_PI_IP and CAM_IPS from
+# hostvars[relay_host].
+relay_host: <site>
+
+# Static IP assigned by the static_ip role on the camera LAN.
+static_ip_address: 192.168.1.98
+static_ip_gateway: 192.168.1.1

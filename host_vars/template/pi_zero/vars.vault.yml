@@ -1,0 +1,17 @@
+# TEMPLATE — placeholders only. Encrypt before committing to your pi-manager-X repo:
+#   ansible-vault encrypt host_vars/<host>-pi-zero/vars.vault.yml
+---
+# SSH / sudo on the Pi Zero.
+ansible_password: "CHANGE_ME"
+
+# Wi-Fi — the `wifi` role iterates over `wifi_connections` (nmcli-based).
+# The `static_ip` role then applies a static IP for entries that define one.
+wifi_connections:
+  - ssid: "Pyronear"
+    password: "CHANGE_ME"
+    priority: 10
+  - ssid: "RUT200_XXXX"           # e.g. a Teltonika 4G router
+    password: "CHANGE_ME"
+    priority: 8
+    static_ip_address: "{{ static_ip_address }}"
+    static_ip_gateway: 192.168.1.1

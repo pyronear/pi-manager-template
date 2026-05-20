@@ -1,0 +1,11 @@
+# TEMPLATE — placeholders only. Encrypt before committing to your pi-manager-X repo:
+#   ansible-vault encrypt host_vars/<alert-server-host>/vars.vault.yml
+---
+# Postgres database used by the alert API container.
+POSTGRES_USER: "dbadmin"
+POSTGRES_PASSWORD: "CHANGE_ME"
+POSTGRES_DB: "pyroapi"
+
+# For dev hosts you typically override the env prefix and DNS here, e.g.:
+# prefix: "frdev"
+# api_dns: "apidev.pyronear.org"

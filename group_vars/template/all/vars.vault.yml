@@ -1,0 +1,9 @@
+# TEMPLATE — placeholders only. Encrypt before committing to your pi-manager-X repo:
+#   ansible-vault encrypt inventory/group_vars/all/vars.vault.yml
+---
+# Telegram bot used by the alert API to push notifications.
+TELEGRAM_TOKEN: "CHANGE_ME"
+
+# Docker Hub password used by roles/servers/tasks/main.yml to docker login.
+# The username is currently hardcoded to `pyronear` in that task.
+dockerhub_password: "CHANGE_ME"

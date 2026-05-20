@@ -1,0 +1,28 @@
+# TEMPLATE — placeholders only. Encrypt before committing to your pi-manager-X repo:
+#   ansible-vault encrypt host_vars/<host>/vars.vault.yml
+---
+# SSH / sudo on the Pi (user defined in group_vars/engine_servers/vars.yml — `pi`).
+ansible_password: "CHANGE_ME"
+# ansible_become_password: "CHANGE_ME"  # only if different from ansible_password
+
+# Camera credentials used by pyro-engine to talk to the cameras.
+CAM_USER: "admin"
+CAM_PWD: "CHANGE_ME"
+
+# OpenVPN client password for this engine's certificate (matches the cert generated
+# by the pyronear.openvpn role on the OpenVPN server).
+open_vpn_password: "CHANGE_ME"
+openvpn_client_password: "CHANGE_ME"
+
+# Optional — only if this engine pushes streams to mediamtx with a per-engine password.
+# mediamtx_pass: "CHANGE_ME"
+
+# Wi-Fi — the `wifi` role iterates over `wifi_connections` (nmcli-based).
+# Higher `priority` wins when several APs are visible.
+wifi_connections:
+  - ssid: "Pyronear"
+    password: "CHANGE_ME"
+    priority: 10
+  - ssid: "Backup-AP"
+    password: "CHANGE_ME"
+    priority: 8
