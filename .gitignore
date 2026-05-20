@@ -8,11 +8,14 @@ init_script/.env
 init_script/cameras.csv
 init_script/venv
 venv/
-host_vars/
+/host_vars/*
+!/host_vars/template/
 inventory/inventory
 inventory/hosts_*
-group_vars
-!group_vars/template
+inventory/host_vars/
+inventory/group_vars/
+/group_vars/*
+!/group_vars/template/
 id_rsa
 .ansible/
 .env

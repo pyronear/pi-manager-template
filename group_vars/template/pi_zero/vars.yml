@@ -1,0 +1,19 @@
+---
+ansible_user: pi
+ansible_become_pass: "{{ ansible_password }}"
+
+# Access Pi Zeros via their assigned engine (relay host) using SSH ProxyJump.
+# Each pi_zero host must define `relay_host` in host_vars pointing to the
+# engine's inventory hostname (e.g. relay_host: chambery).
+ansible_ssh_common_args: >-
+  -o StrictHostKeyChecking=no
+  -o ProxyCommand="sshpass -p {{ hostvars[relay_host]['ansible_password'] }} ssh -o StrictHostKeyChecking=no -W %h:%p {{ hostvars[relay_host]['ansible_user'] }}@{{ hostvars[relay_host]['ansible_host'] }}"
+
+# WiFi — override per host or per site in host_vars / group_vars
+# wifi_ssid: ""
+# wifi_password: ""
+
+# Static IP — must be set in host_vars for each Pi Zero.
+# After first run, update ansible_host to match static_ip_address.
+# static_ip_address: "192.168.X.Y"
+# static_ip_gateway: "192.168.X.1"

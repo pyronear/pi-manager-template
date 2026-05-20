@@ -1,0 +1,26 @@
+# TEMPLATE — placeholders only. Encrypt before committing to your pi-manager-X repo:
+#   ansible-vault encrypt inventory/group_vars/engine_servers/vars.vault.yml
+---
+# Default camera credentials (override per host in host_vars/<host>/vars.vault.yml).
+CAM_USER: "admin"
+CAM_PWD: "CHANGE_ME"
+
+# Default Wi-Fi (override per host in host_vars/<host>/vars.vault.yml).
+wifi_ssid: "Pyronear"
+wifi_password: "CHANGE_ME"
+
+# Grafana Alloy config rendered into /etc/alloy/config.alloy by the
+# grafana.grafana.alloy role. Contains the remote_write basic-auth token,
+# hence why it lives in the vault file. See the role README for the full
+# block; only the basic_auth username/password should change between sites.
+alloy_config: |
+  prometheus.remote_write "metrics_service" {
+    endpoint {
+      url = "https://<your-grafana-cloud-prom-endpoint>/api/prom/push"
+      basic_auth {
+        username = "CHANGE_ME"
+        password = "CHANGE_ME"
+      }
+    }
+  }
+  # ... rest of the Alloy pipeline (loki.write, prometheus.exporter.unix, etc.)

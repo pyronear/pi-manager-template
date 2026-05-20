@@ -1,0 +1,28 @@
+---
+# Dev environment.
+# Hosts opt in via the `envdev` group in inventory (see inventory.template).
+
+prefix: "ansible"  # short, lowercase, used to derive resource names
+pyronear_version: new-datamodel
+api_dns: "alertapidev.pyronear.org"
+openvpn_server_dns: "bastion{{ prefix }}.pyronear.org"
+openvpn_server_ansible_host: "ovh-dev-3"  # inventory name of the OpenVPN host
+
+# Encrypt with: ansible-vault encrypt_string '<password>' --name 'openvpn_ca_password'
+openvpn_ca_password: "CHANGE_ME"  # vault-encrypted in real repos
+
+# Object storage (OVH S3) used by the dev alert API.
+S3_ENDPOINT_URL: https://s3.sbg.io.cloud.ovh.net/
+S3_ACCESS_KEY: "CHANGE_ME"  # vault
+S3_SECRET_KEY: "CHANGE_ME"  # vault
+S3_REGION: sbg
+
+# Public hostnames served by the dev platform-react server.
+platform_react_url_frontend: platformv3.pyronear.org
+platform_react_url_backend: https://alertapi.pyronear.org
+platform_react_url_livestream: https://livestream.pyronear.org
+
+# Sites visible per dev org.
+platform_react_sites_per_organization:
+  - name: example-org
+    sites: ["dev-site"]
