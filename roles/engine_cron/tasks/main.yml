@@ -27,6 +27,6 @@
   ansible.builtin.cron:
     name: "Main pi watchdog"
     minute: "5,15,25,35,45,55"
-    job: "/usr/bin/python3 {{ engine_cron_working_dir }}/watchdog/main_pi/watchdog.py >> /home/pi/watchdog_main.log 2>&1"
+    job: "/usr/bin/python3 {{ engine_cron_working_dir }}/watchdog/main_pi/watchdog.py --trigger {{ relay_trigger_type }} >> /home/pi/watchdog_main.log 2>&1"
     user: pi
   when: pi_zero_hostname | default("") | length > 0
