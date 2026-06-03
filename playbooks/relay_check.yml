@@ -1,0 +1,63 @@
+---
+- name: Run relay check on main Pi
+  hosts: engine_servers
+  gather_facts: false
+  tasks:
+    - name: Run relay_check.py (blocks until Pi Zero returns, ~2 min)
+      ansible.builtin.command: >-
+        python3 /home/pyro-engine/watchdog/main_pi/relay_check.py
+        --trigger {{ relay_trigger_type }}
+
+- name: Wait for Pi Zero SSH after power-cycle
+  hosts: pi_zero
+  gather_facts: false
+  tasks:
+    - name: Wait for SSH connection
+      ansible.builtin.wait_for_connection:
+        timeout: 60
+
+- name: Launch relay check on Pi Zero
+  hosts: pi_zero
+  gather_facts: false
+  tasks:
+    - name: Run relay_check.py fire-and-forget (cuts main Pi power, triggers reboot)
+      ansible.builtin.command: >-
+        python3 /home/pi/pyro-engine/watchdog/pi_zero/relay_check.py
+        --trigger {{ hostvars[relay_host]['relay_trigger_type'] }}
+      async: 1
+      poll: 0
+
+- name: Wait for main Pi to recover after reboot
+  hosts: engine_servers
+  gather_facts: false
+  tasks:
+    - name: Wait for SSH connection
+      ansible.builtin.wait_for_connection:
+        timeout: 180
+
+- name: Fetch and display relay check logs
+  hosts: engine_servers:pi_zero
+  gather_facts: false
+  tasks:
+    - name: Ensure local logs directory exists
+      ansible.builtin.file:
+        path: "logs"
+        state: directory
+        mode: '0755'
+      delegate_to: localhost
+      run_once: true
+
+    - name: Fetch relay check log
+      ansible.builtin.fetch:
+        src: /tmp/relay_check.log
+        dest: "logs/relay_check_{{ inventory_hostname }}.log"
+        flat: true
+
+    - name: Read relay check log content
+      ansible.builtin.slurp:
+        src: /tmp/relay_check.log
+      register: log_content
+
+    - name: Print relay check log
+      ansible.builtin.debug:
+        msg: "{{ log_content.content | b64decode }}"
