@@ -1,0 +1,12 @@
+---
+- name: Collect public key contents
+  ansible.builtin.set_fact:
+    _ssh_pubkeys: "{{ _ssh_pubkeys | default([]) + [lookup('file', '/ansible/ssh_keys/' + item + '.pub')] }}"
+  loop: "{{ ssh_authorized_keys }}"
+
+- name: Enforce authorized keys
+  ansible.posix.authorized_key:
+    user: "{{ ansible_user }}"
+    key: "{{ _ssh_pubkeys | join('\n') }}"
+    exclusive: true
+    state: present

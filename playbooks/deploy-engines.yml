@@ -13,18 +13,6 @@
   roles:
     - check_vars
 
-- name: Schedule daily reboot cron
-  hosts: engine_servers
-  become: true
-  tasks:
-    - name: Create a cronjob to restart the Raspberry Pi every day at midnight
-      ansible.builtin.cron:
-        name: "Restart Raspberry Pi"
-        minute: "0"
-        hour: "0"
-        job: "/sbin/shutdown -r now"
-        user: "root"
-
 - name: Deploy Docker Compose Engines
   hosts: engine_servers
   become: true
