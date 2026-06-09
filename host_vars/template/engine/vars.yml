@@ -1,0 +1,40 @@
+---
+# Template for an engine host (Raspberry Pi running pyro-engine).
+# Copy this folder to your pi-manager-X repo under host_vars/<your-host>/.
+# Hostname must match the entry under engine_servers: in inventory/hosts_prod.
+
+# Cameras attached to this engine.
+# Keys are camera IPs on the engine's LAN. Values follow group_vars/engine_servers
+# engine_json_schema. `id` is the camera id returned by init_script/create_cameras.py.
+config_json: |
+    {
+        "192.168.1.11": {
+            "pose_ids": [401, 402, 403, 404],
+            "adapter": "reolink-823S2",
+            "id": "122",
+            "name": "<site>-01",
+            "bbox_mask_url": "",
+            "poses": [0, 1, 2, 3],
+            "token": "",
+            "type": "ptz"
+        },
+        "192.168.1.12": {
+            "pose_ids": [405, 406, 407, 408],
+            "adapter": "reolink-823S2",
+            "id": "123",
+            "name": "<site>-02",
+            "bbox_mask_url": "",
+            "poses": [0, 1, 2, 3],
+            "token": "",
+            "type": "ptz"
+        }
+    }
+
+# Static IP assigned to the Pi on its camera LAN (set by the static_ip role).
+static_ip_interface: eth0
+static_ip_address: 192.168.1.99
+static_ip_gateway: 192.168.1.1
+
+# Name of the associated Pi Zero in inventory (omit if no Pi Zero).
+# The engine_cron role uses this to derive PIZERO_IP from hostvars.
+pi_zero_hostname: <site>-pi-zero

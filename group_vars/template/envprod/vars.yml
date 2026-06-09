@@ -1,0 +1,48 @@
+---
+# Production environment.
+# Hosts opt in via the `envprod` group in inventory (see inventory.template).
+
+prefix: "fr"  # short, lowercase, used to derive resource names (e.g. bastion{{ prefix }}.pyronear.org)
+pyronear_version: latest
+api_dns: "alertapi.pyronear.org"
+mediamtx_server_ip: "CHANGE_ME"  # public IP of the mediamtx host (e.g. 91.134.47.14)
+openvpn_server_dns: "bastion{{ prefix }}.pyronear.org"
+openvpn_server_ansible_host: "fr_openvpn"  # inventory name of the OpenVPN host
+
+# Encrypt with: ansible-vault encrypt_string '<password>' --name 'openvpn_ca_password'
+openvpn_ca_password: "CHANGE_ME"  # vault-encrypted in real repos
+
+# Object storage (OVH S3) used by alert API + annotation API.
+S3_ENDPOINT_URL: https://s3.gra.io.cloud.ovh.net/
+S3_ACCESS_KEY: "CHANGE_ME"  # vault
+S3_SECRET_KEY: "CHANGE_ME"  # vault
+S3_REGION: gra
+
+# Public hostnames served by the platform-react server.
+platform_react_url_backend: https://alertapi.pyronear.org
+platform_react_url_livestream: https://livestream.pyronear.org
+platform_react_url_frontend: platform.pyronear.org
+
+# One entry per organization in the alert API. Each lists the engine hostnames
+# (must match inventory) whose detections that org is allowed to see.
+platform_react_sites_per_organization:
+  - name: example-org
+    sites: ["site-a", "site-b"]
+
+# alert API configuration.
+alert_api_docker_version: latest
+alert_api_proxy_url: alertapi.pyronear.org
+alert_api_s3_proxy_url: assets.pyronear.org
+alert_api_postgres_db: pyroapi
+alert_api_postgres_pwd: "CHANGE_ME"           # vault
+alert_api_superuser_pwd: "CHANGE_ME"          # vault
+alert_api_jwt_secret: "CHANGE_ME"             # vault
+alert_api_s3_access_key: "CHANGE_ME"          # vault
+alert_api_s3_secret_key: "CHANGE_ME"          # vault
+alert_api_s3_region: gra
+alert_api_s3_url: https://s3.gra.io.cloud.ovh.net/
+alert_api_server_name: ovh-alert-api-prod     # used to derive S3 bucket names
+alert_api_risk_api_url: https://riskapi.pyronear.org
+alert_api_risk_refresh_hour_utc: 4
+alert_api_risk_api_login: "CHANGE_ME"         # vault
+alert_api_risk_api_pwd: "CHANGE_ME"           # vault

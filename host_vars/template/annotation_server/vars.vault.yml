@@ -1,0 +1,12 @@
+# TEMPLATE — placeholders only. Encrypt before committing to your pi-manager-X repo:
+#   ansible-vault encrypt host_vars/<annotation-server-host>/vars.vault.yml
+---
+# Postgres database used by the annotation API container.
+POSTGRES_USER: "dbadmin"
+POSTGRES_PASSWORD: "CHANGE_ME"
+POSTGRES_DB: "pyroannotation"
+
+# Annotation API basic-auth credentials and JWT signing secret.
+AUTH_USERNAME: "admin"
+AUTH_PASSWORD: "CHANGE_ME"
+JWT_SECRET: "CHANGE_ME"  # any high-entropy hex string
