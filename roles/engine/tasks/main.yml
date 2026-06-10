@@ -14,6 +14,8 @@
     name: "pyronear/pyro-engine:{{ pyro_engine_docker_tag }}"
     source: pull
     force_source: true
+  register: pull_pyro_engine
+  until: pull_pyro_engine is not failed
   retries: 3
   delay: 10
 
@@ -22,6 +24,8 @@
     name: "pyronear/pyro-camera-api:{{ pyro_engine_docker_tag }}"
     source: pull
     force_source: true
+  register: pull_pyro_camera_api
+  until: pull_pyro_camera_api is not failed
   retries: 3
   delay: 10
 
