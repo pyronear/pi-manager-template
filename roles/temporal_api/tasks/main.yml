@@ -5,15 +5,16 @@
     that:
       - temporal_api_url | default('', true) | length > 0
       - temporal_api_token | default('', true) | length > 0
-      - temporal_api_s3_bucket | default('', true) | length > 0
       - temporal_api_s3_region | default('', true) | length > 0
       - temporal_api_s3_endpoint_url | default('', true) | length > 0
       - temporal_api_s3_access_key | default('', true) | length > 0
       - temporal_api_s3_secret_key | default('', true) | length > 0
     fail_msg: >-
       Missing temporal_api configuration. Set temporal_api_url, temporal_api_token
-      and the temporal_api_s3_* vars in the sister repo before deploying. An empty
-      token would expose POST /predict unauthenticated.
+      and the temporal_api_s3_* credentials/endpoint vars in the sister repo before
+      deploying. An empty token would expose POST /predict unauthenticated.
+      (temporal_api_s3_bucket is optional — it is only a fallback for requests that
+      do not specify a bucket.)
     quiet: true
 
 - name: Create a network
