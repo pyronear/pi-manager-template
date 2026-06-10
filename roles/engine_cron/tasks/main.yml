@@ -1,5 +1,9 @@
 ---
-- name: Create a cronjob to restart the Raspberry Pi every day at midnight
+# Reboot cron (no_watchdog) and watchdog cron (pi_zero/shelly) are mutually
+# exclusive. Each is paired with an explicit removal so changing watchdog_type
+# converges instead of leaving stale jobs behind.
+
+- name: Add nightly reboot cron (no_watchdog)
   ansible.builtin.cron:
     name: "Restart Raspberry Pi"
     minute: "0"
@@ -7,6 +11,13 @@
     job: "/sbin/shutdown -r now"
     user: "root"
   when: watchdog_type == "no_watchdog"
+
+- name: Remove nightly reboot cron when a watchdog is active
+  ansible.builtin.cron:
+    name: "Restart Raspberry Pi"
+    user: "root"
+    state: absent
+  when: watchdog_type in ["pi_zero", "shelly"]
 
 - name: Ensure working directory exists
   ansible.builtin.file:
@@ -32,10 +43,23 @@
     mode: "0644"
   when: watchdog_type == "shelly"
 
-- name: Add cron job for main pi watchdog
+- name: Remove stale main pi watchdog .env file (no_watchdog)
+  ansible.builtin.file:
+    path: /home/pi/watchdog.env
+    state: absent
+  when: watchdog_type == "no_watchdog"
+
+- name: Add cron job for main pi watchdog (pi_zero/shelly)
   ansible.builtin.cron:
     name: "Main pi watchdog"
     minute: "5,15,25,35,45,55"
     job: "/usr/bin/python3 {{ watchdog_main_script[watchdog_type] }} >> /home/pi/watchdog_main.log 2>&1"
     user: pi
   when: watchdog_type in ["pi_zero", "shelly"]
+
+- name: Remove main pi watchdog cron when no_watchdog
+  ansible.builtin.cron:
+    name: "Main pi watchdog"
+    user: pi
+    state: absent
+  when: watchdog_type == "no_watchdog"
