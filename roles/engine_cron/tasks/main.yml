@@ -6,7 +6,7 @@
     hour: "0"
     job: "/sbin/shutdown -r now"
     user: "root"
-  when: pi_zero_hostname is not defined or pi_zero_hostname | length == 0
+  when: watchdog_type == "no_watchdog"
 
 - name: Ensure working directory exists
   ansible.builtin.file:
@@ -14,19 +14,28 @@
     state: directory
     mode: '0755'
 
-- name: Generate main pi watchdog .env file
+- name: Generate main pi watchdog .env file (pi_zero)
   ansible.builtin.template:
     src: watchdog_main.env.j2
     dest: /home/pi/watchdog.env
     owner: pi
     group: pi
     mode: "0644"
-  when: pi_zero_hostname | default("") | length > 0
+  when: watchdog_type == "pi_zero"
+
+- name: Generate main pi watchdog .env file (shelly)
+  ansible.builtin.template:
+    src: watchdog_shelly.env.j2
+    dest: /home/pi/watchdog.env
+    owner: pi
+    group: pi
+    mode: "0644"
+  when: watchdog_type == "shelly"
 
 - name: Add cron job for main pi watchdog
   ansible.builtin.cron:
     name: "Main pi watchdog"
     minute: "5,15,25,35,45,55"
-    job: "/usr/bin/python3 {{ engine_cron_working_dir }}/watchdog/main_pi/watchdog.py >> /home/pi/watchdog_main.log 2>&1"
+    job: "/usr/bin/python3 {{ watchdog_main_script[watchdog_type] }} >> /home/pi/watchdog_main.log 2>&1"
     user: pi
-  when: pi_zero_hostname | default("") | length > 0
+  when: watchdog_type in ["pi_zero", "shelly"]

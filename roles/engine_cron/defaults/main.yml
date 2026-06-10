@@ -1,2 +1,8 @@
 ---
 engine_cron_working_dir: "/home/{{ project_name }}"
+
+# Main-pi watchdog script path, by watchdog_type.
+# Follows the pyro-engine watchdog/ layout from PR #374 (zero/ and shelly/).
+watchdog_main_script:
+  pi_zero: "{{ engine_cron_working_dir }}/watchdog/zero/main_pi/watchdog.py"
+  shelly:  "{{ engine_cron_working_dir }}/watchdog/shelly/main_pi/watchdog.py"
