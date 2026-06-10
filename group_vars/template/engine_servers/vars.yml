@@ -7,6 +7,7 @@ pyro_engine_docker_tag: "latest"
 ansible_user: pi
 
 pi_zero_hostname: ""  # set in host_vars if a Pi Zero is associated with this engine
+relay_trigger_type: "h"  # h = high-trigger (default), l = low-trigger (legacy); override in host_vars
 
 engine_json_schema: |
   {

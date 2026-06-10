@@ -54,5 +54,5 @@
   ansible.builtin.cron:
     name: "pyro watchdog"
     minute: "*/10"
-    job: "/usr/bin/python3 {{ pi_zero_watchdog_script }} >> {{ pi_zero_log_file }} 2>&1"
+    job: "/usr/bin/python3 {{ pi_zero_watchdog_script }} --trigger {{ hostvars[relay_host]['relay_trigger_type'] }} >> {{ pi_zero_log_file }} 2>&1"
     user: pi
