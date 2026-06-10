@@ -1,5 +1,21 @@
 ---
 
+- name: Assert required temporal_api variables are set
+  ansible.builtin.assert:
+    that:
+      - temporal_api_url | default('', true) | length > 0
+      - temporal_api_token | default('', true) | length > 0
+      - temporal_api_s3_bucket | default('', true) | length > 0
+      - temporal_api_s3_region | default('', true) | length > 0
+      - temporal_api_s3_endpoint_url | default('', true) | length > 0
+      - temporal_api_s3_access_key | default('', true) | length > 0
+      - temporal_api_s3_secret_key | default('', true) | length > 0
+    fail_msg: >-
+      Missing temporal_api configuration. Set temporal_api_url, temporal_api_token
+      and the temporal_api_s3_* vars in the sister repo before deploying. An empty
+      token would expose POST /predict unauthenticated.
+    quiet: true
+
 - name: Create a network
   community.docker.docker_network:
     name: web

@@ -30,7 +30,7 @@ services:
       - 'traefik.http.routers.temporal.tls.certresolver=pyroresolver'
       - 'traefik.http.services.temporal.loadbalancer.server.port=8000'
     healthcheck:
-      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status == 200 else 1)\""]
+      test: ["CMD-SHELL", "python -c \"import urllib.request,json,sys; sys.exit(0 if json.load(urllib.request.urlopen('http://localhost:8000/health')).get('model_loaded') else 1)\""]
       interval: 10s
       timeout: 5s
       retries: 5
