@@ -100,14 +100,6 @@
     - watchdog_type | default("") == "pi_zero"
     - pi_zero_hostname is not defined or pi_zero_hostname | length == 0
 
-- name: Check shelly_ip is set when watchdog_type == shelly
-  ansible.builtin.fail:
-    msg: "'shelly_ip' is required when watchdog_type == 'shelly' (host: {{ inventory_hostname }})."
-  when:
-    - inventory_hostname in groups["engine_servers"]
-    - watchdog_type | default("") == "shelly"
-    - shelly_ip is not defined or shelly_ip | length == 0
-
 - name: Retrieve the list of groups
   ansible.builtin.set_fact:
     group_list:

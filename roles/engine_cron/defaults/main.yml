@@ -6,3 +6,8 @@ engine_cron_working_dir: "/home/{{ project_name }}"
 watchdog_main_script:
   pi_zero: "{{ engine_cron_working_dir }}/watchdog/zero/main_pi/watchdog.py"
   shelly:  "{{ engine_cron_working_dir }}/watchdog/shelly/main_pi/watchdog.py"
+
+# Shelly watchdog (watchdog_type == "shelly"). The Shelly sits at a fixed LAN
+# address by convention; override per-host only if a station differs.
+shelly_ip: "192.168.1.97"
+shelly_output_id: 0
