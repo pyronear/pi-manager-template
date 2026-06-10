@@ -1,0 +1,44 @@
+name: temporal-api
+
+services:
+  reverse-proxy:
+    image: traefik:v3.6.6
+    container_name: traefik
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - {{ temporal_api_working_dir_traefik }}/traefik.toml:/etc/traefik/traefik.toml
+      - {{ temporal_api_working_dir_traefik }}/acme.json:/acme.json
+      - {{ temporal_api_working_dir_traefik }}/logs:/var/log
+    restart: always
+    networks:
+      - web
+
+  backend:
+    image: {{ temporal_api_docker_image }}:{{ temporal_api_docker_version }}
+    container_name: temporal-api
+    env_file:
+      - .env
+    expose:
+      - 8000
+    labels:
+      - 'traefik.enable=true'
+      - 'traefik.http.routers.temporal.rule=Host(`{{ temporal_api_url }}`)'
+      - 'traefik.http.routers.temporal.entrypoints=websecure'
+      - 'traefik.http.routers.temporal.tls.certresolver=pyroresolver'
+      - 'traefik.http.services.temporal.loadbalancer.server.port=8000'
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://localhost:8000/health').status == 200 else 1)\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+    restart: always
+    networks:
+      - web
+
+networks:
+  web:
+    external: true
