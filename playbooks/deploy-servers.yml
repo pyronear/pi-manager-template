@@ -16,7 +16,7 @@
     - check_vars
 
 - name: Upgrade, install git and docker
-  hosts: alert_server:platform_py_server:platform_react_server:openvpn:mediamtx_server
+  hosts: alert_server:platform_py_server:platform_react_server:openvpn:mediamtx_server:temporal_server
   become: true
   roles:
     - common
@@ -72,5 +72,13 @@
   become: true
   roles:
     - role: alert_api
+      tags:
+        - app
+
+- name: Deploy service temporal_api
+  hosts: temporal_server
+  become: true
+  roles:
+    - role: temporal_api
       tags:
         - app

@@ -22,5 +22,8 @@ all:
     mediamtx_server:
       hosts:
 
+    temporal_server:
+      hosts:
+
     pi_zero:
       hosts:
