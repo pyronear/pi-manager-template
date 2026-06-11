@@ -20,6 +20,9 @@ alert_api_server_name:
 alert_api_sentry_dsn:
 alert_api_telegram_token:
 alert_api_posthog_key:
+# Temporal model API — token must match temporal_api_token on the temporal server
+alert_api_temporal_api_url:
+alert_api_temporal_api_token:
 alert_api_risk_api_url:
 alert_api_risk_api_login:
 alert_api_risk_api_pwd:
