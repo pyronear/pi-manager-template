@@ -68,6 +68,8 @@ services:
       - RISK_API_LOGIN=${RISK_API_LOGIN}
       - RISK_API_PWD=${RISK_API_PWD}
       - RISK_REFRESH_HOUR_UTC=${RISK_REFRESH_HOUR_UTC:-4}
+      - TEMPORAL_API_URL=${TEMPORAL_API_URL}
+      - TEMPORAL_API_TOKEN=${TEMPORAL_API_TOKEN}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`{{ alert_api_proxy_url }}`)"
