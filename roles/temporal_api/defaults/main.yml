@@ -1,7 +1,7 @@
 temporal_api_working_dir: /home/temporal_api
 temporal_api_working_dir_traefik: /home/traefik
 temporal_api_docker_image: pyronear/temporal-model-api
-temporal_api_docker_version: 0.3.0
+temporal_api_docker_version: 0.3.1
 
 # Public domain served by Traefik (set in the sister repo, e.g. temporalmodelapi.pyronear.org)
 temporal_api_url:
