@@ -284,7 +284,7 @@ def main():
         with g2:
             angle_of_view = st.number_input("Angle of view", value=54.2, format="%.1f", key=f"aov_{i}")
         with g3:
-            is_trustable = st.checkbox("Trustable", value=True, key=f"trust_{i}")
+            is_trustable = st.checkbox("Trustable", value=False, key=f"trust_{i}")
 
         cam: dict = {
             "ip": ip,
