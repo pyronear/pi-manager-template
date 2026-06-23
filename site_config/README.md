@@ -32,11 +32,11 @@ The API step is idempotent: re-running reuses existing cameras/poses by name.
 ## Fields
 
 - Site name, number of cameras, camera type (PTZ or static), watchdog type
+- Site coordinates (`lat,lon`), shared by every camera of the site
 - API URL + superadmin credentials, organization name
 - Secrets written to the vault file: `ansible_password`, `open_vpn_password`,
   `CAM_USER`, `CAM_PWD`
-- Per camera: IP, adapter, anonymizer, and the geo data needed to create it in
-  the API (latitude, longitude, elevation, angle of view, trustable, poses)
+- Per camera: IP, adapter, anonymizer, elevation, angle of view, trustable, poses
 
 Static IP (`.99`/`.1`/`eth0`) and the WiFi block default to standard values and
 are not collected in the form — edit `vars.yml` / `vars.vault.yml` afterwards if

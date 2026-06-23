@@ -55,6 +55,12 @@ def compute_azimuths(cam_index: int, num_cams: int, n_poses: int) -> list[int]:
     return [round(step * (start + j)) % 360 for j in range(n_poses)]
 
 
+def parse_coords(text: str) -> tuple[float, float]:
+    """Parse a 'lat,lon' string into floats, raising ValueError if malformed."""
+    lat_str, lon_str = text.split(",")
+    return float(lat_str), float(lon_str)
+
+
 def resolve_vault_password_file() -> Path | None:
     if not VAULT_PASSWORD_FILE:
         return None
@@ -223,17 +229,19 @@ def main():
     with col2:
         num_cams = st.number_input("Number of cameras", min_value=1, max_value=20, value=2)
 
-    c1, c2 = st.columns(2)
+    c1, c2, c3 = st.columns(3)
     with c1:
         cam_type = st.radio("Camera type", ["ptz", "static"], horizontal=True)
     with c2:
         watchdog_type = st.text_input("Watchdog type", value="shelly")
+    with c3:
+        coords = st.text_input("Coordinates (lat,lon)", placeholder="48.1234,2.5678")
 
     # --- API access ---
     st.subheader("API access")
     a1, a2, a3 = st.columns(3)
     with a1:
-        api_url = st.text_input("API URL", value=os.getenv("API_URL", ""))
+        api_url = st.text_input("API URL", value=os.getenv("API_URL", "https://alertapi.pyronear.org/"))
     with a2:
         su_login = st.text_input("Superadmin login", value=os.getenv("SUPERADMIN_LOGIN", ""))
     with a3:
@@ -270,16 +278,12 @@ def main():
         with c3:
             anonymizer = st.checkbox("Anonymizer", value=False, key=f"anon_{i}")
 
-        g1, g2, g3, g4, g5 = st.columns(5)
+        g1, g2, g3 = st.columns(3)
         with g1:
-            lat = st.number_input("Latitude", value=0.0, format="%.6f", key=f"lat_{i}")
+            elevation = st.number_input("Elevation (m)", value=100, key=f"elev_{i}")
         with g2:
-            lon = st.number_input("Longitude", value=0.0, format="%.6f", key=f"lon_{i}")
+            angle_of_view = st.number_input("Angle of view", value=54.2, format="%.1f", key=f"aov_{i}")
         with g3:
-            elevation = st.number_input("Elevation (m)", value=0, key=f"elev_{i}")
-        with g4:
-            angle_of_view = st.number_input("Angle of view", value=87, key=f"aov_{i}")
-        with g5:
             is_trustable = st.checkbox("Trustable", value=True, key=f"trust_{i}")
 
         cam: dict = {
@@ -288,8 +292,6 @@ def main():
             "adapter": adapter,
             "anonymizer": anonymizer,
             "type": cam_type,
-            "lat": lat,
-            "lon": lon,
             "elevation": elevation,
             "angle_of_view": angle_of_view,
             "is_trustable": is_trustable,
@@ -330,6 +332,15 @@ def main():
         if any(not ip for ip in ips) or len(set(ips)) != len(ips):
             st.error("Camera IP addresses must all be set and unique.")
             st.stop()
+
+        try:
+            lat, lon = parse_coords(coords)
+        except ValueError:
+            st.error("Coordinates must be in 'lat,lon' format (e.g. 48.1234,2.5678).")
+            st.stop()
+            return
+        for cam in cameras:
+            cam["lat"], cam["lon"] = lat, lon
 
         form = {
             "site_name": site_name,
