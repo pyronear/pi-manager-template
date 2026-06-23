@@ -7,7 +7,6 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(message)s")
 
 
 def get_token(api_url: str, login: str, pwd: str) -> str:
-    print(api_url, login, pwd)
     response = requests.post(
         f"{api_url}/api/v1/login/creds",
         data={"username": login, "password": pwd},

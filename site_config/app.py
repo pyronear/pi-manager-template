@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -192,7 +193,12 @@ def provision_and_write(form: dict) -> Path:
     vault_path.write_text(
         build_vault_yml(form["ansible_password"], form["cam_user"], form["cam_pwd"], form["open_vpn_password"])
     )
-    encrypt_vault_file(vault_path, form["vault_password_file"])
+    try:
+        encrypt_vault_file(vault_path, form["vault_password_file"])
+    except Exception:
+        # Never leave plaintext secrets on disk if encryption fails.
+        vault_path.unlink(missing_ok=True)
+        raise
 
     return dest
 
@@ -314,6 +320,15 @@ def main():
         ]
         if missing:
             st.error("Missing required fields: " + ", ".join(missing))
+            st.stop()
+
+        if not re.fullmatch(r"[a-z0-9-]+", site_name):
+            st.error("Site name must contain only lowercase letters, digits and hyphens.")
+            st.stop()
+
+        ips = [c["ip"] for c in cameras]
+        if any(not ip for ip in ips) or len(set(ips)) != len(ips):
+            st.error("Camera IP addresses must all be set and unique.")
             st.stop()
 
         form = {
