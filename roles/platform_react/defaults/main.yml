@@ -8,3 +8,4 @@ platform_react_url_livestream: TO_CHANGE
 platform_react_sites_per_organization:
   - name: orga1
     sites: ["site1"]
+platform_react_user_guide_url: "https://pyronear.notion.site/Guide-d-utilisation-plateforme-Pyronear-376425b63668818ebd17da60b20cc770"
