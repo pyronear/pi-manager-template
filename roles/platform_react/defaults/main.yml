@@ -8,4 +8,7 @@ platform_react_url_livestream: TO_CHANGE
 platform_react_sites_per_organization:
   - name: orga1
     sites: ["site1"]
-platform_react_user_guide_url: "https://pyronear.notion.site/Guide-d-utilisation-plateforme-Pyronear-376425b63668818ebd17da60b20cc770"
+platform_react_user_guide_urls_fr: 'https://pyronear.notion.site/Guide-d-utilisation-plateforme-Pyronear-376425b63668818ebd17da60b20cc770'
+platform_react_user_guide_urls_en: 'https://pyronear.notion.site/Pyronear-Platform-User-Guide-389425b6366881da906ee38e93524db2'
+platform_react_user_guide_urls_de: 'https://pyronear.notion.site/Pyronear-Plattform-Benutzerhandbuch-389425b63668816abf44e8679fb9dd35'
+platform_react_user_guide_urls_es: 'https://pyronear.notion.site/Gu-a-de-uso-de-la-plataforma-Pyronear-389425b6366881e69fd6f6f1a414814d'
