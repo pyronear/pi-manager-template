@@ -16,7 +16,7 @@
     - check_vars
 
 - name: Upgrade, install git and docker
-  hosts: alert_server:platform_py_server:platform_react_server:openvpn:mediamtx_server:temporal_server
+  hosts: alert_api_servers:platform_py_server:platform_react_server:openvpn:mediamtx_server:temporal_server
   become: true
   roles:
     - common
@@ -41,7 +41,7 @@
     - servers
 
 - name: Add VPN client
-  hosts: platform_py_server:alert_server
+  hosts: platform_py_server:alert_api_servers
   become: true
   serial: 1
   tasks:
@@ -68,7 +68,7 @@
         - app
 
 - name: Deploy service alert_api
-  hosts: alert_server
+  hosts: alert_api_servers
   become: true
   roles:
     - role: alert_api
