@@ -57,6 +57,9 @@ install-platform-react-server: prepare
 install-alert-api-server: prepare
 	ansible-playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l alert_server
 
+install-alert-api-preprod-server: prepare
+	ansible-playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l alert_server_preprod
+
 install-temporal-server: prepare
 	ansible-playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l temporal_server
 
