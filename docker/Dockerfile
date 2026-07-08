@@ -18,12 +18,14 @@ COPY ./requirements.yml /ansible/requirements.yml
 RUN ansible-galaxy role install -r /ansible/requirements.yml -p /ansible/galaxy_roles \
  && ansible-galaxy collection install -r /ansible/requirements.yml
 
-COPY ./group_vars /ansible/group_vars
-COPY ./hooks /ansible/hooks
-COPY ./init_script /ansible/init_script
-COPY ./inventory /ansible/inventory
-COPY ./playbooks /ansible/playbooks
-COPY ./roles /ansible/roles
+# Inventory, group_vars, host_vars, init_script, playbooks and roles are all
+# bind-mounted at runtime (see docker-compose.yml), so nothing from the repo is
+# COPYed here: it would bake secrets and vendored roles into the image layers
+# while being shadowed by the mounts anyway. External roles/collections come from
+# the ansible-galaxy install above.
 COPY ./docker/docker-entrypoint.sh /ansible/docker-entrypoint.sh
+
+# Marker used by the Makefile to refuse operational targets on the host.
+ENV IN_PYRO_ANSIBLE_CONTAINER=1
 
 ENTRYPOINT [ "/ansible/docker-entrypoint.sh" ]
