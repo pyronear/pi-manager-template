@@ -14,6 +14,9 @@ ifeq ($(wildcard $(VAULT_PASSWORD_FILE)),)
   $(error "$(VAULT_PASSWORD_FILE) is required but was not found.")
 endif
 
+# Bare `make` should print help, not silently run dependencies.
+.DEFAULT_GOAL := help
+
 dependencies:
 	@pip install ansible==10.3.0
 	@pip install netaddr
