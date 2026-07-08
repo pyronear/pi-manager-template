@@ -7,9 +7,6 @@ all:
     alert_server:
       hosts:
 
-    platform_py_server:
-      hosts:
-
     platform_react_server:
       hosts:
 
