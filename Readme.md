@@ -32,7 +32,9 @@ Build the image and drop into a shell inside the container:
 make ansible-up
 ```
 
-From that shell, run any target below. Stop the container with `make ansible-stop`.
+From that shell, run any target below. The operational targets only work inside
+the container; running them on the host fails fast with a reminder. When you're
+done, exit the shell and stop the container from the host with `make ansible-stop`.
 
 ### Fleet / engine targets
 
