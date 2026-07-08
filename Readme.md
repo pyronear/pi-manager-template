@@ -1,96 +1,76 @@
 # Raspberry Pi Ansible Automation
 
-This repository contains Ansible playbooks and configuration files to manage and automate Raspberry Pi tasks. It also includes a `Makefile` for easier command execution and integration with Semaphore for a web-based UI.
+Ansible playbooks and roles to manage the Pyronear Raspberry Pi fleet (wildfire
+detection engines) and the backing servers (alert API, platform, mediamtx,
+openvpn, annotation, temporal).
 
-## How to Use the Repository
+This repository is a **template**: it holds the playbooks, roles and tooling but
+**no inventory and no secrets**. The inventory, `host_vars/`, `group_vars/` and
+the vault password live in a sister repo (`pi-manager-X`), glued in through
+`REPO_PATH`. You should not need to modify this repository to onboard a new site
+— per-site work happens in the sister repo.
 
-### Pre-requisites
+## How it works
 
-1) git clone the pi-manager-X repository, corresponding to the github repository containing your inventory and host_vars file.
-2) create a .env file in the root of this repository (used by your Makefile) and set the REPO_PATH variable accordingly (for ex : ../pi-manager-X)
-3) create the .vault_passwrd file containing your ansible vault password
+Ansible runs **inside a Docker container** (`pyro-ansible`). The sister repo's
+inventory, `host_vars` and `group_vars` are bind-mounted straight into the
+container (see `docker-compose.yml`), so there is no copy step to run.
 
-Ensure the following tools are installed by using the Makefile "dependencies" command.
+## Setup
 
-YOU WILL NEVER NEED TO MODIFY THIS REPOSITORY. All the modification must to be done by the pyronear team. If you want to install a new raspberry pi, you only need to modify the files in your pi-manager-X repository.
+1. Clone the sister `pi-manager-X` repo next to this one.
+2. Create a `.env` at the repo root from `.env.template` and set `REPO_PATH`,
+   `VAULT_PASSWORD_FILE` and `SSH_PRIVATE_KEY_FILE` (see `.env.template`).
+3. To seed the API database for a new site, fill `init_script/.env`
+   (copy `init_script/.env.ex`).
 
-### Installing a new Raspberry Pi
-See [How to configure a new raspberry](./docs/howto/how-to-configure-a-new-raspberry.md)
+## Usage
 
-### Commands
+Build the image and drop into a shell inside the container:
 
-The following commands are available in the `Makefile`:
+```bash
+make ansible-up
+```
 
-- **Ping all hosts**:
-  Ping all hosts defined in the Ansible inventory.
-  ```bash
-  make ping
-  ```
-#### Commands on Raspberry
-- **Check watchdog on local Raspberry Pi**:
-  Run a playbook to check the watchdog service on the local Raspberry Pi.
-  ```bash
-  make check-watchdog
-  ```
+From that shell, run any target below. Stop the container with `make ansible-stop`.
 
-- **Check engine service**:
-  Run a playbook to check the engine service on specific servers.
-  ```bash
-  make check-engine
-  ```
+### Fleet / engine targets
 
-- **Install test engine**:
-  Deploy the engine on the test servers. You will need to fill the init_script/.env file
-  ```bash
-  make install-test-engine
-  ```
+```bash
+make ping                          # ping all hosts in inventory/hosts_prod
+make check-engines                 # verify engine containers are running + healthy
+make deploy-all-engines            # deploy-engines.yml on every engine
+make deploy-one-engine SITE=<host> # deploy-engines.yml on a single host
+make init-one-engine  SITE=<host>  # rpi-init.yml on a single host (+ mediamtx)
+make init-pi-zero     SITE=<host>  # rpi-init-pi-zero.yml on a single Pi Zero
+make up / make down                # start / stop engine docker-compose stacks fleet-wide
+make sync-ssh-keys                 # push authorized SSH keys to all hosts
+```
 
-- **Install prod engine**:
-  Deploy the engine on the test servers. You will need to fill the init_script/.env file
-  ```bash
-  make install-engine-fr
-  ```
+### Server targets
 
-#### Commands on setup environnement
-- **Start Semaphore**:
-  Spin up Semaphore using Docker, a web-based UI for Ansible playbook execution.
-  ```bash
-  make semaphore-up
-  ```
+```bash
+make install-servers                 # deploy-servers.yml limited to $LIMIT (from .env)
+make install-openvpn                 # deploy-servers.yml -l openvpn
+make install-mediamtx                # deploy-servers.yml -l mediamtx_server
+make update-mediamtx-conf            # refresh mediamtx streams config only
+make install-annotation-server
+make install-platform-react-server
+make install-alert-api-server
+make install-temporal-server
+```
 
-- **Stop Semaphore**:
-  Stop the Semaphore Docker containers.
-  ```bash
-  make semaphore-stop
-  ```
+`install-servers` and `install-openvpn` source `init_script/.env` before running.
 
-## Using Docker
-### Ansible
-- Check that a file `.env` is configured with the same variables than `.env.template`
-- **Start Ansible**:
-  ```bash
-  make ansible-up
-  ```
-  
-- Execute ansible commands using make
-Example : 
-> make install-platform-react-server
+## Adding a new Raspberry Pi
 
-### Using Semaphore
+See [How to configure a new raspberry](./docs/howto/how-to-configure-a-new-raspberry.md).
 
-Semaphore is a UI tool to manage and run Ansible playbooks:
+## Directory structure
 
-1. Start Semaphore using `make semaphore-up`.
-2. Access the UI at `http://localhost:3000` (default credentials: `admin / changeme`).
-3. Manage playbooks, tasks, and inventory directly from the web interface.
+- **playbooks/** — playbooks per task (engine deploy, server deploy, checks).
+- **roles/** — custom and vendored roles.
+- **init_script/** — Python helpers to seed the API DB before onboarding a site.
+- **docker/** — Dockerfile, entrypoint and container-side `ansible.cfg`/`Makefile`.
 
-## Ansible Directory Structure
-
-This repository follows a typical Ansible directory structure:
-
-- **playbooks/**: Contains playbooks that perform specific tasks (e.g., engine deployment, watchdog checks).
-- **roles/**: Custom roles (if needed) to be reused across playbooks.
-- **host_vars/**: Directory containing per-host variables and vault files (sensitive information).
-- **files/**: Contains files (e.g., OpenVPN client configurations) that need to be deployed on the hosts.
-
-Ensure all sensitive data is encrypted using Ansible Vault before pushing it to the repository.
+Sensitive data is stored vault-encrypted in the sister repo.
