@@ -11,8 +11,8 @@ venv/
 host_vars/
 inventory/inventory
 inventory/hosts_*
-group_vars
-!group_vars/template
+group_vars/*
+!group_vars/template/
 id_rsa
 .ansible/
 .env
