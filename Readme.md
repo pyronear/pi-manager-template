@@ -52,7 +52,6 @@ make sync-ssh-keys                 # push authorized SSH keys to all hosts
 ### Server targets
 
 ```bash
-make install-servers                 # deploy-servers.yml limited to $LIMIT (from .env)
 make install-openvpn                 # deploy-servers.yml -l openvpn
 make install-mediamtx                # deploy-servers.yml -l mediamtx_server
 make update-mediamtx-conf            # refresh mediamtx streams config only
@@ -62,7 +61,7 @@ make install-alert-api-server
 make install-temporal-server
 ```
 
-`install-servers` and `install-openvpn` source `init_script/.env` before running.
+`install-openvpn` sources `init_script/.env` before running.
 
 ## Adding a new Raspberry Pi
 

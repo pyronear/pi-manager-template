@@ -20,7 +20,7 @@ help:
 	@echo "  make ping / check-engines / up / down / sync-ssh-keys"
 	@echo "  make deploy-all-engines | deploy-one-engine SITE=<host>"
 	@echo "  make init-one-engine SITE=<host> | init-pi-zero SITE=<host>"
-	@echo "  make install-servers | install-openvpn | install-mediamtx | update-mediamtx-conf"
+	@echo "  make install-openvpn | install-mediamtx | update-mediamtx-conf"
 	@echo "  make install-annotation-server | install-platform-react-server"
 	@echo "  make install-alert-api-server | install-temporal-server"
 
@@ -51,9 +51,6 @@ down: require-container
 
 up: require-container
 	ansible-playbook playbooks/up-engines.yml -i inventory/hosts_prod -l engine_servers
-
-install-servers: require-container
-	@bash -c 'set -a; source init_script/.env || exit 1; set +a; ansible-playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l $(LIMIT)'
 
 install-openvpn: require-container
 	@bash -c 'set -a; source init_script/.env || exit 1; set +a; ansible-playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l openvpn'
