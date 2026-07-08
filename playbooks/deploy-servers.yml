@@ -25,6 +25,16 @@
 - name: Deploy Openvpn
   hosts: openvpn
   become: true
+  pre_tasks:
+    - name: Load iptable_nat now (the openvpn container needs the NAT table)
+      community.general.modprobe:
+        name: iptable_nat
+        state: present
+    - name: Ensure iptable_nat is loaded on every boot
+      ansible.builtin.copy:
+        dest: /etc/modules-load.d/iptable_nat.conf
+        content: "iptable_nat\n"
+        mode: "0644"
   roles:
     - pyronear.openvpn
 
