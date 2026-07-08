@@ -16,6 +16,7 @@ endif
 
 # Bare `make` should print help, not silently run dependencies.
 .DEFAULT_GOAL := help
+.PHONY: dependencies
 
 dependencies:
 	@pip install ansible==10.3.0
