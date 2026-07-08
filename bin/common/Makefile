@@ -1,4 +1,10 @@
 
+.PHONY: require-container help ansible-up ansible-stop ping check-engines \
+	init-one-engine deploy-one-engine deploy-all-engines down up \
+	install-openvpn install-mediamtx update-mediamtx-conf install-annotation-server \
+	install-platform-react-server install-alert-api-server install-temporal-server \
+	init-pi-zero sync-ssh-keys
+
 # Operational targets must run inside the pyro-ansible container, where the
 # sister repo's inventory/host_vars/group_vars are mounted. The Dockerfile sets
 # IN_PYRO_ANSIBLE_CONTAINER=1; on the host this guard fails fast instead of
@@ -25,6 +31,12 @@ help:
 	@echo "  make install-alert-api-server | install-temporal-server"
 
 ansible-up:
+	@if [ -n "$$(git status --porcelain)" ]; then \
+		echo "⚠️  Uncommitted changes in this repo will be deployed (playbooks/roles are bind-mounted)."; \
+	fi
+	@if [ -n "$(REPO_PATH)" ] && [ -n "$$(git -C $(REPO_PATH) status --porcelain 2>/dev/null)" ]; then \
+		echo "⚠️  Uncommitted changes in $(REPO_PATH) will be deployed (inventory/host_vars are bind-mounted)."; \
+	fi
 	@docker compose up -d --build pyro-ansible
 	@docker exec -it pyro-ansible sh
 
