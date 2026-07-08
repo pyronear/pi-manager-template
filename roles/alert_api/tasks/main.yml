@@ -27,10 +27,10 @@
     force: false
     mode: 0600 # required by traefik
 
-- name: Create static dynamic conf file for traefik
+- name: Create static and dynamic conf files for traefik
   ansible.builtin.template:
     src: "{{ item }}.j2"
-    dest: "{{ alert_api_working_dir_traefik }}/dynamic_assets.toml"
+    dest: "{{ alert_api_working_dir_traefik }}/{{ item }}"
     mode: 0600
   with_items:
     - "traefik.toml"
