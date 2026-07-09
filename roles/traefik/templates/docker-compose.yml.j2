@@ -18,10 +18,6 @@ services:
       - "traefik.http.middlewares.strip-www.redirectregex.regex=^https?://(www\\.)(.+)"
       - "traefik.http.middlewares.strip-www.redirectregex.replacement=https://$${2}"
       - "traefik.http.middlewares.strip-www.redirectregex.permanent=true"
-    command:
-      # StaticResponse
-      - "--experimental.plugins.staticresponse.modulename=github.com/jdel/staticresponse"
-      - "--experimental.plugins.staticresponse.version=v0.0.1"
     restart: always
     networks:
       - web

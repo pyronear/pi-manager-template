@@ -1,3 +1,11 @@
+# Plugins must be declared here: when a static config file is present,
+# traefik ignores --experimental.* CLI flags
+[experimental]
+    [experimental.plugins]
+        [experimental.plugins.staticresponse]
+            modulename = "github.com/jdel/staticresponse"
+            version = "v0.0.1"
+
 # HTTPS
 [entryPoints]
     [entryPoints.web]
