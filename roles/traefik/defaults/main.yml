@@ -1,0 +1,9 @@
+---
+# /home/traefik is kept from the previous per-app traefik deployments so an
+# existing acme.json (Let's Encrypt certificates) survives the migration.
+traefik_working_dir: /home/traefik
+traefik_dynamic_dir: "{{ traefik_working_dir }}/dynamic"
+traefik_image: traefik:v3.6.6
+
+cert_resolver_mail:
+cert_resolver_url:
