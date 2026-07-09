@@ -22,5 +22,8 @@ all:
     temporal_server:
       hosts:
 
+    combined_server:
+      hosts:
+
     pi_zero:
       hosts:

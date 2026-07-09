@@ -1,0 +1,24 @@
+---
+- name: Verify Ansible version
+  hosts: combined_server
+  become: true
+  tasks:
+    - name: Ensure Ansible version is 2.17 or higher
+      ansible.builtin.assert:
+        that:
+          - ansible_version.minor | int >= 17
+        fail_msg: "Ansible version must be 2.17 or higher."
+
+# All services on a single VM behind one shared Traefik. The VM can also act
+# as the reverse_ssh_server (nothing to deploy: engines only need sshd and the
+# 'ubuntu' user there). The OpenVPN server stays on its own machine.
+- name: Deploy alert API, platform and mediamtx on a single server
+  hosts: combined_server
+  become: true
+  roles:
+    - common
+    - docker
+    - traefik
+    - mediamtx
+    - platform_react
+    - alert_api

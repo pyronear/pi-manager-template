@@ -59,6 +59,7 @@ make install-annotation-server
 make install-platform-react-server
 make install-alert-api-server
 make install-temporal-server
+make install-combined-server         # deploy-combined.yml: traefik + mediamtx + platform + alert API on one VM
 ```
 
 `install-openvpn` sources `init_script/.env` before running.

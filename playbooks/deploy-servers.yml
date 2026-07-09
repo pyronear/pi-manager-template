@@ -73,6 +73,7 @@
   hosts: platform_react_server
   become: true
   roles:
+    - role: traefik
     - role: platform_react
       tags:
         - app
@@ -81,6 +82,7 @@
   hosts: alert_server
   become: true
   roles:
+    - role: traefik
     - role: alert_api
       tags:
         - app
