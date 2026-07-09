@@ -3,7 +3,7 @@
 	init-one-engine deploy-one-engine deploy-all-engines down up \
 	install-openvpn install-mediamtx update-mediamtx-conf install-annotation-server \
 	install-platform-react-server install-alert-api-server install-temporal-server \
-	init-pi-zero sync-ssh-keys
+	install-combined-server init-pi-zero sync-ssh-keys
 
 # Operational targets must run inside the pyro-ansible container, where the
 # sister repo's inventory/host_vars/group_vars are mounted. The Dockerfile sets
@@ -29,6 +29,7 @@ help:
 	@echo "  make install-openvpn | install-mediamtx | update-mediamtx-conf"
 	@echo "  make install-annotation-server | install-platform-react-server"
 	@echo "  make install-alert-api-server | install-temporal-server"
+	@echo "  make install-combined-server   (traefik + mediamtx + platform + alert API on one VM)"
 
 ansible-up:
 	@if [ -n "$$(git status --porcelain)" ]; then \
@@ -84,6 +85,9 @@ install-alert-api-server: require-container
 
 install-temporal-server: require-container
 	ansible-playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l temporal_server
+
+install-combined-server: require-container
+	ansible-playbook playbooks/deploy-combined.yml -i inventory/hosts_prod -l combined_server
 
 init-pi-zero: require-container
 	ansible-playbook playbooks/rpi-init-pi-zero.yml -i inventory/hosts_prod -l $(SITE)

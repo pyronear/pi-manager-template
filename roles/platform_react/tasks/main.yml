@@ -1,9 +1,5 @@
 ---
 
-- name: Create a network
-  community.docker.docker_network:
-    name: web
-
 - name: Create working directory if it does not exist
   ansible.builtin.file:
     path: "{{ item }}"
@@ -13,7 +9,6 @@
     - "{{ platform_react_working_dir_react }}"
     - "{{ platform_react_working_dir_react }}/config"
     - "{{ platform_react_working_dir_react }}/logs"
-    - "{{ platform_react_working_dir_traefik }}"
 
 - name: Stop all services
   community.docker.docker_compose_v2:
@@ -36,21 +31,6 @@
   with_items:
     - app-config-prod.js
     - sites_live_access_prod.json
-
-- name: Create empty acme file for traefik
-  ansible.builtin.copy:
-    content: ""
-    dest: "{{ platform_react_working_dir_traefik }}/acme.json"
-    force: false
-    group: sys
-    mode: 0600
-
-- name: Create conf file for traefik
-  ansible.builtin.template:
-    src: traefik.toml.j2
-    dest: "{{ platform_react_working_dir_traefik }}/traefik.toml"
-    group: sys
-    mode: "0600"
 
 - name: Docker Compose start and verify containers are running
   community.docker.docker_compose_v2:

@@ -1,4 +1,12 @@
+# Plugins must be declared here: when a static config file is present,
+# traefik ignores --experimental.* CLI flags
+[experimental]
+    [experimental.plugins]
+        [experimental.plugins.staticresponse]
+            modulename = "github.com/jdel/staticresponse"
+            version = "v0.0.1"
 
+# HTTPS
 [entryPoints]
     [entryPoints.web]
         address = ":80"
@@ -12,14 +20,21 @@
     [entryPoints.websecure]
         address = ":443"
             [entryPoints.websecure.http.tls]
-                certResolver = "default"
+                certResolver = "pyroresolver"
 
 [providers]
+    # Enable Docker in Traefik, so that it reads labels from Docker services
     [providers.docker]
         watch = true
+        # Do not expose all Docker services, only the ones explicitly exposed
         exposedByDefault = false
         network = "web"
+    # Dynamic configuration dropped in by the app roles (e.g. alert_api S3 assets)
+    [providers.file]
+        watch = true
+        directory = "/etc/traefik/dynamic"
 
+# Certificate
 [certificatesResolvers]
     [certificatesResolvers.pyroresolver]
         [certificatesResolvers.pyroresolver.acme]
@@ -28,6 +43,7 @@
             storage = "acme.json"
             caServer = "{{ cert_resolver_url }}"
 
+# Enable the Traefik log, for configurations and errors
 [log]
     filePath = "/var/log/log-file.log"
     level = "INFO"

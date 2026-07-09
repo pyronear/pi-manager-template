@@ -73,6 +73,10 @@
   hosts: platform_react_server
   become: true
   roles:
+    # tagged 'app' too: an app-only deploy must never end up without the proxy
+    - role: traefik
+      tags:
+        - app
     - role: platform_react
       tags:
         - app
@@ -81,6 +85,10 @@
   hosts: alert_server
   become: true
   roles:
+    # tagged 'app' too: an app-only deploy must never end up without the proxy
+    - role: traefik
+      tags:
+        - app
     - role: alert_api
       tags:
         - app

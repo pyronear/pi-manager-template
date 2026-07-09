@@ -1,5 +1,4 @@
 platform_react_working_dir_react: /home/pyro_platform_react
-platform_react_working_dir_traefik: /home/traefik
 platform_react_docker_image: pyronear/pyro-platform-react
 platform_react_docker_version: 0.3.8
 
@@ -9,6 +8,3 @@ platform_react_url_livestream: TO_CHANGE
 platform_react_sites_per_organization:
   - name: orga1
     sites: ["site1"]
-
-cert_resolver_mail:
-cert_resolver_url:

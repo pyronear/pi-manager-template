@@ -1,29 +1,6 @@
 name: alert-api
 
 services:
-  traefik:
-    image: traefik:v3.6.6
-    container_name: traefik
-    ports:
-      # http(s) traffic
-      - "80:80"
-      - "443:443"
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "{{ alert_api_working_dir_traefik }}/acme.json:/acme.json"
-      - "{{ alert_api_working_dir_traefik }}/traefik.toml:/etc/traefik/traefik.toml"
-      - "{{ alert_api_working_dir_traefik }}/dynamic_assets.toml:/etc/traefik/dynamic/assets.toml"
-      - "{{ alert_api_working_dir_traefik }}/logs:/var/log"
-    labels:
-      - "traefik.http.middlewares.strip-www.redirectregex.regex=^https?://(www\\.)(.+)"
-      - "traefik.http.middlewares.strip-www.redirectregex.replacement=https://$${2}"
-      - "traefik.http.middlewares.strip-www.redirectregex.permanent=true"
-    command:
-      # StaticResponse
-      - "--experimental.plugins.staticresponse.modulename=github.com/jdel/staticresponse"
-      - "--experimental.plugins.staticresponse.version=v0.0.1"
-    restart: always
-
   db:
     image: postgres:15-alpine
     expose:
@@ -82,6 +59,13 @@ services:
       interval: 10s
       timeout: 3s
       retries: 3
+    networks:
+      - default
+      - web
 
 volumes:
   postgres_data:
+
+networks:
+  web:
+    external: true
