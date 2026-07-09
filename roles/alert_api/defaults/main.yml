@@ -1,5 +1,6 @@
 alert_api_working_dir: /home/alert_api
-alert_api_working_dir_traefik: /home/traefik
+# Must match the traefik role defaults (shared reverse proxy)
+traefik_dynamic_dir: /home/traefik/dynamic
 alert_api_docker_version: 1.0.6
 
 alert_api_proxy_url:
@@ -27,6 +28,3 @@ alert_api_risk_api_url:
 alert_api_risk_api_login:
 alert_api_risk_api_pwd:
 alert_api_risk_refresh_hour_utc: 4
-
-cert_resolver_mail:
-cert_resolver_url:
