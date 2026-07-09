@@ -1,7 +1,7 @@
 
 .PHONY: require-container help ansible-up ansible-stop ping check-engines \
 	init-one-engine deploy-one-engine deploy-all-engines down up \
-	install-openvpn install-mediamtx update-mediamtx-conf install-annotation-server \
+	install-openvpn install-mediamtx update-mediamtx-conf update-reverse-ssh install-annotation-server \
 	install-platform-react-server install-alert-api-server install-temporal-server \
 	install-combined-server init-pi-zero sync-ssh-keys
 
@@ -73,6 +73,9 @@ install-mediamtx: require-container
 
 update-mediamtx-conf: require-container
 	ansible-playbook playbooks/update-mediamtx.yml -i inventory/hosts_prod -l mediamtx_server
+
+update-reverse-ssh: require-container
+	ansible-playbook playbooks/update-reverse-ssh.yml -i inventory/hosts_prod -l $(or $(LIMIT_HOSTS),engine_servers)
 
 install-annotation-server: require-container
 	ansible-playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l annotation_server
