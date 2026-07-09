@@ -1,6 +1,7 @@
 alert_api_working_dir: /home/alert_api
-# Must match the traefik role defaults (shared reverse proxy)
-traefik_dynamic_dir: /home/traefik/dynamic
+# Follows the traefik role's working dir (shared reverse proxy); the default
+# only applies if this role runs without the traefik role in the same play
+traefik_dynamic_dir: "{{ traefik_working_dir | default('/home/traefik') }}/dynamic"
 alert_api_docker_version: 1.0.6
 
 alert_api_proxy_url:
