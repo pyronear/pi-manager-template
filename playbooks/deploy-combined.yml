@@ -11,7 +11,9 @@
 
 # All services on a single VM behind one shared Traefik. The VM can also act
 # as the reverse_ssh_server (nothing to deploy: engines only need sshd and the
-# 'ubuntu' user there). The OpenVPN server stays on its own machine.
+# 'ubuntu' user there). VPN is deliberately out of scope: the OpenVPN server
+# stays on its own machine and no VPN client is installed here — if the alert
+# API on this VM must reach VPN-only engines, install the client separately.
 - name: Deploy alert API, platform and mediamtx on a single server
   hosts: combined_server
   become: true
