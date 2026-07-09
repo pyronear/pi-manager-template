@@ -35,6 +35,9 @@
     # e.g. "restrict,port-forwarding" to deny shell/exec on shared servers
     key_options: "{{ reverse_ssh_key_options | default(omit) }}"
   delegate_to: reverse_ssh_server
+  # concurrent writes to the same authorized_keys silently lose keys when
+  # several engines run this in parallel — serialize the delegated task
+  throttle: 1
 
 - name: Create a directory if it does not exist
   ansible.builtin.file:
