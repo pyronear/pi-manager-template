@@ -27,10 +27,21 @@
     force: false
     mode: 0600 # required by traefik
 
-- name: Create static dynamic conf file for traefik
+- name: Check whether traefik.toml was left as a directory by a broken deploy
+  ansible.builtin.stat:
+    path: "{{ alert_api_working_dir_traefik }}/traefik.toml"
+  register: traefik_toml_stat
+
+- name: Remove stale traefik.toml directory so the template can create the file
+  ansible.builtin.file:
+    path: "{{ alert_api_working_dir_traefik }}/traefik.toml"
+    state: absent
+  when: traefik_toml_stat.stat.isdir | default(false)
+
+- name: Create static and dynamic conf files for traefik
   ansible.builtin.template:
     src: "{{ item }}.j2"
-    dest: "{{ alert_api_working_dir_traefik }}/dynamic_assets.toml"
+    dest: "{{ alert_api_working_dir_traefik }}/{{ item }}"
     mode: 0600
   with_items:
     - "traefik.toml"
