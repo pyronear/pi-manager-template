@@ -17,6 +17,11 @@
 - name: Deploy alert API, platform and mediamtx on a single server
   hosts: combined_server
   become: true
+  pre_tasks:
+    - name: Register engine stream paths for mediamtx
+      ansible.builtin.set_fact:
+        mediamtx_paths: "{{ mediamtx_paths | default([]) + [{'name': item}] }}"
+      loop: "{{ groups['engine_servers'] | default([]) }}"
   roles:
     - common
     - docker

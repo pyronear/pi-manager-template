@@ -4,3 +4,8 @@ mediamtx_config_file: "{{ mediamtx_config_path }}/mediamtx.yml"
 mediamtx_image: bluenviron/mediamtx
 mediamtx_users: [] # utiliser le json qui est dans la plateforme ?
 mediamtx_paths: []
+# Set to a DNS name to expose WebRTC over HTTPS through the co-hosted shared
+# traefik (requires the traefik role on the same host)
+mediamtx_livestream_hostname: ''
+# Must match the traefik role defaults (shared reverse proxy)
+traefik_dynamic_dir: "{{ traefik_working_dir | default('/home/traefik') }}/dynamic"

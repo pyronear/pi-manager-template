@@ -21,3 +21,12 @@
     volumes:
       - "{{ mediamtx_config_file }}:/mediamtx.yml:ro"
     command: "/mediamtx.yml"
+
+# When co-hosted with the shared traefik role, publish an HTTPS route for the
+# WebRTC endpoint (TLS terminated by traefik, proxied to mediamtx on 8889)
+- name: Publish livestream route to the shared traefik dynamic conf directory
+  ansible.builtin.template:
+    src: livestream.toml.j2
+    dest: "{{ traefik_dynamic_dir }}/mediamtx_livestream.toml"
+    mode: 0600
+  when: mediamtx_livestream_hostname is defined and mediamtx_livestream_hostname
