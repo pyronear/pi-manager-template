@@ -1,0 +1,8 @@
+---
+# Re-point engine reverse-ssh tunnels at the current reverse_ssh_server
+# (e.g. after moving it to another VM) without a full rpi-init run.
+- name: Update reverse SSH tunnels on engines
+  hosts: engine_servers
+  become: true
+  roles:
+    - reverse_ssh
