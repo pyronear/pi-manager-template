@@ -8,6 +8,7 @@
         that:
           - ansible_version.minor | int >= 17
         fail_msg: "Ansible version must be 2.17 or higher."
+      tags: always
 
 # All services on a single VM behind one shared Traefik. The VM can also act
 # as the reverse_ssh_server (nothing to deploy: engines only need sshd and the
@@ -22,10 +23,17 @@
       ansible.builtin.set_fact:
         mediamtx_paths: "{{ mediamtx_paths | default([]) + [{'name': item}] }}"
       loop: "{{ groups['engine_servers'] | default([]) }}"
+      tags: always
   roles:
-    - common
-    - docker
-    - traefik
-    - mediamtx
-    - platform_react
-    - alert_api
+    - role: common
+      tags: common
+    - role: docker
+      tags: docker
+    - role: traefik
+      tags: traefik
+    - role: mediamtx
+      tags: mediamtx
+    - role: platform_react
+      tags: platform
+    - role: alert_api
+      tags: alert_api
