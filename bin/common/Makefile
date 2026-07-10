@@ -30,6 +30,8 @@ help:
 	@echo "  make install-annotation-server | install-platform-react-server"
 	@echo "  make install-alert-api-server | install-temporal-server"
 	@echo "  make install-combined-server   (traefik + mediamtx + platform + alert API on one VM)"
+	@echo "  make update-combined-api | update-combined-platform | update-combined-mediamtx | update-combined-traefik"
+	@echo "                                 (redeploy a single service on the combined server)"
 
 ansible-up:
 	@if [ -n "$$(git status --porcelain)" ]; then \
@@ -91,6 +93,18 @@ install-temporal-server: require-container
 
 install-combined-server: require-container
 	ansible-playbook playbooks/deploy-combined.yml -i inventory/hosts_prod -l combined_server
+
+update-combined-api: require-container
+	ansible-playbook playbooks/deploy-combined.yml -i inventory/hosts_prod -l combined_server --tags alert_api
+
+update-combined-platform: require-container
+	ansible-playbook playbooks/deploy-combined.yml -i inventory/hosts_prod -l combined_server --tags platform
+
+update-combined-mediamtx: require-container
+	ansible-playbook playbooks/deploy-combined.yml -i inventory/hosts_prod -l combined_server --tags mediamtx
+
+update-combined-traefik: require-container
+	ansible-playbook playbooks/deploy-combined.yml -i inventory/hosts_prod -l combined_server --tags traefik
 
 init-pi-zero: require-container
 	ansible-playbook playbooks/rpi-init-pi-zero.yml -i inventory/hosts_prod -l $(SITE)
