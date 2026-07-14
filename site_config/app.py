@@ -62,7 +62,7 @@ SIMPLE_DRAFT_KEYS = [
     "site_name", "num_cams", "latlon", "elevation", "aov", "n_poses", "cam_type",
     "is_trustable", "org_name", "user_login", "user_role", "repo_path", "cam_user",
     "wifi_ssid", "static_iface", "static_ip", "static_gw", "watchdog", "shelly_ip",
-    "group_choice", "new_group", "ssh_port", "pi_local_ip",
+    "group_choice", "new_group", "ssh_port", "pi_local_ip", "vpn_ip",
 ]
 DYNAMIC_KEY_RE = re.compile(r"^(ip|adapter|adapter_custom)_\d+$")
 
@@ -719,9 +719,11 @@ def main() -> None:
     st.caption("Runs `make init-one-engine SITE=<site>` inside the pyro-ansible container.")
 
     host_in_inv = False
+    current_ansible_host = ""
     if site and inv_path.exists():
         inv_hosts = yaml.safe_load(inv_path.read_text())["all"].get("hosts") or {}
         host_in_inv = site in inv_hosts
+        current_ansible_host = (inv_hosts.get(site) or {}).get("ansible_host") or ""
     setup_missing = []
     if not site:
         setup_missing.append("site name")
@@ -760,6 +762,58 @@ def main() -> None:
         else:
             st.error(f"init-one-engine failed (exit {proc.returncode}) — full output above")
 
+    # ---- 7. switch to VPN IP
+    st.header("7. Switch ansible_host to the VPN IP")
+    st.caption(
+        "Init installs the OpenVPN client, giving the Pi a 192.168.255.x address. "
+        "Switch hosts_prod to it so future deploys go through the VPN instead of the local network."
+    )
+    if current_ansible_host:
+        st.write(f"Current `ansible_host` for `{site}`: `{current_ansible_host}`")
+
+    def detect_vpn_ip() -> None:
+        probe = subprocess.run(
+            ["docker", "exec", "pyro-ansible", "ansible", site, "-i", "inventory/hosts_prod",
+             "-m", "command", "-a", "ip -4 -o addr show tun0"],
+            capture_output=True, text=True,
+        )
+        found = re.search(r"inet (192\.168\.255\.\d+)", probe.stdout)
+        if found:
+            st.session_state["vpn_ip"] = found.group(1)
+            st.session_state["vpn_detect_msg"] = ("success", f"VPN IP detected: {found.group(1)}")
+        else:
+            st.session_state["vpn_detect_msg"] = (
+                "error",
+                "Could not detect tun0 on the Pi — is init done? "
+                f"Last output: {(probe.stdout or probe.stderr).strip()[-300:]}",
+            )
+
+    v1, v2 = st.columns(2)
+    with v1:
+        st.session_state.setdefault("vpn_ip", "")
+        st.text_input("VPN IP", key="vpn_ip", placeholder="192.168.255.x")
+        if container_up:
+            st.button("Detect VPN IP (via tun0 on the Pi)", key="btn_vpn_detect",
+                      on_click=detect_vpn_ip, disabled=not host_in_inv)
+        msg = st.session_state.pop("vpn_detect_msg", None)
+        if msg:
+            (st.success if msg[0] == "success" else st.error)(msg[1])
+    with v2:
+        vpn_ip = st.session_state["vpn_ip"].strip()
+        if st.button("Switch ansible_host to VPN IP", key="btn_vpn_switch",
+                     disabled=not (host_in_inv and vpn_ip)):
+            try:
+                changes = update_hosts_prod(
+                    inv_path, site, vpn_ip, int(st.session_state["ssh_port"]), None,
+                )
+                if changes:
+                    st.success(f"hosts_prod updated — {site} now targets {vpn_ip}")
+                    current_ansible_host = vpn_ip
+                else:
+                    st.info("hosts_prod already targets this IP")
+            except (ValueError, RuntimeError) as exc:
+                st.error(str(exc))
+
     # ---- sidebar progress (filesystem-based, survives restarts)
     st.sidebar.divider()
     st.sidebar.subheader("Progress")
@@ -772,6 +826,7 @@ def main() -> None:
         ]
         if inv_path.exists():
             checks.append(("host in hosts_prod", host_in_inv))
+            checks.append(("ansible_host on VPN", current_ansible_host.startswith("192.168.255.")))
         for label, done in checks:
             st.sidebar.write(("✅ " if done else "⬜ ") + label)
     else:
