@@ -616,9 +616,12 @@ def main() -> None:
         st.session_state.setdefault("shelly_ip", "192.168.1.97")
         if st.session_state["watchdog"] == "shelly":
             st.text_input("Shelly IP", key="shelly_ip")
-        st.session_state.setdefault("pi_local_ip", "192.168.1.99")
-        st.text_input("Pi IP for setup (ansible_host)", key="pi_local_ip",
-                      help="IP the Pi answers on during setup — used in hosts_prod and by init-one-engine.")
+        st.session_state.setdefault("pi_local_ip", "")
+        st.text_input("Current Pi IP (wifi after flash)", key="pi_local_ip",
+                      placeholder="192.168.1.71",
+                      help="IP the Pi answers on right now (usually wifi/DHCP after flashing). "
+                           "Used as ansible_host in hosts_prod so init-one-engine can connect; "
+                           "the playbook then configures the static IP above on eth0.")
 
     site_vals.update({
         "static_iface": st.session_state["static_iface"],
