@@ -14,6 +14,21 @@
     state: directory
     mode: '0755'
 
+- name: Check that the pyro-engine checkout ships the Pi Zero watchdog
+  ansible.builtin.stat:
+    path: "{{ engine_cron_working_dir }}/watchdog/zero/main_pi/watchdog.py"
+  register: engine_cron_watchdog_script
+  when: pi_zero_hostname | default("") | length > 0
+
+- name: Assert the Pi Zero watchdog script is present
+  ansible.builtin.assert:
+    that:
+      - engine_cron_watchdog_script.stat.exists
+    fail_msg: >-
+      watchdog/zero not found in {{ engine_cron_working_dir }} —
+      pyro_engine_git_ref must be v1.0.12 or later.
+  when: pi_zero_hostname | default("") | length > 0
+
 - name: Generate main pi watchdog .env file
   ansible.builtin.template:
     src: watchdog_main.env.j2
