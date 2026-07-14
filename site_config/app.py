@@ -593,12 +593,10 @@ def main() -> None:
     with s2:
         st.session_state.setdefault("cam_user", "admin")
         st.text_input("Camera user", key="cam_user")
-        st.session_state.setdefault("cam_pwd", "@Pyronear")
         st.text_input("Camera password", key="cam_pwd", type="password")
     with s3:
         st.session_state.setdefault("wifi_ssid", "Pyronear")
         st.text_input("Wifi SSID", key="wifi_ssid")
-        st.session_state.setdefault("wifi_password", "@Pyronear")
         st.text_input("Wifi password", key="wifi_password", type="password")
 
     # ---- 5. host files
