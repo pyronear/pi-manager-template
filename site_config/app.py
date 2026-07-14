@@ -601,27 +601,29 @@ def main() -> None:
 
     # ---- 5. host files
     st.header("5. Host files (sister repo)")
-    h1, h2, h3 = st.columns(3)
+    st.session_state.setdefault("pi_local_ip", "")
+    st.text_input("Current Pi IP (wifi after flash)", key="pi_local_ip",
+                  placeholder="192.168.1.71",
+                  help="IP the Pi answers on right now (usually wifi/DHCP after flashing). "
+                       "Used as ansible_host in hosts_prod so init-one-engine can connect; "
+                       "the playbook then configures the static IP below on eth0.")
+
+    h1, h2, h3, h4 = st.columns(4)
     with h1:
         st.session_state.setdefault("static_iface", "eth0")
         st.text_input("Static IP interface", key="static_iface")
+    with h2:
         st.session_state.setdefault("static_ip", "192.168.1.99")
         st.text_input("Static IP address", key="static_ip")
-    with h2:
+    with h3:
         st.session_state.setdefault("static_gw", "192.168.1.1")
         st.text_input("Static IP gateway", key="static_gw")
+    with h4:
         st.session_state.setdefault("watchdog", "none")
         st.radio("Watchdog", ["none", "shelly"], key="watchdog", horizontal=True)
-    with h3:
         st.session_state.setdefault("shelly_ip", "192.168.1.97")
         if st.session_state["watchdog"] == "shelly":
             st.text_input("Shelly IP", key="shelly_ip")
-        st.session_state.setdefault("pi_local_ip", "")
-        st.text_input("Current Pi IP (wifi after flash)", key="pi_local_ip",
-                      placeholder="192.168.1.71",
-                      help="IP the Pi answers on right now (usually wifi/DHCP after flashing). "
-                           "Used as ansible_host in hosts_prod so init-one-engine can connect; "
-                           "the playbook then configures the static IP above on eth0.")
 
     site_vals.update({
         "static_iface": st.session_state["static_iface"],
