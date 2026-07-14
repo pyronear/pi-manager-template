@@ -19,3 +19,5 @@
   roles:
     - engine
     - engine_cron # needs to be laucnhed after the engine's installation
+    - role: shelly_watchdog # engines paired with a Shelly relay instead of a Pi Zero
+      when: shelly_enabled | default(false) | bool
