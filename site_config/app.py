@@ -157,6 +157,19 @@ def get_or_create_org(api_url: str, auth: dict, org_name: str) -> tuple[int, boo
     return resp["id"], True
 
 
+def fetch_pose_ids(api_url: str, auth: dict, camera_id: int) -> list[int]:
+    """Recover pose ids of an existing camera, ordered by patrol_id. Empty on failure."""
+    try:
+        poses = api_request("get", f"{api_url}/api/v1/poses/", auth)
+        cam_poses = sorted(
+            (p for p in poses if p.get("camera_id") == camera_id),
+            key=lambda p: p.get("patrol_id", 0),
+        )
+        return [p["id"] for p in cam_poses]
+    except Exception:
+        return []
+
+
 def create_cameras(api_url: str, auth: dict, org_id: int, cams: list[dict],
                    site_vals: dict, prev_results: dict) -> tuple[dict, list[str]]:
     """Create cameras + poses, returning {name: {id, pose_ids}} and log lines."""
@@ -169,12 +182,18 @@ def create_cameras(api_url: str, auth: dict, org_id: int, cams: list[dict],
     for cam in cams:
         name = cam["name"]
         if name in existing_by_name:
-            prev = prev_results.get(name, {})
-            results[name] = {
-                "id": existing_by_name[name]["id"],
-                "pose_ids": prev.get("pose_ids", []),
-            }
-            logs.append(f"Camera '{name}' already exists (id {results[name]['id']}), skipped.")
+            cam_id = existing_by_name[name]["id"]
+            pose_ids = prev_results.get(name, {}).get("pose_ids", [])
+            if not pose_ids and site_vals["n_poses"] > 0:
+                pose_ids = fetch_pose_ids(api_url, auth, cam_id)
+                if pose_ids:
+                    logs.append(f"Camera '{name}' exists (id {cam_id}), recovered pose_ids {pose_ids}")
+                else:
+                    logs.append(f"Camera '{name}' exists (id {cam_id}) but its pose ids could not "
+                                "be recovered — fill pose_ids in vars.yml manually.")
+            else:
+                logs.append(f"Camera '{name}' already exists (id {cam_id}), skipped.")
+            results[name] = {"id": cam_id, "pose_ids": pose_ids}
             if site_vals["n_poses"] > 0:
                 ptz_index += 1
             continue
@@ -256,27 +275,28 @@ def build_vault_yml(secrets: dict) -> str:
     )
 
 
-def encrypt_vault(path: Path, content: str, vault_password_file: Path | None) -> bool:
-    """Write vault content, encrypting via ansible-vault. Returns True if encrypted."""
+def encrypt_vault(path: Path, content: str, vault_password_file: Path | None) -> None:
+    """Write vault content encrypted via ansible-vault. Never writes plaintext."""
+    if not shutil.which("ansible-vault"):
+        raise RuntimeError("ansible-vault not found on PATH — run 'make dependencies' and retry")
+    if not (vault_password_file and vault_password_file.exists()):
+        raise RuntimeError(
+            f"Vault password file not found ({vault_password_file}) — "
+            "set VAULT_PASSWORD_FILE in the root .env"
+        )
     tmp = path.with_name(path.name + ".tmp")
     tmp.write_text(content)
-    if (
-        vault_password_file
-        and vault_password_file.exists()
-        and shutil.which("ansible-vault")
-    ):
+    try:
         proc = subprocess.run(
             ["ansible-vault", "encrypt", str(tmp),
              "--vault-password-file", str(vault_password_file)],
             capture_output=True, text=True,
         )
         if proc.returncode != 0:
-            tmp.unlink(missing_ok=True)
             raise RuntimeError(f"ansible-vault encrypt failed: {proc.stderr.strip()}")
         tmp.replace(path)
-        return True
-    tmp.replace(path)
-    return False
+    finally:
+        tmp.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------- hosts_prod editing
@@ -304,10 +324,19 @@ def update_hosts_prod(inv_path: Path, site: str, ip: str, port: int,
     children = data["all"].get("children") or {}
     changes = []
 
+    entry = f"    {site}:\n      ansible_host: {ip}\n      reverse_ssh_port: {port}\n"
     if site not in hosts:
-        entry = f"    {site}:\n      ansible_host: {ip}\n      reverse_ssh_port: {port}\n"
         text = insert_after(text, r"^all:\n  hosts:\n", entry)
         changes.append("host entry under all.hosts")
+    else:
+        current = hosts.get(site) or {}
+        if current.get("ansible_host") != ip or current.get("reverse_ssh_port") != port:
+            # replace the host block (4-space key + its 6-space attribute lines)
+            pattern = rf"^    {re.escape(site)}:\n(?:      \S.*\n)*"
+            text, count = re.subn(pattern, entry, text, count=1, flags=re.M)
+            if count != 1:
+                raise RuntimeError(f"could not locate host entry '{site}' to update")
+            changes.append("host entry updated (ansible_host/reverse_ssh_port)")
 
     engine_hosts = (children.get("engine_servers") or {}).get("hosts") or {}
     if site not in engine_hosts:
@@ -336,7 +365,11 @@ def update_hosts_prod(inv_path: Path, site: str, ip: str, port: int,
     new_data = yaml.safe_load(text)
     new_hosts = new_data["all"]["hosts"]
     new_engines = new_data["all"]["children"]["engine_servers"]["hosts"]
-    if site not in new_hosts or site not in new_engines:
+    if (
+        site not in new_engines
+        or (new_hosts.get(site) or {}).get("ansible_host") != ip
+        or (new_hosts.get(site) or {}).get("reverse_ssh_port") != port
+    ):
         raise RuntimeError("hosts_prod validation failed after edit, file left untouched")
 
     tmp = inv_path.with_name(inv_path.name + ".tmp")
@@ -624,7 +657,8 @@ def main() -> None:
     f1, f2, f3 = st.columns(3)
     with f1:
         vars_exists = site_dir is not None and (site_dir / "vars.yml").exists()
-        if st.button("Write vars.yml", key="btn_vars", disabled=not ready or (vars_exists and not overwrite)):
+        if st.button("Write vars.yml", key="btn_vars",
+                     disabled=not ready or bool(missing_ids) or (vars_exists and not overwrite)):
             site_dir.mkdir(parents=True, exist_ok=True)
             content = build_vars_yml(cams, cam_results, site_vals)
             (site_dir / "vars.yml").write_text(content)
@@ -649,16 +683,8 @@ def main() -> None:
             vpf = root_env.get("VAULT_PASSWORD_FILE")
             vpf_path = resolve_path(vpf) if vpf else None
             try:
-                encrypted = encrypt_vault(site_dir / "vars.vault.yml", content, vpf_path)
-                if encrypted:
-                    st.success(f"Wrote and encrypted {site_dir / 'vars.vault.yml'}")
-                else:
-                    st.warning(
-                        f"Wrote {site_dir / 'vars.vault.yml'} in PLAINTEXT "
-                        "(ansible-vault or VAULT_PASSWORD_FILE unavailable). Encrypt it with:\n\n"
-                        f"`ansible-vault encrypt {site_dir / 'vars.vault.yml'} "
-                        f"--vault-password-file {vpf or '<vault password file>'}`"
-                    )
+                encrypt_vault(site_dir / "vars.vault.yml", content, vpf_path)
+                st.success(f"Wrote and encrypted {site_dir / 'vars.vault.yml'}")
             except RuntimeError as exc:
                 st.error(str(exc))
         if not secrets_ok:
@@ -688,6 +714,23 @@ def main() -> None:
     # ---- 6. launch
     st.header("6. Launch init-one-engine")
     st.caption("Runs `make init-one-engine SITE=<site>` inside the pyro-ansible container.")
+
+    host_in_inv = False
+    if site and inv_path.exists():
+        inv_hosts = yaml.safe_load(inv_path.read_text())["all"].get("hosts") or {}
+        host_in_inv = site in inv_hosts
+    setup_missing = []
+    if not site:
+        setup_missing.append("site name")
+    if site_dir is None or not (site_dir / "vars.yml").exists():
+        setup_missing.append("vars.yml")
+    if site_dir is None or not (site_dir / "vars.vault.yml").exists():
+        setup_missing.append("vars.vault.yml")
+    if not host_in_inv:
+        setup_missing.append("hosts_prod entry")
+    if setup_missing:
+        st.info(f"Complete step 5 first — missing: {', '.join(setup_missing)}")
+
     container_up = False
     if shutil.which("docker"):
         probe = subprocess.run(
@@ -699,7 +742,7 @@ def main() -> None:
         st.warning("pyro-ansible container is not running. Start it first:")
         st.code("make ansible-up", language="bash")
         st.code(f"make init-one-engine SITE={site or '<site>'}", language="bash")
-    elif st.button("Run init-one-engine", key="btn_run", type="primary", disabled=not site):
+    elif st.button("Run init-one-engine", key="btn_run", type="primary", disabled=bool(setup_missing)):
         cmd = ["docker", "exec", "pyro-ansible", "make", "init-one-engine", f"SITE={site}"]
         st.write(f"Running: `{' '.join(cmd)}`")
         box = st.empty()
@@ -725,8 +768,7 @@ def main() -> None:
             ("vars.vault.yml written", site_dir is not None and (site_dir / "vars.vault.yml").exists()),
         ]
         if inv_path.exists():
-            inv_hosts = yaml.safe_load(inv_path.read_text())["all"].get("hosts") or {}
-            checks.append(("host in hosts_prod", site in inv_hosts))
+            checks.append(("host in hosts_prod", host_in_inv))
         for label, done in checks:
             st.sidebar.write(("✅ " if done else "⬜ ") + label)
     else:
