@@ -50,19 +50,6 @@
     - item.value is none or item.value | length == 0
   no_log: true
 
-- name: Check Plateform variables. no_log=true
-  ansible.builtin.fail:
-    msg: "Variable '{{ item.name }}' is empty or None."
-  loop:
-    - { name: "api_dns",     value: "{{ api_dns }}" }
-    - { name: "admin_login", value: "{{ admin_login }}" }  # DOES THE PLATFORM REALLY NEED ADMIN PWD ?
-    - { name: "admin_pwd",   value: "{{ admin_pwd }}" }
-    - { name: "prefix",      value: "{{ prefix }}" }
-  when:
-    - inventory_hostname in groups["platform_py_server"]
-    - item.value is none or item.value | length == 0
-  no_log: true
-
 - name: Check Annotation server variables. no_log=true
   ansible.builtin.fail:
     msg: "Variable '{{ item.name }}' is empty or None."
@@ -85,7 +72,6 @@
   ansible.builtin.set_fact:
     group_list:
       - openvpn
-      - platform_py_server
       - alert_server
 
 - name: Verify that each group contains only one host

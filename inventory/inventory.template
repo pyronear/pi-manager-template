@@ -17,9 +17,6 @@ all:
         alert_server:
         alert_server_preprod:
 
-    platform_py_server:
-      hosts:
-
     platform_react_server:
       hosts:
 
@@ -33,6 +30,9 @@ all:
       hosts:
 
     temporal_server:
+      hosts:
+
+    combined_server:
       hosts:
 
     pi_zero:

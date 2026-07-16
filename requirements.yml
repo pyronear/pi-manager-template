@@ -12,6 +12,7 @@ collections:
   - name: grafana.grafana
     version: 5.7.0
   - name: community.docker
+  - name: community.general
   - name: amazon.aws
   - name: community.crypto
   - name: ansible.posix

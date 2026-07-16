@@ -1,0 +1,8 @@
+---
+shelly_watchdog_ip: "192.168.1.97"
+shelly_watchdog_output_id: 0
+shelly_watchdog_script_name: "pi_watchdog"
+shelly_watchdog_repo_dir: "/home/{{ project_name }}"
+shelly_watchdog_device_dir: "{{ shelly_watchdog_repo_dir }}/watchdog/shelly/device"
+shelly_watchdog_work_dir: "/home/pi/.shelly_watchdog"
+shelly_watchdog_health_url: "http://{{ static_ip_address }}:8081/health"

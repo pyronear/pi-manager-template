@@ -1,0 +1,11 @@
+[http.routers.livestream]
+rule = "Host(`{{ mediamtx_livestream_hostname }}`)"
+service = "livestream"
+entryPoints = ["websecure"]
+tls.certResolver = "pyroresolver"
+
+[http.services.livestream]
+  [http.services.livestream.loadBalancer]
+    [[http.services.livestream.loadBalancer.servers]]
+      # mediamtx runs with host networking; reach it through the host's address
+      url = "http://{{ mediamtx_livestream_backend | default(ansible_default_ipv4.address) }}:8889"

@@ -1,0 +1,27 @@
+name: traefik
+
+services:
+  traefik:
+    image: {{ traefik_image }}
+    container_name: traefik
+    ports:
+      # http(s) traffic
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "{{ traefik_working_dir }}/acme.json:/acme.json"
+      - "{{ traefik_working_dir }}/traefik.toml:/etc/traefik/traefik.toml"
+      - "{{ traefik_dynamic_dir }}:/etc/traefik/dynamic"
+      - "{{ traefik_working_dir }}/logs:/var/log"
+    labels:
+      - "traefik.http.middlewares.strip-www.redirectregex.regex=^https?://(www\\.)(.+)"
+      - "traefik.http.middlewares.strip-www.redirectregex.replacement=https://$${2}"
+      - "traefik.http.middlewares.strip-www.redirectregex.permanent=true"
+    restart: always
+    networks:
+      - web
+
+networks:
+  web:
+    external: true

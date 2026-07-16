@@ -1,0 +1,116 @@
+---
+- name: Check Shelly watchdog prerequisites
+  ansible.builtin.assert:
+    that:
+      - pi_zero_hostname is not defined or pi_zero_hostname | length == 0
+      - static_ip_address is defined
+      - static_ip_address | length > 0
+      - config_json is defined
+    fail_msg: >-
+      Shelly hosts need static_ip_address and config_json in host_vars,
+      and must not set pi_zero_hostname (the two watchdog variants are exclusive).
+
+- name: Check that the pyro-engine checkout ships the Shelly watchdog
+  ansible.builtin.stat:
+    path: "{{ shelly_watchdog_device_dir }}/setup_shelly_watchdog.sh"
+  register: shelly_watchdog_setup_script
+
+- name: Assert the Shelly watchdog scripts are present
+  ansible.builtin.assert:
+    that:
+      - shelly_watchdog_setup_script.stat.exists
+    fail_msg: >-
+      watchdog/shelly not found in {{ shelly_watchdog_repo_dir }} —
+      pyro_engine_git_ref must be v1.0.12 or later.
+
+- name: Generate main pi watchdog .env file
+  ansible.builtin.template:
+    src: watchdog.env.j2
+    dest: /home/pi/watchdog.env
+    owner: pi
+    group: pi
+    mode: "0644"
+
+- name: Add cron job for main pi watchdog
+  ansible.builtin.cron:
+    name: "Main pi watchdog"
+    minute: "5,15,25,35,45,55"
+    job: "/usr/bin/python3 {{ shelly_watchdog_repo_dir }}/watchdog/shelly/main_pi/watchdog.py >> /home/pi/watchdog_main.log 2>&1"
+    user: pi
+
+- name: Ensure Shelly watchdog work directory exists
+  ansible.builtin.file:
+    path: "{{ shelly_watchdog_work_dir }}"
+    state: directory
+    owner: pi
+    group: pi
+    mode: "0755"
+
+- name: Read watchdog.js from the pyro-engine checkout
+  ansible.builtin.slurp:
+    src: "{{ shelly_watchdog_device_dir }}/watchdog.js"
+  register: shelly_watchdog_js_src
+
+- name: Assert watchdog.js still declares PI_URL
+  ansible.builtin.assert:
+    that:
+      - shelly_watchdog_js_src.content | b64decode is search('let PI_URL = ')
+    fail_msg: >-
+      PI_URL declaration not found in watchdog.js — the upstream layout
+      changed, update this role before deploying.
+
+- name: Write watchdog.js patched with this host's health URL
+  ansible.builtin.copy:
+    content: >-
+      {{ shelly_watchdog_js_src.content | b64decode
+         | regex_replace('let PI_URL = .*;', 'let PI_URL = "' ~ shelly_watchdog_health_url ~ '";') }}
+    dest: "{{ shelly_watchdog_work_dir }}/watchdog.js"
+    owner: pi
+    group: pi
+    mode: "0644"
+  register: shelly_watchdog_js
+
+- name: Harden the Shelly device configuration
+  ansible.builtin.command:
+    cmd: bash {{ shelly_watchdog_device_dir }}/harden_shelly.sh
+    chdir: "{{ shelly_watchdog_work_dir }}"
+  environment:
+    SHELLY_IP: "{{ shelly_watchdog_ip }}"
+    OUT_DIR: "{{ shelly_watchdog_work_dir }}"
+  changed_when: false
+
+- name: Query Shelly script list
+  ansible.builtin.uri:
+    url: "http://{{ shelly_watchdog_ip }}/rpc/Script.List"
+    return_content: true
+  register: shelly_watchdog_scripts
+
+- name: Determine whether the watchdog script is installed and running
+  ansible.builtin.set_fact:
+    shelly_watchdog_running: >-
+      {{ shelly_watchdog_scripts.json.scripts | default([])
+         | selectattr('name', 'equalto', shelly_watchdog_script_name)
+         | selectattr('running', 'defined') | selectattr('running')
+         | list | length > 0 }}
+
+- name: Install and start the Shelly watchdog script
+  ansible.builtin.command:
+    cmd: bash {{ shelly_watchdog_device_dir }}/setup_shelly_watchdog.sh
+    chdir: "{{ shelly_watchdog_work_dir }}"
+  environment:
+    SHELLY_IP: "{{ shelly_watchdog_ip }}"
+    SCRIPT_NAME: "{{ shelly_watchdog_script_name }}"
+    SCRIPT_FILE: "{{ shelly_watchdog_work_dir }}/watchdog.js"
+  when: shelly_watchdog_js is changed or not (shelly_watchdog_running | bool)
+  changed_when: true
+
+- name: Verify the Shelly watchdog script is running
+  ansible.builtin.uri:
+    url: "http://{{ shelly_watchdog_ip }}/rpc/Script.List"
+    return_content: true
+  register: shelly_watchdog_scripts_after
+  failed_when: >-
+    shelly_watchdog_scripts_after.json.scripts | default([])
+    | selectattr('name', 'equalto', shelly_watchdog_script_name)
+    | selectattr('running', 'defined') | selectattr('running')
+    | list | length == 0

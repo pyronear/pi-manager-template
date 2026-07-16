@@ -1,7 +1,13 @@
 # Watchdog Setup
 
-Two watchdog scripts monitor hardware health and power-cycle relays on failure.
-Both are managed by Ansible and read their configuration from a `.env` file generated on the device.
+Watchdog scripts monitor hardware health and power-cycle relays on failure.
+All are managed by Ansible and read their configuration from a `.env` file generated on the device.
+
+A site uses **one** of two variants (set exactly one of `pi_zero_hostname` / `shelly_enabled`):
+- **Pi Zero pairing** — the engine and a Pi Zero watchdog each other through power relays.
+- **Shelly pairing** — a Shelly Pro smart relay watches the engine, and the engine asks the Shelly to power-cycle the cameras/router.
+
+All watchdog scripts live in the [pyro-engine](https://github.com/pyronear/pyro-engine) repo (`watchdog/`), which requires `pyro_engine_git_ref` >= `v1.0.12`.
 
 ---
 
@@ -9,10 +15,12 @@ Both are managed by Ansible and read their configuration from a `.env` file gene
 
 | Script | Runs on | Monitors | Cron schedule |
 |--------|---------|----------|---------------|
-| `watchdog/main_pi/watchdog.py` | Engine (`/home/pyro-engine/`) | Pi Zero reachability | `5,15,25,35,45,55 * * * *` |
-| `watchdog/pi_zero/watchdog.py` | Pi Zero | Engine health + camera pings | `*/10 * * * *` |
+| `watchdog/zero/main_pi/watchdog.py` | Engine (`/home/pyro-engine/`) | Pi Zero reachability | `5,15,25,35,45,55 * * * *` |
+| `watchdog/zero/pi_zero/watchdog.py` | Pi Zero | Engine health + camera pings | `*/10 * * * *` |
+| `watchdog/shelly/main_pi/watchdog.py` | Engine (`/home/pyro-engine/`) | Internet + camera pings | `5,15,25,35,45,55 * * * *` |
+| `watchdog.js` (Shelly script) | Shelly device | Engine health endpoint | every 10 min |
 
-The two schedules are offset by 5 minutes so they never run simultaneously.
+The paired schedules are offset by 5 minutes so they never run simultaneously.
 
 ---
 
@@ -45,6 +53,43 @@ Deployed by the `pi_zero_watchdog` role, called from `rpi-init-pi-zero.yml`.
 
 `MAIN_PI_IP` is derived from `hostvars[relay_host]['static_ip_address']`.
 `CAM_IPS` is derived from the keys of `hostvars[relay_host]['config_json']`.
+
+---
+
+## Shelly watchdog
+
+For sites where the engine is paired with a Shelly Pro relay instead of a Pi Zero.
+Deployed by the `shelly_watchdog` role, called from `deploy-engines.yml`.
+
+Only runs if `shelly_enabled: true` is set in the engine's host_vars (mutually
+exclusive with `pi_zero_hostname`).
+
+The role manages both sides:
+
+- **Engine side** — writes `/home/pi/watchdog.env` (`SHELLY_IP`, `SHELLY_OUTPUT_ID`,
+  `CAM_IPS` from the keys of the host's `config_json`) and a cron entry for
+  `watchdog/shelly/main_pi/watchdog.py`, which checks internet + cameras and asks
+  the Shelly to power-cycle output 0 on repeated failures.
+- **Shelly side** — from the engine (which shares the Shelly's LAN), runs the
+  upstream `harden_shelly.sh` (disables cloud/MQTT/BLE/AP, forces outputs on at
+  boot) and uploads `watchdog.js` with `PI_URL` patched to the engine's
+  `http://<static_ip_address>:8081/health` endpoint. The Shelly then reboots the
+  engine's power if the health endpoint fails repeatedly. The play verifies the
+  script reports `running: true` at the end.
+
+The upload is skipped when the patched `watchdog.js` is unchanged and the script
+is already running, so a routine re-deploy does not reset the Shelly's reboot budget.
+
+| Variable | Where | Description |
+|----------|-------|-------------|
+| `shelly_enabled` | `host_vars/<engine>/vars.yml` | Set to `true` to deploy the Shelly watchdog |
+| `shelly_watchdog_ip` | role default | Shelly's fixed LAN IP (`192.168.1.97`, same on every site) |
+| `shelly_watchdog_output_id` | role default | Shelly output power-cycled by the engine (`0`) |
+
+**Prerequisite (manual, once per device):** put the Shelly on the site's Wi-Fi at
+its fixed IP with the Shelly Smart Control app (Bluetooth onboarding). See
+`watchdog/shelly/device/README.md` in pyro-engine. Make sure the Shelly is not
+powered by one of the outputs it cuts.
 
 ---
 
