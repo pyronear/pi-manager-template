@@ -16,7 +16,7 @@
     - check_vars
 
 - name: Upgrade, install git and docker
-  hosts: alert_api_servers:platform_react_server:openvpn:mediamtx_server:temporal_server
+  hosts: alert_server:platform_react_server:openvpn:mediamtx_server:temporal_server
   become: true
   roles:
     - common
@@ -51,7 +51,7 @@
     - servers
 
 - name: Add VPN client
-  hosts: alert_api_servers
+  hosts: alert_server
   become: true
   serial: 1
   tasks:
@@ -82,7 +82,7 @@
         - app
 
 - name: Deploy service alert_api
-  hosts: alert_api_servers
+  hosts: alert_server
   become: true
   roles:
     # tagged 'app' too: an app-only deploy must never end up without the proxy

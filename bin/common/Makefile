@@ -2,7 +2,8 @@
 .PHONY: require-container help ansible-up ansible-stop ping check-engines \
 	init-one-engine deploy-one-engine deploy-all-engines down up \
 	install-openvpn install-mediamtx update-mediamtx-conf update-reverse-ssh install-annotation-server \
-	install-platform-react-server install-alert-api-server install-alert-api-preprod-server install-temporal-server \
+	install-platform-react-server install-platform-react-preprod-server \
+	install-alert-api-server install-alert-api-preprod-server install-temporal-server \
 	install-combined-server init-pi-zero sync-ssh-keys
 
 # Operational targets must run inside the pyro-ansible container, where the
@@ -29,6 +30,8 @@ help:
 	@echo "  make install-openvpn | install-mediamtx | update-mediamtx-conf"
 	@echo "  make install-annotation-server | install-platform-react-server"
 	@echo "  make install-alert-api-server | install-temporal-server"
+	@echo "  make install-platform-react-preprod-server | install-alert-api-preprod-server"
+	@echo "                                 (same plays as prod, against inventory/hosts_dev)"
 	@echo "  make install-combined-server   (traefik + mediamtx + platform + alert API on one VM)"
 	@echo "  make update-combined-api | update-combined-platform | update-combined-mediamtx | update-combined-traefik"
 	@echo "                                 (redeploy a single service on the combined server)"
@@ -85,11 +88,17 @@ install-annotation-server: require-container
 install-platform-react-server: require-container
 	ansible-playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l platform_react_server
 
+# Preprod targets run the same plays and groups as prod against the dev
+# inventory (inventory/hosts_dev in the sister repo); preprod-specific values
+# are overridden there via host_vars.
+install-platform-react-preprod-server: require-container
+	ansible-playbook playbooks/deploy-servers.yml -i inventory/hosts_dev -l platform_react_server
+
 install-alert-api-server: require-container
 	ansible-playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l alert_server
 
 install-alert-api-preprod-server: require-container
-	ansible-playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l alert_server_preprod
+	ansible-playbook playbooks/deploy-servers.yml -i inventory/hosts_dev -l alert_server
 
 install-temporal-server: require-container
 	ansible-playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l temporal_server

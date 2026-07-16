@@ -106,7 +106,9 @@ make install-mediamtx                # deploy-servers.yml -l mediamtx_server
 make update-mediamtx-conf            # refresh mediamtx streams config only
 make install-annotation-server
 make install-platform-react-server
+make install-platform-react-preprod-server   # same plays, against inventory/hosts_dev
 make install-alert-api-server
+make install-alert-api-preprod-server        # same plays, against inventory/hosts_dev
 make install-temporal-server
 make install-combined-server         # deploy-combined.yml: traefik + mediamtx + platform + alert API on one VM
 ```

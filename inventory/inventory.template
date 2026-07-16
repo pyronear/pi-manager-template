@@ -7,16 +7,6 @@ all:
     alert_server:
       hosts:
 
-    alert_server_preprod:
-      hosts:
-
-    # Parent group: shared alert API config lives in group_vars/alert_api_servers.
-    # Deploy plays target this group so prod and preprod stay identical.
-    alert_api_servers:
-      children:
-        alert_server:
-        alert_server_preprod:
-
     platform_react_server:
       hosts:
 
