@@ -47,7 +47,9 @@ services:
       - RISK_REFRESH_HOUR_UTC=${RISK_REFRESH_HOUR_UTC:-4}
       - TEMPORAL_API_URL=${TEMPORAL_API_URL}
       - TEMPORAL_API_TOKEN=${TEMPORAL_API_TOKEN}
+{% if alert_api_telegram_token %}
       - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
+{% endif %}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`{{ alert_api_proxy_url }}`)"
