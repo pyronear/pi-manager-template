@@ -88,9 +88,9 @@ install-annotation-server: require-container
 install-platform-react-server: require-container
 	ansible-playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l platform_react_server
 
-# Preprod targets run the same plays and groups as prod against the dev
-# inventory (inventory/hosts_preprod in the sister repo); preprod-specific values
-# are overridden there via host_vars.
+# Preprod targets run the same plays and groups as prod against the preprod
+# inventory (inventory/hosts_preprod in the sister repo); preprod-specific
+# values are overridden there via group_vars/envpreprod and host_vars.
 install-platform-react-preprod-server: require-container
 	ansible-playbook playbooks/deploy-servers.yml -i inventory/hosts_preprod -l platform_react_server
 
