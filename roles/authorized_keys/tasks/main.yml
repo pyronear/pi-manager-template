@@ -1,8 +1,36 @@
 ---
+- name: Ensure at least one admin/backup key is defined
+  ansible.builtin.assert:
+    that:
+      - ssh_admin_keys | length > 0
+    fail_msg: >-
+      ssh_admin_keys is empty — refusing to enforce an exclusive authorized_keys
+      (lockout risk). Set it in group_vars/all/vars.yml.
+
+- name: Check that every referenced public key file exists on the controller
+  ansible.builtin.stat:
+    path: "/ansible/ssh_keys/{{ item }}.pub"
+  loop: "{{ (ssh_authorized_keys + ssh_admin_keys) | unique }}"
+  delegate_to: localhost
+  become: false
+  run_once: true
+  register: _pubkey_stats
+
+- name: Fail if any referenced public key file is missing
+  ansible.builtin.assert:
+    that:
+      - item.stat.exists
+    fail_msg: "Public key file not found: /ansible/ssh_keys/{{ item.item }}.pub"
+  loop: "{{ _pubkey_stats.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+  run_once: true
+
 - name: Collect public key contents
   ansible.builtin.set_fact:
     _ssh_pubkeys: "{{ _ssh_pubkeys | default([]) + [lookup('file', '/ansible/ssh_keys/' + item + '.pub')] }}"
-  loop: "{{ ssh_authorized_keys }}"
+  # admin/backup keys are always appended so exclusive: true can never lock us out
+  loop: "{{ (ssh_authorized_keys + ssh_admin_keys) | unique }}"
 
 - name: Enforce authorized keys
   ansible.posix.authorized_key:
