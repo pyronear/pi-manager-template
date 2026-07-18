@@ -1,0 +1,64 @@
+---
+- name: Create the shared web network
+  community.docker.docker_network:
+    name: web
+
+- name: Create working directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  with_items:
+    - "{{ traefik_working_dir }}"
+    - "{{ traefik_dynamic_dir }}"
+    - "{{ traefik_working_dir }}/logs"
+
+- name: Inspect any existing traefik container
+  community.docker.docker_container_info:
+    name: traefik
+  register: traefik_container
+
+- name: Remove traefik container owned by a legacy per-app compose project
+  community.docker.docker_container:
+    name: traefik
+    state: absent
+  when:
+    - traefik_container.exists
+    - traefik_container.container.Config.Labels['com.docker.compose.project'] | default('') != 'traefik'
+
+- name: Create empty acme file for traefik
+  ansible.builtin.copy:
+    content: ""
+    dest: "{{ traefik_working_dir }}/acme.json"
+    force: false
+    mode: 0600 # required by traefik
+
+- name: Check whether traefik.toml was left as a directory by a broken deploy
+  ansible.builtin.stat:
+    path: "{{ traefik_working_dir }}/traefik.toml"
+  register: traefik_toml_stat
+
+- name: Remove stale traefik.toml directory so the template can create the file
+  ansible.builtin.file:
+    path: "{{ traefik_working_dir }}/traefik.toml"
+    state: absent
+  when: traefik_toml_stat.stat.isdir | default(false)
+
+- name: Create static conf file for traefik
+  ansible.builtin.template:
+    src: traefik.toml.j2
+    dest: "{{ traefik_working_dir }}/traefik.toml"
+    mode: 0600
+  notify: Restart traefik
+
+- name: Copy docker-compose.yml for traefik
+  ansible.builtin.template:
+    src: docker-compose.yml.j2
+    dest: "{{ traefik_working_dir }}/docker-compose.yml"
+    mode: 0644
+
+- name: Docker Compose start and verify traefik is running
+  community.docker.docker_compose_v2:
+    project_src: "{{ traefik_working_dir }}"
+    wait: true
+    wait_timeout: 60

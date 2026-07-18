@@ -1,0 +1,66 @@
+---
+
+- name: Assert required temporal_api variables are set
+  ansible.builtin.assert:
+    that:
+      - temporal_api_url | default('', true) | length > 0
+      - temporal_api_token | default('', true) | length > 0
+      - temporal_api_s3_region | default('', true) | length > 0
+      - temporal_api_s3_endpoint_url | default('', true) | length > 0
+      - temporal_api_s3_access_key | default('', true) | length > 0
+      - temporal_api_s3_secret_key | default('', true) | length > 0
+    fail_msg: >-
+      Missing temporal_api configuration. Set temporal_api_url, temporal_api_token
+      and the temporal_api_s3_* credentials/endpoint vars in the sister repo before
+      deploying. An empty token would expose POST /predict unauthenticated.
+      (temporal_api_s3_bucket is optional — it is only a fallback for requests that
+      do not specify a bucket.)
+    quiet: true
+
+- name: Create a network
+  community.docker.docker_network:
+    name: web
+
+- name: Create working directories if they do not exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  with_items:
+    - "{{ temporal_api_working_dir }}"
+    - "{{ temporal_api_working_dir_traefik }}"
+    - "{{ temporal_api_working_dir_traefik }}/logs"
+
+- name: Stop all services
+  community.docker.docker_compose_v2:
+    project_src: "{{ temporal_api_working_dir }}"
+    state: absent
+  ignore_errors: true
+
+- name: Create empty acme file for traefik
+  ansible.builtin.copy:
+    content: ""
+    dest: "{{ temporal_api_working_dir_traefik }}/acme.json"
+    force: false
+    mode: 0600 # required by traefik
+
+- name: Create conf file for traefik
+  ansible.builtin.template:
+    src: traefik.toml.j2
+    dest: "{{ temporal_api_working_dir_traefik }}/traefik.toml"
+    mode: "0600"
+
+- name: Copy docker-compose.yml and .env for temporal_api
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ temporal_api_working_dir }}/{{ item }}"
+    mode: "0644"
+  with_items:
+    - "docker-compose.yml"
+    - ".env"
+
+- name: Docker Compose start and verify containers are running
+  community.docker.docker_compose_v2:
+    project_src: "{{ temporal_api_working_dir }}"
+    wait: true
+    wait_timeout: 120

@@ -25,6 +25,21 @@
     state: directory
     mode: '0755'
 
+- name: Check that the pyro-engine checkout ships the watchdog script
+  ansible.builtin.stat:
+    path: "{{ watchdog_main_script[watchdog_type] }}"
+  register: engine_cron_watchdog_script
+  when: watchdog_type in ["pi_zero", "shelly"]
+
+- name: Assert the watchdog script is present
+  ansible.builtin.assert:
+    that:
+      - engine_cron_watchdog_script.stat.exists
+    fail_msg: >-
+      {{ watchdog_main_script[watchdog_type] }} not found in the pyro-engine
+      checkout — verify pyro_engine_git_ref ships the {{ watchdog_type }} watchdog.
+  when: watchdog_type in ["pi_zero", "shelly"]
+
 - name: Generate main pi watchdog .env file (pi_zero)
   ansible.builtin.template:
     src: watchdog_main.env.j2

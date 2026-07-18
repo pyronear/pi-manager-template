@@ -1,4 +1,3 @@
-
 [entryPoints]
     [entryPoints.web]
         address = ":80"
@@ -12,7 +11,7 @@
     [entryPoints.websecure]
         address = ":443"
             [entryPoints.websecure.http.tls]
-                certResolver = "default"
+                certResolver = "pyroresolver"
 
 [providers]
     [providers.docker]
@@ -38,11 +37,3 @@
     filePath = "/var/log/access.log"
     [accessLog.filters]
         statusCodes = ["200", "400-404", "500-503"]
-    [accessLog.fields]
-        [accessLog.fields.names]
-            ClientUsername = "drop"
-        [accessLog.fields.headers]
-            defaultMode = "keep"
-            [accessLog.fields.headers.names]
-                "User-Agent" = "redact"
-                "Content-Type" = "keep"

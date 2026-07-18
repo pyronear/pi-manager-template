@@ -1,0 +1,20 @@
+temporal_api_working_dir: /home/temporal_api
+temporal_api_working_dir_traefik: /home/traefik
+temporal_api_docker_image: pyronear/temporal-model-api
+temporal_api_docker_version: 0.3.1
+
+# Public domain served by Traefik (set in the sister repo, e.g. temporalmodelapi.pyronear.org)
+temporal_api_url:
+
+# Shared bearer token guarding POST /predict
+temporal_api_token:
+
+# S3 backend (reuses the existing prod S3)
+temporal_api_s3_bucket:
+temporal_api_s3_region:
+temporal_api_s3_endpoint_url:
+temporal_api_s3_access_key:
+temporal_api_s3_secret_key:
+
+cert_resolver_mail:
+cert_resolver_url:

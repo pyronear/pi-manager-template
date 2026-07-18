@@ -7,9 +7,6 @@ all:
     alert_server:
       hosts:
 
-    platform_py_server:
-      hosts:
-
     platform_react_server:
       hosts:
 
@@ -20,6 +17,12 @@ all:
       hosts:
 
     mediamtx_server:
+      hosts:
+
+    temporal_server:
+      hosts:
+
+    combined_server:
       hosts:
 
     pi_zero:
