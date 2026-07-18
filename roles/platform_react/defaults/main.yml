@@ -1,6 +1,6 @@
 platform_react_working_dir_react: /home/pyro_platform_react
 platform_react_docker_image: pyronear/pyro-platform-react
-platform_react_docker_version: 0.3.8
+platform_react_docker_version: 0.5.0
 
 platform_react_url_frontend: TO_CHANGE
 platform_react_url_backend: TO_CHANGE
