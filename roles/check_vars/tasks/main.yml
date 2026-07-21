@@ -50,16 +50,21 @@
     - item.value is none or item.value | length == 0
   no_log: true
 
-- name: Check Plateform variables. no_log=true
+- name: Check Annotation server variables. no_log=true
   ansible.builtin.fail:
     msg: "Variable '{{ item.name }}' is empty or None."
   loop:
-    - { name: "api_dns",     value: "{{ api_dns }}" }
-    - { name: "admin_login", value: "{{ admin_login }}" }  # DOES THE PLATFORM REALLY NEED ADMIN PWD ?
-    - { name: "admin_pwd",   value: "{{ admin_pwd }}" }
-    - { name: "prefix",      value: "{{ prefix }}" }
+    - { name: "annotation_api_s3_endpoint_url", value: "{{ annotation_api_s3_endpoint_url | default('') }}" }
+    - { name: "annotation_api_s3_access_key",   value: "{{ annotation_api_s3_access_key | default('') }}" }
+    - { name: "annotation_api_s3_secret_key",   value: "{{ annotation_api_s3_secret_key | default('') }}" }
+    - { name: "annotation_api_s3_region",       value: "{{ annotation_api_s3_region | default('') }}" }
+    - { name: "annotation_api_s3_bucket_name",  value: "{{ annotation_api_s3_bucket_name | default('') }}" }
+    - { name: "platform_server_name",           value: "{{ platform_server_name | default('') }}" }
+    - { name: "POSTGRES_USER",                  value: "{{ POSTGRES_USER | default('') }}" }
+    - { name: "POSTGRES_PASSWORD",              value: "{{ POSTGRES_PASSWORD | default('') }}" }
+    - { name: "POSTGRES_DB",                    value: "{{ POSTGRES_DB | default('') }}" }
   when:
-    - inventory_hostname in groups["platform_py_server"]
+    - inventory_hostname in groups.get("annotation_server", [])
     - item.value is none or item.value | length == 0
   no_log: true
 
@@ -67,7 +72,6 @@
   ansible.builtin.set_fact:
     group_list:
       - openvpn
-      - platform_py_server
       - alert_server
 
 - name: Verify that each group contains only one host

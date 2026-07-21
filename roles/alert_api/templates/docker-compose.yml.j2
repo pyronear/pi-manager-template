@@ -1,31 +1,9 @@
 name: alert-api
 
 services:
-  traefik:
-    image: traefik:v3.6.6
-    container_name: traefik
-    ports:
-      # http(s) traffic
-      - "80:80"
-      - "443:443"
-    volumes:
-      - "/var/run/docker.sock:/var/run/docker.sock:ro"
-      - "{{ alert_api_working_dir_traefik }}/acme.json:/acme.json"
-      - "{{ alert_api_working_dir_traefik }}/traefik.toml:/etc/traefik/traefik.toml"
-      - "{{ alert_api_working_dir_traefik }}/dynamic_assets.toml:/etc/traefik/dynamic/assets.toml"
-      - "{{ alert_api_working_dir_traefik }}/logs:/var/log"
-    labels:
-      - "traefik.http.middlewares.strip-www.redirectregex.regex=^https?://(www\\.)(.+)"
-      - "traefik.http.middlewares.strip-www.redirectregex.replacement=https://$${2}"
-      - "traefik.http.middlewares.strip-www.redirectregex.permanent=true"
-    command:
-      # StaticResponse
-      - "--experimental.plugins.staticresponse.modulename=github.com/jdel/staticresponse"
-      - "--experimental.plugins.staticresponse.version=v0.0.1"
-    restart: always
-
   db:
     image: postgres:15-alpine
+    restart: always
     expose:
       - 5432
     environment:
@@ -42,6 +20,7 @@ services:
 
   backend:
     image: pyronear/alert-api:{{ alert_api_docker_version }}
+    restart: always
     depends_on:
       db:
         condition: service_healthy
@@ -64,18 +43,34 @@ services:
       - S3_PROXY_URL=${S3_PROXY_URL}
       - SERVER_NAME=${SERVER_NAME}
       - PLATFORM_URL=${PLATFORM_URL:-https://platform.pyronear.org}
+      - RISK_API_URL=${RISK_API_URL}
+      - RISK_API_LOGIN=${RISK_API_LOGIN}
+      - RISK_API_PWD=${RISK_API_PWD}
+      - RISK_REFRESH_HOUR_UTC=${RISK_REFRESH_HOUR_UTC:-4}
+      - TEMPORAL_API_URL=${TEMPORAL_API_URL}
+      - TEMPORAL_API_TOKEN=${TEMPORAL_API_TOKEN}
+{% if alert_api_telegram_token %}
+      - TELEGRAM_TOKEN=${TELEGRAM_TOKEN}
+{% endif %}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.backend.rule=Host(`{{ alert_api_proxy_url }}`)"
       - "traefik.http.routers.backend.entrypoints=websecure"
       - "traefik.http.routers.backend.tls.certresolver=pyroresolver"
       - "traefik.http.services.backend.loadbalancer.server.port=5050"
-    command: "sh -c 'python app/db.py && uvicorn app.main:app --workers 2 --host 0.0.0.0 --port 5050 --proxy-headers --use-colors'"
+    command: "sh -c 'alembic upgrade head && python app/db.py && uvicorn app.main:app --workers 2 --host 0.0.0.0 --port 5050 --proxy-headers --use-colors'"
     healthcheck:
       test: ["CMD-SHELL", "curl http://localhost:5050/status"]
       interval: 10s
       timeout: 3s
       retries: 3
+    networks:
+      - default
+      - web
 
 volumes:
   postgres_data:
+
+networks:
+  web:
+    external: true

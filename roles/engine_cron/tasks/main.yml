@@ -1,9 +1,33 @@
 ---
+- name: Create a cronjob to restart the Raspberry Pi every day at midnight
+  ansible.builtin.cron:
+    name: "Restart Raspberry Pi"
+    minute: "0"
+    hour: "0"
+    job: "/sbin/shutdown -r now"
+    user: "root"
+  when: pi_zero_hostname is not defined or pi_zero_hostname | length == 0
+
 - name: Ensure working directory exists
   ansible.builtin.file:
     path: "{{ engine_cron_working_dir }}"
     state: directory
     mode: '0755'
+
+- name: Check that the pyro-engine checkout ships the Pi Zero watchdog
+  ansible.builtin.stat:
+    path: "{{ engine_cron_working_dir }}/watchdog/zero/main_pi/watchdog.py"
+  register: engine_cron_watchdog_script
+  when: pi_zero_hostname | default("") | length > 0
+
+- name: Assert the Pi Zero watchdog script is present
+  ansible.builtin.assert:
+    that:
+      - engine_cron_watchdog_script.stat.exists
+    fail_msg: >-
+      watchdog/zero not found in {{ engine_cron_working_dir }} —
+      pyro_engine_git_ref must be v1.0.12 or later.
+  when: pi_zero_hostname | default("") | length > 0
 
 - name: Generate main pi watchdog .env file
   ansible.builtin.template:
@@ -18,6 +42,6 @@
   ansible.builtin.cron:
     name: "Main pi watchdog"
     minute: "5,15,25,35,45,55"
-    job: "/usr/bin/python3 {{ engine_cron_working_dir }}/watchdog/main_pi/watchdog.py >> /home/pi/watchdog_main.log 2>&1"
+    job: "/usr/bin/python3 {{ engine_cron_working_dir }}/watchdog/zero/main_pi/watchdog.py >> /home/pi/watchdog_main.log 2>&1"
     user: pi
   when: pi_zero_hostname | default("") | length > 0

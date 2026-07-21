@@ -12,6 +12,7 @@
 
   roles:
     - common
+    - authorized_keys
     - wifi
     - docker
 

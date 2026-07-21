@@ -1,17 +1,10 @@
 ---
 
-- name: Create a network
-  community.docker.docker_network:
-    name: web
-
 - name: Create working directory if it does not exist
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: "{{ alert_api_working_dir }}"
     state: directory
     mode: '0755'
-  with_items:
-    - "{{ alert_api_working_dir }}"
-    - "{{ alert_api_working_dir_traefik }}"
 
 - name: Stop all services
   community.docker.docker_compose_v2:
@@ -20,21 +13,11 @@
     remove_images: all
   ignore_errors: true
 
-- name: Create empty acme file for traefik
-  ansible.builtin.copy:
-    content: ""
-    dest: "{{ alert_api_working_dir_traefik }}/acme.json"
-    force: false
-    mode: 0600 # required by traefik
-
-- name: Create static dynamic conf file for traefik
+- name: Publish S3 assets routing to the shared traefik dynamic conf directory
   ansible.builtin.template:
-    src: "{{ item }}.j2"
-    dest: "{{ alert_api_working_dir_traefik }}/dynamic_assets.toml"
+    src: dynamic_assets.toml.j2
+    dest: "{{ traefik_dynamic_dir }}/alert_api_assets.toml"
     mode: 0600
-  with_items:
-    - "traefik.toml"
-    - "dynamic_assets.toml"
 
 - name: Copy docker-compose.yml and .env for alert_api
   ansible.builtin.template:
@@ -49,3 +32,4 @@
   community.docker.docker_compose_v2:
     project_src: "{{ alert_api_working_dir }}"
     wait: true
+    wait_timeout: 120

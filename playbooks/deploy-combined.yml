@@ -1,0 +1,39 @@
+---
+- name: Verify Ansible version
+  hosts: combined_server
+  become: true
+  tasks:
+    - name: Ensure Ansible version is 2.17 or higher
+      ansible.builtin.assert:
+        that:
+          - ansible_version.minor | int >= 17
+        fail_msg: "Ansible version must be 2.17 or higher."
+      tags: always
+
+# All services on a single VM behind one shared Traefik. The VM can also act
+# as the reverse_ssh_server (nothing to deploy: engines only need sshd and the
+# 'ubuntu' user there). VPN is deliberately out of scope: the OpenVPN server
+# stays on its own machine and no VPN client is installed here — if the alert
+# API on this VM must reach VPN-only engines, install the client separately.
+- name: Deploy alert API, platform and mediamtx on a single server
+  hosts: combined_server
+  become: true
+  pre_tasks:
+    - name: Register engine stream paths for mediamtx
+      ansible.builtin.set_fact:
+        mediamtx_paths: "{{ mediamtx_paths | default([]) + [{'name': item}] }}"
+      loop: "{{ groups['engine_servers'] | default([]) }}"
+      tags: always
+  roles:
+    - role: common
+      tags: common
+    - role: docker
+      tags: docker
+    - role: traefik
+      tags: traefik
+    - role: mediamtx
+      tags: mediamtx
+    - role: platform_react
+      tags: platform
+    - role: alert_api
+      tags: alert_api

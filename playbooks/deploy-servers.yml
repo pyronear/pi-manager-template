@@ -10,13 +10,13 @@
         fail_msg: "Ansible version must be 2.17 or higher."
 
 - name: Check vars
-  hosts: platform_py_server:openvpn:mediamtx_server
+  hosts: openvpn:mediamtx_server
   become: true
   roles:
     - check_vars
 
 - name: Upgrade, install git and docker
-  hosts: alert_server:platform_py_server:platform_react_server:openvpn:mediamtx_server
+  hosts: alert_server:platform_react_server:openvpn:mediamtx_server:temporal_server
   become: true
   roles:
     - common
@@ -25,6 +25,16 @@
 - name: Deploy Openvpn
   hosts: openvpn
   become: true
+  pre_tasks:
+    - name: Load iptable_nat now (the openvpn container needs the NAT table)
+      community.general.modprobe:
+        name: iptable_nat
+        state: present
+    - name: Ensure iptable_nat is loaded on every boot
+      ansible.builtin.copy:
+        dest: /etc/modules-load.d/iptable_nat.conf
+        content: "iptable_nat\n"
+        mode: "0644"
   roles:
     - pyronear.openvpn
 
@@ -35,13 +45,13 @@
     - mediamtx
 
 - name: Deploy Docker Compose Servers
-  hosts: platform_py_server:annotation_server
+  hosts: annotation_server
   become: true
   roles:
     - servers
 
 - name: Add VPN client
-  hosts: platform_py_server:alert_server
+  hosts: alert_server
   become: true
   serial: 1
   tasks:
@@ -63,6 +73,10 @@
   hosts: platform_react_server
   become: true
   roles:
+    # tagged 'app' too: an app-only deploy must never end up without the proxy
+    - role: traefik
+      tags:
+        - app
     - role: platform_react
       tags:
         - app
@@ -71,6 +85,18 @@
   hosts: alert_server
   become: true
   roles:
+    # tagged 'app' too: an app-only deploy must never end up without the proxy
+    - role: traefik
+      tags:
+        - app
     - role: alert_api
+      tags:
+        - app
+
+- name: Deploy service temporal_api
+  hosts: temporal_server
+  become: true
+  roles:
+    - role: temporal_api
       tags:
         - app
