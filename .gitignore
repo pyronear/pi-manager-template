@@ -18,4 +18,5 @@ id_rsa
 .env
 .vault_passwrd*
 *.iml
+backups/
 *.dump
