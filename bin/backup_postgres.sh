@@ -14,9 +14,17 @@ DATE=$(date +%Y%m%d_%H%M)
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO_ROOT"
 
-if [ ! -f "${INVENTORY}" ]; then
-  echo "ERROR: inventory '${INVENTORY}' not found — run 'make prepare' first" >&2
-  exit 1
+# Locate the inventory on the host: a local copy if present, otherwise the
+# sister repo pointed to by REPO_PATH in .env (inventory is not kept in this
+# repo; the pyro-ansible container bind-mounts it from REPO_PATH).
+LOCAL_INVENTORY=""
+if [ -f "${INVENTORY}" ]; then
+  LOCAL_INVENTORY="${INVENTORY}"
+elif [ -f .env ]; then
+  REPO_PATH=$(grep -E '^REPO_PATH=' .env | head -n1 | cut -d= -f2-) || REPO_PATH=""
+  if [ -n "${REPO_PATH}" ] && [ -f "${REPO_PATH}/${INVENTORY}" ]; then
+    LOCAL_INVENTORY="${REPO_PATH}/${INVENTORY}"
+  fi
 fi
 
 # ====== RESOLVE SERVER IP FROM INVENTORY ======
@@ -24,12 +32,19 @@ fi
 if [ -z "${SERVER_HOST:-}" ]; then
   echo "Resolving IP for group ${GROUP} via Ansible inventory..."
 
-  if command -v ansible-inventory >/dev/null 2>&1; then
-    INV_JSON=$(ansible-inventory -i "${INVENTORY}" --list)
-  else
-    echo "  ansible-inventory not in PATH — using pyro-ansible docker container"
+  INV_JSON=""
+  if [ -n "${LOCAL_INVENTORY}" ] && command -v ansible-inventory >/dev/null 2>&1; then
+    INV_JSON=$(ansible-inventory -i "${LOCAL_INVENTORY}" --list 2>/dev/null) || INV_JSON=""
+  fi
+  if [ -z "${INV_JSON}" ]; then
+    echo "  using pyro-ansible docker container (inventory mounted from REPO_PATH)"
     INV_JSON=$(docker compose run --rm -T pyro-ansible \
-      ansible-inventory -i "${INVENTORY}" --list 2>/dev/null)
+      ansible-inventory -i "${INVENTORY}" --list 2>/dev/null) || INV_JSON=""
+  fi
+  if [ -z "${INV_JSON}" ]; then
+    echo "ERROR: could not read inventory '${INVENTORY}', neither locally nor via the pyro-ansible container." >&2
+    echo "Check that .env exists (REPO_PATH set) and that the sister repo holds ${INVENTORY}." >&2
+    exit 1
   fi
 
   SERVER_HOST=$(echo "${INV_JSON}" | python3 -c "
@@ -56,8 +71,10 @@ read_env_var() {
     "set -o pipefail; grep -E ^${key}= ${Q_ENV_FILE} | head -n1 | cut -d= -f2-"
 }
 
-PGUSER=$(read_env_var POSTGRES_USER)
-DB=$(read_env_var POSTGRES_DB)
+# '|| PGUSER=""' keeps set -e from aborting before the explicit error below
+# when the key is absent (grep exits 1 through ssh).
+PGUSER=$(read_env_var POSTGRES_USER) || PGUSER=""
+DB=$(read_env_var POSTGRES_DB) || DB=""
 
 if [ -z "${PGUSER}" ] || [ -z "${DB}" ]; then
   echo "ERROR: POSTGRES_USER or POSTGRES_DB missing in ${ENV_FILE}" >&2
