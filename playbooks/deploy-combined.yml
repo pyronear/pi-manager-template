@@ -12,9 +12,10 @@
 
 # All services on a single VM behind one shared Traefik. The VM can also act
 # as the reverse_ssh_server (nothing to deploy: engines only need sshd and the
-# 'ubuntu' user there). VPN is deliberately out of scope: the OpenVPN server
-# stays on its own machine and no VPN client is installed here — if the alert
-# API on this VM must reach VPN-only engines, install the client separately.
+# 'ubuntu' user there). VPN is out of scope by default: the OpenVPN server
+# stays on its own machine and no VPN client is installed on a routine deploy.
+# If the alert API on this VM must reach VPN-only engines, install the client
+# with the opt-in 'vpn' tag (see the "Add VPN client" play below).
 - name: Deploy alert API, platform and mediamtx on a single server
   hosts: combined_server
   become: true
@@ -37,3 +38,28 @@
       tags: platform
     - role: alert_api
       tags: alert_api
+
+# Opt-in: only runs with `--tags vpn` (the 'never' tag keeps it out of routine
+# deploys, so the reboot below never fires unexpectedly). Mirrors the VPN client
+# step from deploy-servers.yml. Requires the OpenVPN client vars in host_vars.
+- name: Add VPN client
+  hosts: combined_server
+  become: true
+  serial: 1
+  tags:
+    - vpn
+    - never
+  tasks:
+    - name: Run client-specific tasks
+      ansible.builtin.include_role:
+        name: pyronear.openvpn
+        tasks_from: install_client.yml
+
+    - name: Remplacer 'redirect-gateway def1' par 'route 192.168.255.0 255.255.255.0'
+      ansible.builtin.replace:
+        path: /etc/openvpn/client.conf
+        regexp: '^redirect-gateway def1$'
+        replace: 'route 192.168.255.0 255.255.255.0'
+
+    - name: Unconditionally reboot the machine with all defaults
+      ansible.builtin.reboot:
