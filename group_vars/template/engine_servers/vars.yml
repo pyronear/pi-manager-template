@@ -5,6 +5,10 @@ pyro_engine_git_ref: "main"
 pyro_engine_docker_tag: "latest"
 
 ansible_user: pi
+# Recent Pi images no longer grant the pi user passwordless sudo, so become needs
+# the sudo password. New engines must set ansible_password in their vars.vault.yml.
+# default('') keeps legacy engines (passwordless sudo, no ansible_password) working.
+ansible_become_pass: "{{ ansible_password | default('') }}"
 
 pi_zero_hostname: ""  # set in host_vars if a Pi Zero is associated with this engine
 
