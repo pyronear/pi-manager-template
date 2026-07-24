@@ -1,6 +1,12 @@
 rtsp: no
 rtmp: no
 hls: no
+{% if mediamtx_webrtc_additional_hosts %}
+webrtcAdditionalHosts: [{{ mediamtx_webrtc_additional_hosts | map('to_json') | join(', ') }}]
+{% endif %}
+{% if mediamtx_webrtc_tcp_address %}
+webrtcLocalTCPAddress: "{{ mediamtx_webrtc_tcp_address }}"
+{% endif %}
 
 paths:
 {% for path in mediamtx_paths %}
