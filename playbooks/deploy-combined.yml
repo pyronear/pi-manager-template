@@ -61,5 +61,25 @@
         regexp: '^redirect-gateway def1$'
         replace: 'route 192.168.255.0 255.255.255.0'
 
+    # OpenVPN 2.6+ on this VM ships with data-channel offload (DCO), which
+    # treats the server's pushed compression as fatal and refuses to bring up
+    # tun0 ("Failed to open tun/tap interface"). Disabling DCO re-allows the
+    # pushed compression; the pull-filter drops the Windows-only push option
+    # that 2.7 also rejects. Older OpenVPN on the engines doesn't need this.
+    - name: Make client.conf compatible with OpenVPN 2.7 (DCO)
+      ansible.builtin.lineinfile:
+        path: /etc/openvpn/client.conf
+        line: "{{ item }}"
+        insertafter: EOF
+        state: present
+      loop:
+        - "disable-dco"
+        - 'pull-filter ignore "block-outside-dns"'
+
+    - name: Ensure the OpenVPN client starts on boot
+      ansible.builtin.systemd_service:
+        name: openvpn@client
+        enabled: true
+
     - name: Unconditionally reboot the machine with all defaults
       ansible.builtin.reboot:
