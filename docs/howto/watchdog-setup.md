@@ -3,9 +3,11 @@
 Watchdog scripts monitor hardware health and power-cycle relays on failure.
 All are managed by Ansible and read their configuration from a `.env` file generated on the device.
 
-A site uses **one** of two variants (set exactly one of `pi_zero_hostname` / `shelly_enabled`):
-- **Pi Zero pairing** — the engine and a Pi Zero watchdog each other through power relays.
-- **Shelly pairing** — a Shelly Pro smart relay watches the engine, and the engine asks the Shelly to power-cycle the cameras/router.
+A site uses **one** variant, selected by the `watchdog_type` host var
+(`no_watchdog`, `pi_zero` or `shelly`, defaults to `no_watchdog` in group_vars):
+- **`no_watchdog`** — nightly reboot cron only.
+- **`pi_zero`** — the engine and a Pi Zero watchdog each other through power relays. Also requires `pi_zero_hostname`.
+- **`shelly`** — a Shelly Pro smart relay watches the engine, and the engine asks the Shelly to power-cycle the cameras/router.
 
 All watchdog scripts live in the [pyro-engine](https://github.com/pyronear/pyro-engine) repo (`watchdog/`), which requires `pyro_engine_git_ref` >= `v1.0.12`.
 
@@ -30,10 +32,11 @@ Pings the Pi Zero. If unreachable after `MAX_FAILS` attempts, power-cycles the P
 
 Deployed by the `engine_cron` role, called from `deploy-engines.yml`.
 
-Only runs if `pi_zero_hostname` is set in the engine's host_vars.
+Only runs if `watchdog_type: pi_zero` is set in the engine's host_vars.
 
 | Variable | Where | Description |
 |----------|-------|-------------|
+| `watchdog_type` | `host_vars/<engine>/vars.yml` | `pi_zero` for this variant |
 | `pi_zero_hostname` | `host_vars/<engine>/vars.yml` | Inventory hostname of the associated Pi Zero (e.g. `chambery-pi-zero`). Leave empty if no Pi Zero. |
 
 `PIZERO_IP` is derived automatically from `hostvars[pi_zero_hostname]['static_ip_address']` — no manual configuration needed.
@@ -59,18 +62,16 @@ Deployed by the `pi_zero_watchdog` role, called from `rpi-init-pi-zero.yml`.
 ## Shelly watchdog
 
 For sites where the engine is paired with a Shelly Pro relay instead of a Pi Zero.
-Deployed by the `shelly_watchdog` role, called from `deploy-engines.yml`.
-
-Only runs if `shelly_enabled: true` is set in the engine's host_vars (mutually
+Enabled with `watchdog_type: shelly` in the engine's host_vars (mutually
 exclusive with `pi_zero_hostname`).
 
-The role manages both sides:
+The two sides are deployed by two roles, both called from `deploy-engines.yml`:
 
-- **Engine side** — writes `/home/pi/watchdog.env` (`SHELLY_IP`, `SHELLY_OUTPUT_ID`,
-  `CAM_IPS` from the keys of the host's `config_json`) and a cron entry for
-  `watchdog/shelly/main_pi/watchdog.py`, which checks internet + cameras and asks
-  the Shelly to power-cycle output 0 on repeated failures.
-- **Shelly side** — from the engine (which shares the Shelly's LAN), runs the
+- **Engine side** (`engine_cron` role) — writes `/home/pi/watchdog.env` (`SHELLY_IP`,
+  `SHELLY_OUTPUT_ID`, `CAM_IPS` from the keys of the host's `config_json`) and a cron
+  entry for `watchdog/shelly/main_pi/watchdog.py`, which checks internet + cameras and
+  asks the Shelly to power-cycle output 0 on repeated failures.
+- **Shelly side** (`shelly_watchdog` role) — from the engine (which shares the Shelly's LAN), runs the
   upstream `harden_shelly.sh` (disables cloud/MQTT/BLE/AP, forces outputs on at
   boot) and uploads `watchdog.js` with `PI_URL` patched to the engine's
   `http://<static_ip_address>:8081/health` endpoint. The Shelly then reboots the
@@ -82,9 +83,9 @@ is already running, so a routine re-deploy does not reset the Shelly's reboot bu
 
 | Variable | Where | Description |
 |----------|-------|-------------|
-| `shelly_enabled` | `host_vars/<engine>/vars.yml` | Set to `true` to deploy the Shelly watchdog |
-| `shelly_watchdog_ip` | role default | Shelly's fixed LAN IP (`192.168.1.97`, same on every site) |
-| `shelly_watchdog_output_id` | role default | Shelly output power-cycled by the engine (`0`) |
+| `watchdog_type` | `host_vars/<engine>/vars.yml` | `shelly` for this variant |
+| `shelly_ip` | role default | Shelly's fixed LAN IP (`192.168.1.97`, same on every site) |
+| `shelly_output_id` | role default | Shelly output power-cycled by the engine (`0`) |
 
 **Prerequisite (manual, once per device):** put the Shelly on the site's Wi-Fi at
 its fixed IP with the Shelly Smart Control app (Bluetooth onboarding). See
@@ -97,6 +98,7 @@ powered by one of the outputs it cuts.
 
 ### Engine — `host_vars/<engine>/vars.yml`
 ```yaml
+watchdog_type: pi_zero
 pi_zero_hostname: <pi-zero-inventory-name>   # e.g. chambery-pi-zero
 static_ip_address: 192.168.X.Y
 static_ip_gateway: 192.168.X.1
