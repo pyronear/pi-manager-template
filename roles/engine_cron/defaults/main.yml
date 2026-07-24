@@ -1,2 +1,13 @@
 ---
 engine_cron_working_dir: "/home/{{ project_name }}"
+
+# Main-pi watchdog script path, by watchdog_type.
+# Follows the pyro-engine watchdog/ layout from PR #374 (zero/ and shelly/).
+watchdog_main_script:
+  pi_zero: "{{ engine_cron_working_dir }}/watchdog/zero/main_pi/watchdog.py"
+  shelly:  "{{ engine_cron_working_dir }}/watchdog/shelly/main_pi/watchdog.py"
+
+# Shelly watchdog (watchdog_type == "shelly"). The Shelly sits at a fixed LAN
+# address by convention; override per-host only if a station differs.
+shelly_ip: "192.168.1.97"
+shelly_output_id: 0

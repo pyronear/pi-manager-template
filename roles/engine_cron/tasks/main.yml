@@ -1,12 +1,23 @@
 ---
-- name: Create a cronjob to restart the Raspberry Pi every day at midnight
+# Reboot cron (no_watchdog) and watchdog cron (pi_zero/shelly) are mutually
+# exclusive. Each is paired with an explicit removal so changing watchdog_type
+# converges instead of leaving stale jobs behind.
+
+- name: Add nightly reboot cron (no_watchdog)
   ansible.builtin.cron:
     name: "Restart Raspberry Pi"
     minute: "0"
     hour: "0"
     job: "/sbin/shutdown -r now"
     user: "root"
-  when: pi_zero_hostname is not defined or pi_zero_hostname | length == 0
+  when: watchdog_type == "no_watchdog"
+
+- name: Remove nightly reboot cron when a watchdog is active
+  ansible.builtin.cron:
+    name: "Restart Raspberry Pi"
+    user: "root"
+    state: absent
+  when: watchdog_type in ["pi_zero", "shelly"]
 
 - name: Ensure working directory exists
   ansible.builtin.file:
@@ -14,34 +25,56 @@
     state: directory
     mode: '0755'
 
-- name: Check that the pyro-engine checkout ships the Pi Zero watchdog
+- name: Check that the pyro-engine checkout ships the watchdog script
   ansible.builtin.stat:
-    path: "{{ engine_cron_working_dir }}/watchdog/zero/main_pi/watchdog.py"
+    path: "{{ watchdog_main_script[watchdog_type] }}"
   register: engine_cron_watchdog_script
-  when: pi_zero_hostname | default("") | length > 0
+  when: watchdog_type in ["pi_zero", "shelly"]
 
-- name: Assert the Pi Zero watchdog script is present
+- name: Assert the watchdog script is present
   ansible.builtin.assert:
     that:
       - engine_cron_watchdog_script.stat.exists
     fail_msg: >-
-      watchdog/zero not found in {{ engine_cron_working_dir }} —
-      pyro_engine_git_ref must be v1.0.12 or later.
-  when: pi_zero_hostname | default("") | length > 0
+      {{ watchdog_main_script[watchdog_type] }} not found in the pyro-engine
+      checkout — verify pyro_engine_git_ref ships the {{ watchdog_type }} watchdog.
+  when: watchdog_type in ["pi_zero", "shelly"]
 
-- name: Generate main pi watchdog .env file
+- name: Generate main pi watchdog .env file (pi_zero)
   ansible.builtin.template:
     src: watchdog_main.env.j2
     dest: /home/pi/watchdog.env
     owner: pi
     group: pi
     mode: "0644"
-  when: pi_zero_hostname | default("") | length > 0
+  when: watchdog_type == "pi_zero"
 
-- name: Add cron job for main pi watchdog
+- name: Generate main pi watchdog .env file (shelly)
+  ansible.builtin.template:
+    src: watchdog_shelly.env.j2
+    dest: /home/pi/watchdog.env
+    owner: pi
+    group: pi
+    mode: "0644"
+  when: watchdog_type == "shelly"
+
+- name: Remove stale main pi watchdog .env file (no_watchdog)
+  ansible.builtin.file:
+    path: /home/pi/watchdog.env
+    state: absent
+  when: watchdog_type == "no_watchdog"
+
+- name: Add cron job for main pi watchdog (pi_zero/shelly)
   ansible.builtin.cron:
     name: "Main pi watchdog"
     minute: "5,15,25,35,45,55"
-    job: "/usr/bin/python3 {{ engine_cron_working_dir }}/watchdog/zero/main_pi/watchdog.py >> /home/pi/watchdog_main.log 2>&1"
+    job: "/usr/bin/python3 {{ watchdog_main_script[watchdog_type] }} >> /home/pi/watchdog_main.log 2>&1"
     user: pi
-  when: pi_zero_hostname | default("") | length > 0
+  when: watchdog_type in ["pi_zero", "shelly"]
+
+- name: Remove main pi watchdog cron when no_watchdog
+  ansible.builtin.cron:
+    name: "Main pi watchdog"
+    user: pi
+    state: absent
+  when: watchdog_type == "no_watchdog"
