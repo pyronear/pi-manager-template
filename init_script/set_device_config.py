@@ -43,7 +43,7 @@ def parse_config_json(vars_yml: Path) -> dict | None:
     return json.loads(raw) if raw else None
 
 
-def build_plan(repo: Path, name_to_id: dict) -> tuple[list, list]:
+def build_plan(repo: Path, name_to_id: dict, duplicate_names: set) -> tuple[list, list]:
     """Return (planned, skipped) where planned items carry all PATCH fields."""
     inventory = load_inventory_hosts(repo)
     planned, skipped = [], []
@@ -64,6 +64,11 @@ def build_plan(repo: Path, name_to_id: dict) -> tuple[list, list]:
 
         for camera_ip, cam in config.items():
             name = cam.get("name")
+            if name in duplicate_names:
+                # ambiguous: several API cameras share this name, possibly across
+                # organizations. Never guess which one to configure.
+                skipped.append((engine, f"camera '{name}' ({camera_ip}) is ambiguous (duplicate name in the API)"))
+                continue
             camera_id = name_to_id.get(name)
             if camera_id is None:
                 skipped.append((engine, f"camera '{name}' ({camera_ip}) not found in the API"))
@@ -104,14 +109,20 @@ def main() -> None:
     cameras = api_request("get", f"{api_url}/api/v1/cameras/?include_non_trustable=true", auth)
     name_to_id, duplicates = {}, set()
     for cam in cameras:
-        if cam["name"] in name_to_id:
-            duplicates.add(cam["name"])
-        name_to_id[cam["name"]] = cam["id"]
+        name = cam["name"]
+        if name in name_to_id or name in duplicates:
+            duplicates.add(name)
+        else:
+            name_to_id[name] = cam["id"]
+    # Duplicated names cannot be resolved unambiguously; drop them so they are
+    # reported as skipped rather than configured against an arbitrary id.
+    for name in duplicates:
+        name_to_id.pop(name, None)
     for name in sorted(duplicates):
-        print(f"WARN duplicate camera name in the API: '{name}' (last id wins)")
+        print(f"WARN duplicate camera name in the API: '{name}' (cameras with this name will be skipped)")
 
     repo = Path(args.repo).expanduser()
-    planned, skipped = build_plan(repo, name_to_id)
+    planned, skipped = build_plan(repo, name_to_id, duplicates)
 
     for item in planned:
         print(
