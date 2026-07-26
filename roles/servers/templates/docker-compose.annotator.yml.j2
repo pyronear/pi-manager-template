@@ -42,6 +42,7 @@ services:
   db:
     image: postgres:15-alpine
     container_name: postgres
+    restart: always
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     expose:

@@ -68,6 +68,25 @@
     - item.value is none or item.value | length == 0
   no_log: true
 
+- name: Check watchdog_type is set and valid on engines
+  ansible.builtin.assert:
+    that:
+      - watchdog_type is defined
+      - watchdog_type in ["no_watchdog", "pi_zero", "shelly"]
+    fail_msg: >-
+      'watchdog_type' must be one of: no_watchdog, pi_zero, shelly
+      (host: {{ inventory_hostname }}, got: {{ watchdog_type | default("<undefined>") }}).
+    success_msg: "watchdog_type = {{ watchdog_type }}"
+  when: inventory_hostname in groups["engine_servers"]
+
+- name: Check pi_zero_hostname is set when watchdog_type == pi_zero
+  ansible.builtin.fail:
+    msg: "'pi_zero_hostname' is required when watchdog_type == 'pi_zero' (host: {{ inventory_hostname }})."
+  when:
+    - inventory_hostname in groups["engine_servers"]
+    - watchdog_type | default("") == "pi_zero"
+    - pi_zero_hostname is not defined or pi_zero_hostname | length == 0
+
 - name: Retrieve the list of groups
   ansible.builtin.set_fact:
     group_list:

@@ -2,6 +2,7 @@ services:
   platform:
     image: {{ platform_react_docker_image }}:{{ platform_react_docker_version}}
     container_name: platform
+    restart: always
     expose:
       - 8080
     volumes:

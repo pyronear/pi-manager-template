@@ -106,7 +106,9 @@ make install-mediamtx                # deploy-servers.yml -l mediamtx_server
 make update-mediamtx-conf            # refresh mediamtx streams config only
 make install-annotation-server
 make install-platform-react-server
+make install-platform-react-preprod-server   # same plays, against inventory/hosts_preprod
 make install-alert-api-server
+make install-alert-api-preprod-server        # same plays, against inventory/hosts_preprod
 make install-temporal-server
 make install-combined-server         # deploy-combined.yml: traefik + mediamtx + platform + alert API on one VM
 ```
@@ -122,6 +124,21 @@ make update-combined-platform        # platform only
 make update-combined-mediamtx        # mediamtx only
 make update-combined-traefik         # traefik only
 ```
+
+`install-combined-server` deliberately does **not** install an OpenVPN client
+(no reboot on a routine deploy). If the alert API on the combined VM must reach
+VPN-only engines, install the client with the opt-in `vpn` tag:
+
+```bash
+ansible-playbook playbooks/deploy-combined.yml -i inventory/hosts_prod \
+  -l combined_server --tags vpn
+```
+
+This installs the client (cert generated on the OpenVPN server), routes the
+`192.168.255.0/24` engine subnet over the tunnel, applies the OpenVPN 2.6+ DCO
+fix, enables the service on boot, and **reboots** the VM. It requires
+`openvpn_client_password` in the combined host's `host_vars` vault (the same
+value the engines use).
 
 ## Adding a new Raspberry Pi
 

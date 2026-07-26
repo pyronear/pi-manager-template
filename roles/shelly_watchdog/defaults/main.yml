@@ -1,6 +1,7 @@
 ---
-shelly_watchdog_ip: "192.168.1.97"
-shelly_watchdog_output_id: 0
+# Same default as engine_cron's shelly_ip: role defaults are role-scoped, so
+# both roles carry it; a host_vars override applies to both consistently.
+shelly_ip: "192.168.1.97"
 shelly_watchdog_script_name: "pi_watchdog"
 shelly_watchdog_repo_dir: "/home/{{ project_name }}"
 shelly_watchdog_device_dir: "{{ shelly_watchdog_repo_dir }}/watchdog/shelly/device"
