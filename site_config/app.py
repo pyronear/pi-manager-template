@@ -250,9 +250,11 @@ def build_vars_yml(cams: list[dict], results: dict, site_vals: dict) -> str:
     out += f"static_ip_interface: {site_vals['static_iface']}\n"
     out += f"static_ip_address: {site_vals['static_ip']}\n"
     out += f"static_ip_gateway: {site_vals['static_gw']}\n"
-    if site_vals["watchdog"] == "shelly":
-        out += "\nshelly_enabled: true\n"
-        out += f"shelly_watchdog_ip: {yaml_str(site_vals['shelly_ip'])}\n"
+    # watchdog_type is asserted by the check_vars role — deploy-engines fails without it.
+    watchdog_type = "shelly" if site_vals["watchdog"] == "shelly" else "no_watchdog"
+    out += f"\nwatchdog_type: {watchdog_type}\n"
+    if watchdog_type == "shelly":
+        out += f"shelly_ip: {yaml_str(site_vals['shelly_ip'])}\n"
     return out
 
 
@@ -714,9 +716,9 @@ def main() -> None:
             except (ValueError, RuntimeError) as exc:
                 st.error(str(exc))
 
-    # ---- 6. launch
-    st.header("6. Launch init-one-engine")
-    st.caption("Runs `make init-one-engine SITE=<site>` inside the pyro-ansible container.")
+    # ---- 6. init-one-engine (run by hand, outside the app)
+    st.header("6. Run init-one-engine")
+    st.caption("The app does not run ansible — copy these into your terminal, from the repo root.")
 
     host_in_inv = False
     current_ansible_host = ""
@@ -743,24 +745,14 @@ def main() -> None:
             capture_output=True, text=True,
         )
         container_up = "pyro-ansible" in probe.stdout
-    if not container_up:
-        st.warning("pyro-ansible container is not running. Start it first:")
-        st.code("make ansible-up", language="bash")
-        st.code(f"make init-one-engine SITE={site or '<site>'}", language="bash")
-    elif st.button("Run init-one-engine", key="btn_run", type="primary", disabled=bool(setup_missing)):
-        cmd = ["docker", "exec", "pyro-ansible", "make", "init-one-engine", f"SITE={site}"]
-        st.write(f"Running: `{' '.join(cmd)}`")
-        box = st.empty()
-        lines = []
-        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-        for line in proc.stdout:
-            lines.append(line.rstrip())
-            box.code("\n".join(lines[-40:]))
-        proc.wait()
-        if proc.returncode == 0:
-            st.success("init-one-engine finished successfully")
-        else:
-            st.error(f"init-one-engine failed (exit {proc.returncode}) — full output above")
+    st.code(
+        f"make ansible-up\nmake init-one-engine SITE={site or '<site>'}",
+        language="bash",
+    )
+    if container_up:
+        st.caption("pyro-ansible container is running — `make ansible-up` drops you into its shell.")
+    else:
+        st.caption("pyro-ansible container is not running — `make ansible-up` starts it.")
 
     # ---- 7. switch to VPN IP
     st.header("7. Switch ansible_host to the VPN IP")
@@ -813,6 +805,14 @@ def main() -> None:
                     st.info("hosts_prod already targets this IP")
             except (ValueError, RuntimeError) as exc:
                 st.error(str(exc))
+
+    # ---- 8. deploy the engine (run by hand, outside the app)
+    st.header("8. Deploy the engine")
+    st.caption("Once hosts_prod targets the VPN IP, deploy the engine stack from your terminal.")
+    st.code(f"make deploy-one-engine SITE={site or '<site>'}", language="bash")
+    if not current_ansible_host.startswith("192.168.255."):
+        st.info("ansible_host is not on the VPN yet — do step 7 first, otherwise the deploy "
+                "goes through the local network.")
 
     # ---- sidebar progress (filesystem-based, survives restarts)
     st.sidebar.divider()
