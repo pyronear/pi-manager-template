@@ -19,6 +19,20 @@ uv run --with streamlit,pyyaml,requests streamlit run site_config/app.py
 
 Then open http://localhost:8501 in your browser.
 
+## Default secrets from `.env`
+
+The camera and wifi passwords are usually the same across sites. You can store
+them once in the root `.env` (see `.env.template`) and the app will pre-fill the
+matching fields in step 4:
+
+```bash
+CAM_PWD=<camera password>
+WIFI_PASSWORD=<wifi password>
+```
+
+Both are optional — when absent or empty, the fields simply start empty and must
+be typed in the UI. Like all secrets they are never written to drafts.
+
 ## Drafts
 
 Every non-secret input and API result is auto-saved to `site_config/drafts/<site>.json`

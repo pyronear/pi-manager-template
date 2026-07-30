@@ -62,13 +62,14 @@ SIMPLE_DRAFT_KEYS = [
     "site_name", "num_cams", "latlon", "elevation", "aov", "n_poses", "cam_type",
     "is_trustable", "org_name", "user_login", "user_role", "repo_path", "cam_user",
     "wifi_ssid", "static_iface", "static_ip", "static_gw", "watchdog", "shelly_ip",
-    "group_choice", "new_group", "ssh_port", "pi_local_ip", "vpn_ip",
+    "group_choice", "new_group", "ssh_port", "pi_local_ip", "vpn_ip", "org_choice",
 ]
 DYNAMIC_KEY_RE = re.compile(r"^(ip|adapter|adapter_custom)_\d+$")
 
 NEW_DRAFT = "— new site —"
 NO_GROUP = "(none)"
 NEW_GROUP = "New group..."
+NEW_ORG = "New organization..."
 
 
 # ---------------------------------------------------------------- helpers
@@ -148,13 +149,18 @@ def api_auth(api_url: str, login: str, pwd: str) -> dict:
     return {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
 
 
-def get_or_create_org(api_url: str, auth: dict, org_name: str) -> tuple[int, bool]:
+def list_orgs(api_url: str, auth: dict) -> dict[str, int]:
     orgs = api_request("get", f"{api_url}/api/v1/organizations/", auth)
-    for org in orgs:
-        if org["name"] == org_name:
-            return org["id"], False
+    return {org["name"]: org["id"] for org in orgs}
+
+
+def find_org(api_url: str, auth: dict, org_name: str) -> int | None:
+    return list_orgs(api_url, auth).get(org_name)
+
+
+def create_org(api_url: str, auth: dict, org_name: str) -> int:
     resp = api_request("post", f"{api_url}/api/v1/organizations/", auth, {"name": org_name})
-    return resp["id"], True
+    return resp["id"]
 
 
 def fetch_pose_ids(api_url: str, auth: dict, camera_id: int) -> list[int]:
@@ -512,25 +518,67 @@ def main() -> None:
 
     # ---- 3. API creation
     st.header("3. Alert API — org, user, cameras")
-    st.session_state.setdefault("org_name", script_env.get("organization_name", ""))
-    st.text_input("Organization name", key="org_name")
-    org_name = st.session_state["org_name"].strip()
-
     api_ready = bool(api_url and superadmin_login and superadmin_pwd)
+
+    if api_ready and "orgs" not in st.session_state:
+        try:
+            auth = api_auth(api_url, superadmin_login, superadmin_pwd)
+            st.session_state["orgs"] = list_orgs(api_url, auth)
+        except Exception as exc:  # surface API errors in the UI
+            st.session_state["orgs"] = {}
+            st.warning(f"Could not list organizations: {exc}")
+    orgs = st.session_state.get("orgs", {})
+
+    # after creating a new org, select it in the dropdown on the next rerun
+    pending_org = st.session_state.pop("org_pending_select", None)
+    if pending_org:
+        st.session_state["org_choice"] = pending_org
+
+    o1, o2 = st.columns([3, 1])
+    with o1:
+        options = sorted(orgs) + [NEW_ORG]
+        env_org = script_env.get("organization_name", "")
+        st.session_state.setdefault("org_choice", env_org if env_org in orgs else NEW_ORG)
+        if st.session_state["org_choice"] not in options:
+            st.session_state["org_choice"] = NEW_ORG
+        st.selectbox("Organization", options, key="org_choice")
+        if st.session_state["org_choice"] == NEW_ORG:
+            st.session_state.setdefault("org_name", env_org)
+            st.text_input("New organization name", key="org_name")
+            org_name = st.session_state["org_name"].strip()
+        else:
+            org_name = st.session_state["org_choice"]
+    with o2:
+        if st.button("↻ Refresh organizations", key="btn_org_refresh", disabled=not api_ready):
+            st.session_state.pop("orgs", None)
+            st.rerun()
 
     b1, b2 = st.columns(2)
     with b1:
-        if st.button("Create organization", key="btn_org", disabled=not (api_ready and org_name)):
-            try:
-                auth = api_auth(api_url, superadmin_login, superadmin_pwd)
-                org_id, created = get_or_create_org(api_url, auth, org_name)
-                st.session_state["results"]["org_id"] = org_id
-                st.success(f"Organization '{org_name}' {'created' if created else 'already exists'} (id {org_id})")
-            except Exception as exc:  # surface API errors in the UI
-                st.error(str(exc))
+        if st.session_state["org_choice"] == NEW_ORG:
+            if st.button("Create organization", key="btn_org", disabled=not (api_ready and org_name)):
+                try:
+                    auth = api_auth(api_url, superadmin_login, superadmin_pwd)
+                    org_id = find_org(api_url, auth, org_name)
+                    if org_id is None:
+                        org_id = create_org(api_url, auth, org_name)
+                        st.session_state["org_msg"] = ("success", f"Organization '{org_name}' created (id {org_id})")
+                    else:
+                        st.session_state["org_msg"] = ("info", f"Organization '{org_name}' already exists (id {org_id})")
+                    st.session_state["results"]["org_id"] = org_id
+                    st.session_state.setdefault("orgs", {})[org_name] = org_id
+                    st.session_state["org_pending_select"] = org_name
+                    st.rerun()
+                except Exception as exc:  # surface API errors in the UI
+                    st.error(str(exc))
+        else:
+            st.session_state["results"]["org_id"] = orgs.get(org_name)
+        msg = st.session_state.pop("org_msg", None)
+        if msg:
+            (st.success if msg[0] == "success" else st.info)(msg[1])
     with b2:
         org_id_known = st.session_state["results"].get("org_id")
-        st.caption(f"Organization id: {org_id_known}" if org_id_known else "Organization not created yet")
+        st.caption(f"Organization id: {org_id_known}" if org_id_known else "Organization not selected yet")
 
     with st.expander("Create API user (optional)"):
         u1, u2, u3 = st.columns(3)
@@ -546,14 +594,18 @@ def main() -> None:
         if st.button("Create user", key="btn_user", disabled=not can_user):
             try:
                 auth = api_auth(api_url, superadmin_login, superadmin_pwd)
-                org_id, _ = get_or_create_org(api_url, auth, org_name)
-                api_request("post", f"{api_url}/api/v1/users/", auth, {
-                    "organization_id": org_id,
-                    "login": st.session_state["user_login"],
-                    "password": st.session_state["user_password"],
-                    "role": st.session_state["user_role"],
-                })
-                st.success(f"User '{st.session_state['user_login']}' created")
+                org_id = find_org(api_url, auth, org_name)
+                if org_id is None:
+                    st.error(f"Organization '{org_name}' does not exist — create it first "
+                             "with the 'Create organization' button.")
+                else:
+                    api_request("post", f"{api_url}/api/v1/users/", auth, {
+                        "organization_id": org_id,
+                        "login": st.session_state["user_login"],
+                        "password": st.session_state["user_password"],
+                        "role": st.session_state["user_role"],
+                    })
+                    st.success(f"User '{st.session_state['user_login']}' created")
             except Exception as exc:
                 st.error(str(exc))
 
@@ -569,14 +621,18 @@ def main() -> None:
     if st.button("Create cameras", key="btn_cams", type="primary", disabled=not can_create_cams):
         try:
             auth = api_auth(api_url, superadmin_login, superadmin_pwd)
-            org_id, _ = get_or_create_org(api_url, auth, org_name)
-            st.session_state["results"]["org_id"] = org_id
-            prev = st.session_state["results"].get("cameras", {})
-            results, logs = create_cameras(api_url, auth, org_id, cams, site_vals, prev)
-            st.session_state["results"]["cameras"] = {**prev, **results}
-            for line in logs:
-                st.write(line)
-            save_draft()
+            org_id = find_org(api_url, auth, org_name)
+            if org_id is None:
+                st.error(f"Organization '{org_name}' does not exist — create it first "
+                         "with the 'Create organization' button in step 3.")
+            else:
+                st.session_state["results"]["org_id"] = org_id
+                prev = st.session_state["results"].get("cameras", {})
+                results, logs = create_cameras(api_url, auth, org_id, cams, site_vals, prev)
+                st.session_state["results"]["cameras"] = {**prev, **results}
+                for line in logs:
+                    st.write(line)
+                save_draft()
         except Exception as exc:
             st.error(str(exc))
 
@@ -595,11 +651,15 @@ def main() -> None:
     with s2:
         st.session_state.setdefault("cam_user", "admin")
         st.text_input("Camera user", key="cam_user")
-        st.text_input("Camera password", key="cam_pwd", type="password")
+        st.session_state.setdefault("cam_pwd", root_env.get("CAM_PWD", ""))
+        st.text_input("Camera password", key="cam_pwd", type="password",
+                      help="Pre-filled from CAM_PWD in the root .env when set.")
     with s3:
         st.session_state.setdefault("wifi_ssid", "Pyronear")
         st.text_input("Wifi SSID", key="wifi_ssid")
-        st.text_input("Wifi password", key="wifi_password", type="password")
+        st.session_state.setdefault("wifi_password", root_env.get("WIFI_PASSWORD", ""))
+        st.text_input("Wifi password", key="wifi_password", type="password",
+                      help="Pre-filled from WIFI_PASSWORD in the root .env when set.")
 
     # ---- 5. host files
     st.header("5. Host files (sister repo)")
