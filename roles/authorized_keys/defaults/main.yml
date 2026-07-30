@@ -1,2 +1,9 @@
 ---
+# Per-host / per-group keys: only the user-specific accesses.
 ssh_authorized_keys: []
+
+# Trusted admin/backup keys, always enforced on every host on top of
+# ssh_authorized_keys. Guarantees we can never lock ourselves out via
+# exclusive: true. MUST be set in inventory (group_vars/all/vars.yml):
+# the role refuses to run while this list is empty.
+ssh_admin_keys: []

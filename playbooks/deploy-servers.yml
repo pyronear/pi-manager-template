@@ -22,6 +22,12 @@
     - common
     - docker
 
+- name: Sync authorized SSH keys
+  hosts: alert_server:platform_react_server
+  become: true
+  roles:
+    - authorized_keys
+
 - name: Deploy Openvpn
   hosts: openvpn
   become: true
