@@ -5,6 +5,8 @@ platform_react_docker_version: 0.6.0
 platform_react_url_frontend: TO_CHANGE
 platform_react_url_backend: TO_CHANGE
 platform_react_url_livestream: TO_CHANGE
+platform_react_api_timeout_ms: 4000
+platform_react_control_camera_timeout_ms: 10000
 platform_react_sites_per_organization:
   - name: orga1
     sites: ["site1"]
