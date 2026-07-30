@@ -19,3 +19,4 @@ id_rsa
 .vault_passwrd*
 *.iml
 *.dump
+site_config/drafts/

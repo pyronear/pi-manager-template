@@ -7,7 +7,6 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(message)s")
 
 
 def get_token(api_url: str, login: str, pwd: str) -> str:
-    print(api_url, login, pwd)
     response = requests.post(
         f"{api_url}/api/v1/login/creds",
         data={"username": login, "password": pwd},
@@ -21,21 +20,22 @@ def get_token(api_url: str, login: str, pwd: str) -> str:
 def api_request(
     method_type: str,
     route: str,
-    headers=Dict[str, str],
+    headers: Dict[str, str],
     payload: Optional[Dict[str, Any]] = None,
 ):
     kwargs = {"json": payload} if isinstance(payload, dict) else {}
 
-    response = getattr(requests, method_type)(route, headers=headers, **kwargs)
+    response = getattr(requests, method_type)(route, headers=headers, timeout=30, **kwargs)
     try:
         detail = response.json()
     except (requests.exceptions.JSONDecodeError, KeyError):
         detail = response.text
-    assert response.status_code // 100 == 2, print(detail)
+    if response.status_code // 100 != 2:
+        raise RuntimeError(f"{method_type.upper()} {route} failed ({response.status_code}): {detail}")
     return response.json()
 
 # Récupérer l'organisation par son nom
-def get_organization_id(api_url: str, superuser_auth: str, org_name: str):
+def get_organization_id(api_url: str, superuser_auth: Dict[str, str], org_name: str):
     response = api_request("get", f"{api_url}/api/v1/organizations/", superuser_auth)
     for orga in response:
         if orga["name"] == org_name:
