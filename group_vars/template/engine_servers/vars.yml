@@ -1,7 +1,10 @@
 ---
 app_name: "engine"
 project_name : "pyro-engine"
-pyro_engine_git_ref: "main"
+# Keep in sync with pyro_engine_docker_tag in roles/engine/defaults/main.yml:
+# the role copies docker-compose.yml out of this checkout, so an older ref can
+# ship a compose file that does not match the image it starts.
+pyro_engine_git_ref: "v1.0.13"
 
 ansible_user: pi
 # Recent Pi images no longer grant the pi user passwordless sudo, so become needs
