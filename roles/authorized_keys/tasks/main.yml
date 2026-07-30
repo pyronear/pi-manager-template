@@ -23,7 +23,6 @@
   loop: "{{ _pubkey_stats.results }}"
   loop_control:
     label: "{{ item.item }}"
-  run_once: true
 
 - name: Collect public key contents
   ansible.builtin.set_fact:
