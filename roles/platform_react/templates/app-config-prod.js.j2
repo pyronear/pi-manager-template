@@ -1,6 +1,7 @@
 window.AppConfig = {
   API_URL: '{{ platform_react_url_backend }}',
-  API_TIMEOUT_MS: 4000,
+  API_TIMEOUT_MS: {{ platform_react_api_timeout_ms }},
+  CAMERA_CONTROL_TIMEOUT_MS: {{ platform_react_control_camera_timeout_ms }},
   LIVE_STREAMING_MEDIA_URL: '{{ platform_react_url_livestream }}',
   LIVE_STREAMING_TIMEOUT_SECONDS: 30,
   CAMERAS_INACTIVITY_THRESHOLD_MINUTES: 30,
