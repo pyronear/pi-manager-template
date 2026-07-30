@@ -2,7 +2,6 @@
 app_name: "engine"
 project_name : "pyro-engine"
 pyro_engine_git_ref: "main"
-pyro_engine_docker_tag: "latest"
 
 ansible_user: pi
 # Recent Pi images no longer grant the pi user passwordless sudo, so become needs
