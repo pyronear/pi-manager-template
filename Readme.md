@@ -154,10 +154,42 @@ make build-push COMPONENT=platform BRANCH=<branch>   # new-pyro-platform -> pyro
 
 Unlike the deploy targets, this runs **on the host**: it needs the docker
 daemon (with buildx) and a Docker Hub login with push rights on the `pyronear`
-organization. It **overwrites the `:latest` tag published by CI** — the next CI
-push on the service's default branch restores it. Cross-architecture builds
-need QEMU/binfmt (Docker Desktop ships it; on bare Linux install
+organization. It **overwrites the `:latest` tag published by CI** — and any
+merge to the service's default branch re-triggers CI and overwrites it back,
+so re-run `build-push` if your branch build gets clobbered. Cross-architecture
+builds need QEMU/binfmt (Docker Desktop ships it; on bare Linux install
 `qemu-user-static`).
+
+The deploy only uses your image if the target pins the `latest` tag in the
+sister repo: `platform_react_docker_version` / `alert_api_docker_version` in
+`inventory/group_vars/envpreprod/vars.yml`, `pyro_engine_docker_tag` in the
+engine's `host_vars` (host-level, `engine_servers` outranks `envpreprod`).
+
+#### Example: deploy a platform PR branch on preprod
+
+```bash
+# 1. On the host: build the branch and push it as pyronear/pyro-platform-react:latest
+make build-push COMPONENT=platform BRANCH=<pr-branch>
+
+# 2. In the container: force the pull. Compose only pulls *missing* images, so
+#    when the host already runs :latest it would keep the stale one.
+ansible platform_react_server -i inventory/hosts_preprod -b \
+  -m community.docker.docker_image \
+  -a "name=pyronear/pyro-platform-react:latest source=pull force_source=true"
+
+# 3. In the container: redeploy (compose recreates on the new image id)
+make install-platform-react-preprod-server
+```
+
+The API works the same with `COMPONENT=api`, the `alert_server` group and
+`make install-alert-api-preprod-server`. Engines don't need step 2 — the
+engine role always force-pulls — so `COMPONENT=engine` then
+`make deploy-one-engine SITE=<host>` is enough.
+
+Note for the platform: `/config/app-config.js` served to the browser is
+templated by ansible (`roles/platform_react`), not taken from the image — a
+branch that adds config keys needs them added to the template too, otherwise
+the app falls back to its built-in defaults.
 
 ## Adding a new Raspberry Pi
 
