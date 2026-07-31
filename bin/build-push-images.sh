@@ -59,12 +59,14 @@ case "$COMPONENT" in
     platform)
         # CI builds the app outside docker; the Dockerfile only copies dist/
         # into nginx. No packageManager field in package.json, so run pnpm
-        # via npx instead of corepack. Run as the host user so node_modules/
-        # dist are not root-owned (the cleanup trap must be able to delete
-        # them on Linux hosts).
+        # via npx instead of corepack; pnpm 9 matches lockfileVersion 9.0
+        # and, unlike pnpm 10, runs the esbuild postinstall script vite
+        # needs. Run as the host user so node_modules/dist are not
+        # root-owned (the cleanup trap must be able to delete them on
+        # Linux hosts).
         docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp \
             -v "$SRC_DIR":/app -w /app node:24 \
-            sh -c "npx -y pnpm install --frozen-lockfile && npx -y pnpm build"
+            sh -c "npx -y pnpm@9 install --frozen-lockfile && npx -y pnpm@9 build"
         docker buildx build --platform linux/amd64 \
             -t pyronear/pyro-platform-react:latest --push .
         ;;
