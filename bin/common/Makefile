@@ -58,7 +58,7 @@ build-push:
 		echo "Usage: make build-push COMPONENT=<api|engine|platform> BRANCH=<branch>"; \
 		exit 1; \
 	fi
-	@bash bin/build-push-images.sh $(COMPONENT) $(BRANCH)
+	@bash bin/build-push-images.sh '$(COMPONENT)' '$(BRANCH)'
 
 ping: require-container
 	@ansible all -i inventory/hosts_prod -m ping

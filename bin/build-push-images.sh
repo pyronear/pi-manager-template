@@ -8,7 +8,9 @@
 # Usage: bin/build-push-images.sh <api|engine|platform> <branch>
 #
 # Requires docker (with buildx) and a Docker Hub login with push rights on
-# the pyronear organization.
+# the pyronear organization. Builds target a fixed platform per image; when
+# that differs from the host architecture, cross-building needs QEMU/binfmt
+# (Docker Desktop ships it; on bare Linux install qemu-user-static).
 set -euo pipefail
 
 usage() {
@@ -56,10 +58,13 @@ case "$COMPONENT" in
         ;;
     platform)
         # CI builds the app outside docker; the Dockerfile only copies dist/
-        # into nginx. No packageManager field in package.json, so install
-        # pnpm via npm instead of corepack.
-        docker run --rm -v "$SRC_DIR":/app -w /app node:24 \
-            sh -c "npm install -g pnpm && pnpm install --frozen-lockfile && pnpm build"
+        # into nginx. No packageManager field in package.json, so run pnpm
+        # via npx instead of corepack. Run as the host user so node_modules/
+        # dist are not root-owned (the cleanup trap must be able to delete
+        # them on Linux hosts).
+        docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp \
+            -v "$SRC_DIR":/app -w /app node:24 \
+            sh -c "npx -y pnpm install --frozen-lockfile && npx -y pnpm build"
         docker buildx build --platform linux/amd64 \
             -t pyronear/pyro-platform-react:latest --push .
         ;;
