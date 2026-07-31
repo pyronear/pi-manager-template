@@ -140,6 +140,25 @@ fix, enables the service on boot, and **reboots** the VM. It requires
 `openvpn_client_password` in the combined host's `host_vars` vault (the same
 value the engines use).
 
+### Testing a branch on preprod
+
+To try a PR branch of a service before it is merged, build its docker image(s)
+from that branch and push them to Docker Hub as `:latest`, then redeploy the
+target host so it pulls the fresh image:
+
+```bash
+make build-push COMPONENT=api      BRANCH=<branch>   # pyro-api          -> pyronear/alert-api:latest (amd64)
+make build-push COMPONENT=engine   BRANCH=<branch>   # pyro-engine       -> pyro-engine + pyro-camera-api :latest (arm64)
+make build-push COMPONENT=platform BRANCH=<branch>   # new-pyro-platform -> pyronear/pyro-platform-react:latest (amd64)
+```
+
+Unlike the deploy targets, this runs **on the host**: it needs the docker
+daemon (with buildx) and a Docker Hub login with push rights on the `pyronear`
+organization. It **overwrites the `:latest` tag published by CI** — the next CI
+push on the service's default branch restores it. Cross-architecture builds
+need QEMU/binfmt (Docker Desktop ships it; on bare Linux install
+`qemu-user-static`).
+
 ## Adding a new Raspberry Pi
 
 See [How to configure a new raspberry](./docs/howto/how-to-configure-a-new-raspberry.md).
