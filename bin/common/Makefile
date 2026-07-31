@@ -1,6 +1,6 @@
 
 .PHONY: require-container help ansible-up ansible-stop ping check-engines \
-	init-one-engine deploy-one-engine deploy-all-engines down up \
+	init-one-engine deploy-one-engine deploy-one-engine-preprod deploy-all-engines down up \
 	install-openvpn install-mediamtx update-mediamtx-conf update-reverse-ssh install-annotation-server \
 	install-platform-react-server install-platform-react-preprod-server \
 	install-alert-api-server install-alert-api-preprod-server install-temporal-server \
@@ -26,6 +26,7 @@ help:
 	@echo "Container targets (run after 'make ansible-up'):"
 	@echo "  make ping / check-engines / up / down / sync-ssh-keys"
 	@echo "  make deploy-all-engines | deploy-one-engine SITE=<host>"
+	@echo "  make deploy-one-engine-preprod SITE=<host>  (against inventory/hosts_preprod)"
 	@echo "  make init-one-engine SITE=<host> | init-pi-zero SITE=<host>"
 	@echo "  make install-openvpn | install-mediamtx | update-mediamtx-conf"
 	@echo "  make install-annotation-server | install-platform-react-server"
@@ -60,6 +61,10 @@ init-one-engine: require-container
 
 deploy-one-engine: require-container
 	ansible-playbook playbooks/deploy-engines.yml -i inventory/hosts_prod -l $(SITE)
+
+# Same play as deploy-one-engine, against the preprod inventory.
+deploy-one-engine-preprod: require-container
+	ansible-playbook playbooks/deploy-engines.yml -i inventory/hosts_preprod -l $(SITE)
 
 deploy-all-engines: require-container
 	ansible-playbook playbooks/deploy-engines.yml -i inventory/hosts_prod -l engine_servers
