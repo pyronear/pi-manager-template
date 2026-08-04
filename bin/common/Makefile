@@ -26,7 +26,7 @@ help:
 	@echo "Container targets (run after 'make ansible-up'):"
 	@echo "  make ping / check-engines / up / down / sync-ssh-keys"
 	@echo "  make deploy-all-engines | deploy-one-engine SITE=<host>"
-	@echo "  make deploy-one-engine-preprod SITE=<host>  (against inventory/hosts_preprod)"
+	@echo "  make deploy-one-engine-preprod SITE=<host>  (deploy-engines.yml against inventory/hosts_preprod)"
 	@echo "  make init-one-engine SITE=<host> | init-pi-zero SITE=<host>"
 	@echo "  make install-openvpn | install-mediamtx | update-mediamtx-conf"
 	@echo "  make install-annotation-server | install-platform-react-server"
@@ -62,7 +62,8 @@ init-one-engine: require-container
 deploy-one-engine: require-container
 	ansible-playbook playbooks/deploy-engines.yml -i inventory/hosts_prod -l $(SITE)
 
-# Same play as deploy-one-engine, against the preprod inventory.
+# Deploy an engine listed in the preprod inventory (e.g. st-peray): same play
+# as prod, but api_dns resolves to the preprod alert API via group_vars/envpreprod.
 deploy-one-engine-preprod: require-container
 	ansible-playbook playbooks/deploy-engines.yml -i inventory/hosts_preprod -l $(SITE)
 
