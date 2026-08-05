@@ -52,13 +52,17 @@ ansible-stop:
 	@docker compose down pyro-ansible
 
 # Host target: needs the docker daemon and a Docker Hub login with push
-# rights on the pyronear organization.
+# rights on the pyronear organization. COMPONENT/BRANCH are passed through
+# the environment, not interpolated into the recipe, so branch names with
+# shell metacharacters cannot inject commands.
+build-push: export BP_COMPONENT = $(COMPONENT)
+build-push: export BP_BRANCH = $(BRANCH)
 build-push:
-	@if [ -z "$(COMPONENT)" ] || [ -z "$(BRANCH)" ]; then \
+	@if [ -z "$$BP_COMPONENT" ] || [ -z "$$BP_BRANCH" ]; then \
 		echo "Usage: make build-push COMPONENT=<api|engine|platform> BRANCH=<branch>"; \
 		exit 1; \
 	fi
-	@bash bin/build-push-images.sh '$(COMPONENT)' '$(BRANCH)'
+	@bash bin/build-push-images.sh "$$BP_COMPONENT" "$$BP_BRANCH"
 
 ping: require-container
 	@ansible all -i inventory/hosts_prod -m ping

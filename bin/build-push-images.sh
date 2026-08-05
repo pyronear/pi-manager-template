@@ -24,10 +24,11 @@ usage() {
 COMPONENT=$1
 BRANCH=$2
 
-# Tag = branch name without its type prefix (feat/my-fix -> my-fix),
-# sanitized to docker tag rules: [a-zA-Z0-9_] first, then [a-zA-Z0-9._-],
-# max 128 chars.
-TAG=$(printf '%s' "${BRANCH##*/}" | tr -c 'a-zA-Z0-9_.-' '-' | sed 's/^[.-]*//' | cut -c1-128)
+# Tag = branch name without its type prefix (feat/my-fix -> my-fix); only
+# the first path component is dropped so nested branches keep distinct tags
+# (feat/team/foo -> team-foo). Sanitized to docker tag rules: [a-zA-Z0-9_]
+# first, then [a-zA-Z0-9._-], max 128 chars.
+TAG=$(printf '%s' "${BRANCH#*/}" | tr -c 'a-zA-Z0-9_.-' '-' | sed 's/^[.-]*//' | cut -c1-128)
 [ -n "$TAG" ] || { echo "ERROR: branch name '$BRANCH' yields an empty docker tag" >&2; exit 1; }
 
 docker buildx version >/dev/null 2>&1 || { echo "ERROR: docker buildx is not available" >&2; exit 1; }

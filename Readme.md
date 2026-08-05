@@ -179,7 +179,10 @@ make install-platform-react-preprod-server
 
 The API works the same with `COMPONENT=api`, the `alert_server` group and
 `make install-alert-api-preprod-server`. For engines, set
-`pyro_engine_docker_tag` then `make deploy-one-engine SITE=<host>`.
+`pyro_engine_docker_tag` then `make deploy-one-engine SITE=<host>` — note
+this target uses `inventory/hosts_prod`; for a host that only exists in the
+preprod inventory, run the playbook directly:
+`ansible-playbook playbooks/deploy-engines.yml -i inventory/hosts_preprod -l <host>`.
 
 When you push the **same branch again** after new commits, the tag doesn't
 change, so compose keeps the stale local image (it only pulls *missing*
