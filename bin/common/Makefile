@@ -23,7 +23,7 @@ help:
 	@echo "  make ansible-stop    stop the container"
 	@echo "  make dependencies    install host-side ansible + pre-commit hook"
 	@echo "  make build-push COMPONENT=<api|engine|platform> BRANCH=<branch>"
-	@echo "                       build a branch's docker image(s) and push to Docker Hub as :latest"
+	@echo "                       build a branch's docker image(s) and push to Docker Hub tagged with the branch name"
 	@echo ""
 	@echo "Container targets (run after 'make ansible-up'):"
 	@echo "  make ping / check-engines / up / down / sync-ssh-keys"

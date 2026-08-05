@@ -143,48 +143,54 @@ value the engines use).
 ### Testing a branch on preprod
 
 To try a PR branch of a service before it is merged, build its docker image(s)
-from that branch and push them to Docker Hub as `:latest`, then redeploy the
-target host so it pulls the fresh image:
+from that branch and push them to Docker Hub tagged with the branch name, then
+point the target host at that tag and redeploy:
 
 ```bash
-make build-push COMPONENT=api      BRANCH=<branch>   # pyro-api          -> pyronear/alert-api:latest (amd64)
-make build-push COMPONENT=engine   BRANCH=<branch>   # pyro-engine       -> pyro-engine + pyro-camera-api :latest (arm64)
-make build-push COMPONENT=platform BRANCH=<branch>   # new-pyro-platform -> pyronear/pyro-platform-react:latest (amd64)
+make build-push COMPONENT=api      BRANCH=<branch>   # pyro-api          -> pyronear/alert-api:<tag> (amd64)
+make build-push COMPONENT=engine   BRANCH=<branch>   # pyro-engine       -> pyro-engine + pyro-camera-api :<tag> (arm64)
+make build-push COMPONENT=platform BRANCH=<branch>   # new-pyro-platform -> pyronear/pyro-platform-react:<tag> (amd64)
 ```
 
-Unlike the deploy targets, this runs **on the host**: it needs the docker
-daemon (with buildx) and a Docker Hub login with push rights on the `pyronear`
-organization. It **overwrites the `:latest` tag published by CI** — and any
-merge to the service's default branch re-triggers CI and overwrites it back,
-so re-run `build-push` if your branch build gets clobbered. Cross-architecture
-builds need QEMU/binfmt (Docker Desktop ships it; on bare Linux install
-`qemu-user-static`).
+The tag is the branch name without its type prefix, sanitized for docker
+(`feat/my-fix` -> `my-fix`); the script prints it. Unlike the deploy targets,
+this runs **on the host**: it needs the docker daemon (with buildx) and a
+Docker Hub login with push rights on the `pyronear` organization.
+Cross-architecture builds need QEMU/binfmt (Docker Desktop ships it; on bare
+Linux install `qemu-user-static`).
 
-The deploy only uses your image if the target pins the `latest` tag in the
-sister repo: `platform_react_docker_version` / `alert_api_docker_version` in
+To deploy it, set the image tag in the sister repo to the pushed tag:
+`platform_react_docker_version` / `alert_api_docker_version` in
 `inventory/group_vars/envpreprod/vars.yml`, `pyro_engine_docker_tag` in the
 engine's `host_vars` (host-level, `engine_servers` outranks `envpreprod`).
 
 #### Example: deploy a platform PR branch on preprod
 
 ```bash
-# 1. On the host: build the branch and push it as pyronear/pyro-platform-react:latest
+# 1. On the host: build the branch and push it as pyronear/pyro-platform-react:<tag>
 make build-push COMPONENT=platform BRANCH=<pr-branch>
 
-# 2. In the container: force the pull. Compose only pulls *missing* images, so
-#    when the host already runs :latest it would keep the stale one.
-ansible platform_react_server -i inventory/hosts_preprod -b \
-  -m community.docker.docker_image \
-  -a "name=pyronear/pyro-platform-react:latest source=pull force_source=true"
+# 2. In the sister repo: set platform_react_docker_version to the pushed tag
+#    in inventory/group_vars/envpreprod/vars.yml
 
-# 3. In the container: redeploy (compose recreates on the new image id)
+# 3. In the container: redeploy (compose pulls the tag and recreates)
 make install-platform-react-preprod-server
 ```
 
 The API works the same with `COMPONENT=api`, the `alert_server` group and
-`make install-alert-api-preprod-server`. Engines don't need step 2 — the
-engine role always force-pulls — so `COMPONENT=engine` then
-`make deploy-one-engine SITE=<host>` is enough.
+`make install-alert-api-preprod-server`. For engines, set
+`pyro_engine_docker_tag` then `make deploy-one-engine SITE=<host>`.
+
+When you push the **same branch again** after new commits, the tag doesn't
+change, so compose keeps the stale local image (it only pulls *missing*
+images). Force the pull before redeploying — engines don't need this, the
+engine role always force-pulls:
+
+```bash
+ansible platform_react_server -i inventory/hosts_preprod -b \
+  -m community.docker.docker_image \
+  -a "name=pyronear/pyro-platform-react:<tag> source=pull force_source=true"
+```
 
 Note for the platform: `/config/app-config.js` served to the browser is
 templated by ansible (`roles/platform_react`), not taken from the image — a
