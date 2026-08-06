@@ -141,6 +141,66 @@ fix, enables the service on boot, and **reboots** the VM. It requires
 `openvpn_client_password` in the combined host's `host_vars` vault (the same
 value the engines use).
 
+### Testing a branch on preprod
+
+To try a PR branch of a service before it is merged, build its docker image(s)
+from that branch and push them to Docker Hub tagged with the branch name, then
+point the target host at that tag and redeploy:
+
+```bash
+make build-push COMPONENT=api      BRANCH=<branch>   # pyro-api          -> pyronear/alert-api:<tag> (amd64)
+make build-push COMPONENT=engine   BRANCH=<branch>   # pyro-engine       -> pyro-engine + pyro-camera-api :<tag> (arm64)
+make build-push COMPONENT=platform BRANCH=<branch>   # new-pyro-platform -> pyronear/pyro-platform-react:<tag> (amd64)
+```
+
+The tag is the branch name without its type prefix, sanitized for docker
+(`feat/my-fix` -> `my-fix`); the script prints it. Unlike the deploy targets,
+this runs **on the host**: it needs the docker daemon (with buildx) and a
+Docker Hub login with push rights on the `pyronear` organization.
+Cross-architecture builds need QEMU/binfmt (Docker Desktop ships it; on bare
+Linux install `qemu-user-static`).
+
+To deploy it, set the image tag in the sister repo to the pushed tag:
+`platform_react_docker_version` / `alert_api_docker_version` in
+`inventory/group_vars/envpreprod/vars.yml`, `pyro_engine_docker_tag` in the
+engine's `host_vars` (host-level, `engine_servers` outranks `envpreprod`).
+
+#### Example: deploy a platform PR branch on preprod
+
+```bash
+# 1. On the host: build the branch and push it as pyronear/pyro-platform-react:<tag>
+make build-push COMPONENT=platform BRANCH=<pr-branch>
+
+# 2. In the sister repo: set platform_react_docker_version to the pushed tag
+#    in inventory/group_vars/envpreprod/vars.yml
+
+# 3. In the container: redeploy (compose pulls the tag and recreates)
+make install-platform-react-preprod-server
+```
+
+The API works the same with `COMPONENT=api`, the `alert_server` group and
+`make install-alert-api-preprod-server`. For engines, set
+`pyro_engine_docker_tag` then `make deploy-one-engine SITE=<host>` — note
+this target uses `inventory/hosts_prod`; for a host that only exists in the
+preprod inventory, run the playbook directly:
+`ansible-playbook playbooks/deploy-engines.yml -i inventory/hosts_preprod -l <host>`.
+
+When you push the **same branch again** after new commits, the tag doesn't
+change, so compose keeps the stale local image (it only pulls *missing*
+images). Force the pull before redeploying — engines don't need this, the
+engine role always force-pulls:
+
+```bash
+ansible platform_react_server -i inventory/hosts_preprod -b \
+  -m community.docker.docker_image \
+  -a "name=pyronear/pyro-platform-react:<tag> source=pull force_source=true"
+```
+
+Note for the platform: `/config/app-config.js` served to the browser is
+templated by ansible (`roles/platform_react`), not taken from the image — a
+branch that adds config keys needs them added to the template too, otherwise
+the app falls back to its built-in defaults.
+
 ## Adding a new Raspberry Pi
 
 See [How to configure a new raspberry](./docs/howto/how-to-configure-a-new-raspberry.md).
