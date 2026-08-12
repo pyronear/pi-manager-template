@@ -37,7 +37,7 @@
       - engine_cron_watchdog_script.stat.exists
     fail_msg: >-
       {{ watchdog_main_script[watchdog_type] }} not found in the pyro-engine
-      checkout — verify pyro_engine_git_ref ships the {{ watchdog_type }} watchdog.
+      checkout — verify engine_git_ref ships the {{ watchdog_type }} watchdog.
   when: watchdog_type in ["pi_zero", "shelly"]
 
 - name: Generate main pi watchdog .env file (pi_zero)

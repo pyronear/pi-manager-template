@@ -9,7 +9,7 @@ A site uses **one** variant, selected by the `watchdog_type` host var
 - **`pi_zero`** — the engine and a Pi Zero watchdog each other through power relays. Also requires `pi_zero_hostname`.
 - **`shelly`** — a Shelly Pro smart relay watches the engine, and the engine asks the Shelly to power-cycle the cameras/router.
 
-All watchdog scripts live in the [pyro-engine](https://github.com/pyronear/pyro-engine) repo (`watchdog/`), which requires `pyro_engine_git_ref` >= `v1.0.12`.
+All watchdog scripts live in the [pyro-engine](https://github.com/pyronear/pyro-engine) repo (`watchdog/`), which requires `engine_git_ref` >= `v1.0.12`.
 
 ---
 
