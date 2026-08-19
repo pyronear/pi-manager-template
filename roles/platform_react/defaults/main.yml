@@ -7,6 +7,11 @@ platform_react_url_backend: TO_CHANGE
 platform_react_url_livestream: TO_CHANGE
 platform_react_api_timeout_ms: 4000
 platform_react_control_camera_timeout_ms: 10000
+# IGN Geoplateforme key (https://data.geopf.fr/private/wmts): enables the IGN Topo
+# base layer, the layer stays hidden when empty. The key is referrer-restricted,
+# so every origin serving the app must be allow-listed in the IGN client space,
+# or the tiles come back 401. Empty by default so a deployment without the key still works.
+platform_react_ign_api_key: ""
 platform_react_sites_per_organization:
   - name: orga1
     sites: ["site1"]
