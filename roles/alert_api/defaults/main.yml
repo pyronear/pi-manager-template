@@ -18,6 +18,10 @@ alert_api_s3_access_key:
 alert_api_s3_secret_key:
 alert_api_s3_region:
 alert_api_s3_url:
+# Comma-separated list of frontend origins allowed to fetch bucket objects
+# cross-origin; the API applies it as the bucket CORS policy on bucket creation.
+# Set it per deployment in the sister inventory repo (group_vars/alert_server).
+alert_api_s3_cors_origins:
 alert_api_server_name:
 alert_api_sentry_dsn:
 alert_api_telegram_token:
