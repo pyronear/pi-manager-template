@@ -7,6 +7,13 @@ collocation: false
 
 # Attributes to override
 prefix: "PREFIX"
+# IGN Geoplateforme API key, rendered into the platform's app-config-prod.js as
+# IGN_API_KEY. Enables the IGN Topo base layer; the layer stays hidden while it
+# is empty. The key is referrer-restricted, so every origin serving the app
+# (localhost, preprod, prod) must be allow-listed in the IGN client space or the
+# tiles come back 401. Set it per environment in the sister repo's inventory (group_vars/envprod,
+# group_vars/envpreprod), next to the other platform_react_* vars.
+platform_react_ign_api_key: ""
 openvpn_server_host: "HOST_OPENVPN"
 ca_password: !vault |
   ANSIBLE_VAULT
