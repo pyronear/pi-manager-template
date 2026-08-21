@@ -111,6 +111,7 @@ make install-platform-react-preprod-server   # same plays, against inventory/hos
 make install-alert-api-server
 make install-alert-api-preprod-server        # same plays, against inventory/hosts_preprod
 make install-temporal-server
+make install-temporal-preprod-server         # same play, against inventory/hosts_preprod
 make install-combined-server         # deploy-combined.yml: traefik + mediamtx + platform + alert API on one VM
 ```
 
