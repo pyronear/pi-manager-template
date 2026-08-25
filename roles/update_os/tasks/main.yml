@@ -1,0 +1,30 @@
+---
+- name: "1. Copy the RAUC bundle to the target (/tmp)"
+  ansible.builtin.copy:
+    # Assumes you have put your .raucb in a 'bundles' directory at the root
+    src: "../../bundles/pyronear-bundle-rpi5.raucb" 
+    dest: "/tmp/pyronear-bundle-rpi5.raucb"
+    mode: '0644'
+
+- name: "2. Run RAUC installation (Write to the inactive partition)"
+  ansible.builtin.command: rauc install /tmp/pyronear-bundle-rpi5.raucb
+  register: rauc_install
+
+- name: "Show RAUC installation logs"
+  ansible.builtin.debug:
+    var: rauc_install.stdout_lines
+
+- name: "3. Reboot the target to boot the new slot"
+  ansible.builtin.reboot:
+    msg: "Reboot initiated by Ansible to apply the RAUC update"
+    reboot_timeout: 300
+    connect_timeout: 10
+    pre_reboot_delay: 2
+
+- name: "4. Verify RAUC status after reboot"
+  ansible.builtin.command: rauc status
+  register: rauc_status
+
+- name: "Show final status"
+  ansible.builtin.debug:
+    var: rauc_status.stdout_lines
