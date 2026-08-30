@@ -12,9 +12,6 @@ platform_react_control_camera_timeout_ms: 10000
 # so every origin serving the app must be allow-listed in the IGN client space,
 # or the tiles come back 401. Empty by default so a deployment without the key still works.
 platform_react_ign_api_key: ""
-platform_react_sites_per_organization:
-  - name: orga1
-    sites: ["site1"]
 platform_react_user_guide_urls_fr: 'https://pyronear.notion.site/Guide-d-utilisation-plateforme-Pyronear-376425b63668818ebd17da60b20cc770'
 platform_react_user_guide_urls_en: 'https://pyronear.notion.site/Pyronear-Platform-User-Guide-389425b6366881da906ee38e93524db2'
 platform_react_user_guide_urls_de: 'https://pyronear.notion.site/Pyronear-Plattform-Benutzerhandbuch-389425b63668816abf44e8679fb9dd35'
