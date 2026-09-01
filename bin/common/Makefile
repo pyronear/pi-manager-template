@@ -5,7 +5,7 @@
 	install-platform-react-server install-platform-react-preprod-server \
 	install-alert-api-server install-alert-api-preprod-server install-temporal-server \
 	install-temporal-preprod-server \
-	install-combined-server init-pi-zero sync-ssh-keys
+	install-combined-server init-pi-zero sync-ssh-keys update-os
 
 # Operational targets must run inside the pyro-ansible container, where the
 # sister repo's inventory/host_vars/group_vars are mounted. The Dockerfile sets
@@ -29,6 +29,7 @@ help:
 	@echo "  make deploy-all-engines | deploy-one-engine SITE=<host>"
 	@echo "  make deploy-one-engine-preprod SITE=<host>  (deploy-engines.yml against inventory/hosts_preprod)"
 	@echo "  make init-one-engine SITE=<host> | init-pi-zero SITE=<host>"
+	@echo "  make update-os                  (OTA OS update via RAUC on the production environment)"
 	@echo "  make install-openvpn | install-mediamtx | update-mediamtx-conf"
 	@echo "  make install-annotation-server | install-platform-react-server"
 	@echo "  make install-alert-api-server | install-temporal-server"
@@ -133,3 +134,7 @@ init-pi-zero: require-container
 
 sync-ssh-keys: require-container
 	ansible-playbook playbooks/sync-ssh-keys.yml -i inventory/hosts_prod
+
+# --- Added targets for OTA OS update via RAUC ---
+update-os: require-container
+	ansible-playbook playbooks/update-os.yml -i inventory/hosts_prod
