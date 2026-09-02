@@ -6,7 +6,6 @@ services:
     expose:
       - 8080
     volumes:
-      - {{ platform_react_working_dir_react }}/config/sites_live_access_prod.json:/usr/share/nginx/html/config/sites_live_access_prod.json
       - {{ platform_react_working_dir_react }}/config/app-config-prod.js:/usr/share/nginx/html/config/app-config.js
     networks:
       - web
