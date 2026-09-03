@@ -41,12 +41,12 @@
     - { name: "S3_SECRET_KEY",    value: "{{ S3_SECRET_KEY }}" }
     - { name: "S3_REGION",        value: "{{ S3_REGION }}" }
     # - { name: "S3_PROXY_URL",   value: "{{ S3_PROXY_URL }}" }
-    - { name: "POSTGRES_USER",    value: "{{ POSTGRES_USER }}" }
-    - { name: "POSTGRES_PASSWORD", value: "{{ POSTGRES_PASSWORD }}" }
-    - { name: "POSTGRES_DB",      value: "{{ POSTGRES_DB }}" }
-    - { name: "prefix",           value: "{{ prefix }}" }
+    - { name: "POSTGRES_USER",    value: "{{ POSTGRES_USER | default('') }}" }
+    - { name: "POSTGRES_PASSWORD", value: "{{ POSTGRES_PASSWORD | default('') }}" }
+    - { name: "POSTGRES_DB",      value: "{{ POSTGRES_DB | default('') }}" }
+    - { name: "prefix",           value: "{{ prefix | default('') }}" }
   when:
-    - inventory_hostname in groups["alert_server"]
+    - inventory_hostname in groups.get("alert_server", [])
     - item.value is none or item.value | length == 0
   no_log: true
 
@@ -96,7 +96,7 @@
 - name: Verify that each group contains only one host
   ansible.builtin.assert:
     that:
-      - "groups[item] | length <= 1"
+      - "groups.get(item, []) | length <= 1"
     fail_msg: "The'{{ item }}' group contains more than one server"
     success_msg: "The '{{ item }}' does indeed contain a single server."
   loop: "{{ group_list }}"
