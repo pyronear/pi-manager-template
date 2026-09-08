@@ -1,0 +1,7 @@
+---
+- name: OTA update of the Pyronear OS via RAUC
+  hosts: engine_servers
+  become: yes
+
+  roles:
+    - update_os

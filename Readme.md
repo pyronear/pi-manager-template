@@ -142,6 +142,17 @@ fix, enables the service on boot, and **reboots** the VM. It requires
 `openvpn_client_password` in the combined host's `host_vars` vault (the same
 value the engines use).
 
+## Update OS
+
+To update the OS of the raspberry pi, it is imperative to use a Yocto image generated via the [pyro-yocto](https://github.com/pyronear/pyro-yocto) repo.
+
+Follow the steps below:
+1. Create a `bundles` directory at the root of your [sister-repo](https://github.com/pyronear/pi-manager-example.git).
+2. Generate the RAUC bundle from the Yocto image using the [instructions in the pyro-yocto repo](https://github.com/pyronear/pyro-yocto/blob/main/README.md#-system-update).
+3. Then follow the instructions in the [Pyro-yocto documentation](https://github.com/pyronear/pyro-yocto#using-ansible-) to update the OS of the raspberry pi via Ansible.
+
+**Warning** : The `update-os` playbook updates **all** Raspberry Pi present in `engine_servers`.
+
 ## Adding a new Raspberry Pi
 
 See [How to configure a new raspberry](./docs/howto/how-to-configure-a-new-raspberry.md).
