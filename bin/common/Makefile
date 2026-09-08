@@ -1,9 +1,10 @@
 
 .PHONY: require-container help ansible-up ansible-stop ping check-engines \
-	init-one-engine deploy-one-engine deploy-all-engines down up \
+	init-one-engine deploy-one-engine deploy-one-engine-preprod deploy-all-engines down up \
 	install-openvpn install-mediamtx update-mediamtx-conf update-reverse-ssh install-annotation-server \
 	install-platform-react-server install-platform-react-preprod-server \
 	install-alert-api-server install-alert-api-preprod-server install-temporal-server \
+	install-temporal-preprod-server \
 	install-combined-server init-pi-zero sync-ssh-keys build-push
 
 # Operational targets must run inside the pyro-ansible container, where the
@@ -28,11 +29,12 @@ help:
 	@echo "Container targets (run after 'make ansible-up'):"
 	@echo "  make ping / check-engines / up / down / sync-ssh-keys"
 	@echo "  make deploy-all-engines | deploy-one-engine SITE=<host>"
+	@echo "  make deploy-one-engine-preprod SITE=<host>  (deploy-engines.yml against inventory/hosts_preprod)"
 	@echo "  make init-one-engine SITE=<host> | init-pi-zero SITE=<host>"
 	@echo "  make install-openvpn | install-mediamtx | update-mediamtx-conf"
 	@echo "  make install-annotation-server | install-platform-react-server"
 	@echo "  make install-alert-api-server | install-temporal-server"
-	@echo "  make install-platform-react-preprod-server | install-alert-api-preprod-server"
+	@echo "  make install-platform-react-preprod-server | install-alert-api-preprod-server | install-temporal-preprod-server"
 	@echo "                                 (same plays as prod, against inventory/hosts_preprod)"
 	@echo "  make install-combined-server   (traefik + mediamtx + platform + alert API on one VM)"
 	@echo "  make update-combined-api | update-combined-platform | update-combined-mediamtx | update-combined-traefik"
@@ -76,6 +78,11 @@ init-one-engine: require-container
 deploy-one-engine: require-container
 	ansible-playbook playbooks/deploy-engines.yml -i inventory/hosts_prod -l $(SITE)
 
+# Deploy an engine listed in the preprod inventory (e.g. st-peray): same play
+# as prod, but api_dns resolves to the preprod alert API via group_vars/envpreprod.
+deploy-one-engine-preprod: require-container
+	ansible-playbook playbooks/deploy-engines.yml -i inventory/hosts_preprod -l $(SITE)
+
 deploy-all-engines: require-container
 	ansible-playbook playbooks/deploy-engines.yml -i inventory/hosts_prod -l engine_servers
 
@@ -117,6 +124,9 @@ install-alert-api-preprod-server: require-container
 
 install-temporal-server: require-container
 	ansible-playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l temporal_server
+
+install-temporal-preprod-server: require-container
+	ansible-playbook playbooks/deploy-servers.yml -i inventory/hosts_preprod -l temporal_server
 
 install-combined-server: require-container
 	ansible-playbook playbooks/deploy-combined.yml -i inventory/hosts_prod -l combined_server

@@ -64,6 +64,7 @@ make ping                          # ping all hosts in inventory/hosts_prod
 make check-engines                 # verify engine containers are running + healthy
 make deploy-all-engines            # deploy-engines.yml on every engine
 make deploy-one-engine SITE=<host> # deploy-engines.yml on a single host
+make deploy-one-engine-preprod SITE=<host>   # same play, against inventory/hosts_preprod
 make init-one-engine  SITE=<host>  # rpi-init.yml on a single host (+ mediamtx)
 make init-pi-zero     SITE=<host>  # rpi-init-pi-zero.yml on a single Pi Zero
 make up / make down                # start / stop engine docker-compose stacks fleet-wide
@@ -110,6 +111,7 @@ make install-platform-react-preprod-server   # same plays, against inventory/hos
 make install-alert-api-server
 make install-alert-api-preprod-server        # same plays, against inventory/hosts_preprod
 make install-temporal-server
+make install-temporal-preprod-server         # same play, against inventory/hosts_preprod
 make install-combined-server         # deploy-combined.yml: traefik + mediamtx + platform + alert API on one VM
 ```
 
