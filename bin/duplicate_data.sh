@@ -11,16 +11,16 @@ ORG=${1:?usage: $0 <org_name> <from YYYY-MM-DD> <to YYYY-MM-DD>}
 FROM=${2:?usage: $0 <org_name> <from YYYY-MM-DD> <to YYYY-MM-DD>}
 TO=${3:?usage: $0 <org_name> <from YYYY-MM-DD> <to YYYY-MM-DD>}
 for d in "$FROM" "$TO"; do [[ $d =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || { echo "invalid date '$d', expected YYYY-MM-DD" >&2; exit 1; }; done
+[[ $FROM > $TO ]] && { echo "from '$FROM' is after to '$TO'" >&2; exit 1; }
 "$(dirname "$0")/duplicate_org.sh" "$ORG"
 . "$(dirname "$0")/preprod-lib.sh"
 check_org "$ORG"
 
-WINDOW="BETWEEN '$FROM' AND DATE '$TO' + 1"  # [from 00:00, to+1 00:00]; the extra instant is harmless
 CTE="WITH org AS (SELECT id FROM organizations WHERE name = '$ORG'),
 cams AS (SELECT id FROM cameras WHERE organization_id = (SELECT id FROM org)),
-seqs AS (SELECT * FROM sequences WHERE camera_id IN (SELECT id FROM cams) AND started_at $WINDOW),
+seqs AS (SELECT * FROM sequences WHERE camera_id IN (SELECT id FROM cams) AND started_at >= '$FROM' AND started_at < DATE '$TO' + 1),
 dets AS (SELECT * FROM detections WHERE camera_id IN (SELECT id FROM cams)
-  AND (sequence_id IN (SELECT id FROM seqs) OR (sequence_id IS NULL AND created_at $WINDOW))),
+  AND (sequence_id IN (SELECT id FROM seqs) OR (sequence_id IS NULL AND created_at >= '$FROM' AND created_at < DATE '$TO' + 1))),
 links AS (SELECT * FROM alerts_sequences WHERE sequence_id IN (SELECT id FROM seqs)),
 al AS (SELECT * FROM alerts WHERE id IN (SELECT alert_id FROM links))"
 export_table organizations "SELECT * FROM organizations WHERE id = (SELECT id FROM org)"
@@ -104,9 +104,7 @@ from app.services.storage import s3_service
 SRC = "${PROD_SERVER}-alert-api-${PROD_ORG_ID}"
 DST = s3_service.resolve_bucket_name(${PREPROD_ORG_ID})
 KEYS = """${KEYS}""".split()
-s3 = s3_service._s3
-if DST not in {b["Name"] for b in s3.list_buckets()["Buckets"]}:
-    assert s3_service.create_bucket(DST), f"cannot create bucket {DST}"
+s3 = s3_service._s3  # DST bucket was created by duplicate_org.sh
 def copy(key):
     try:
         s3.copy_object(Bucket=DST, Key=key, CopySource={"Bucket": SRC, "Key": key})
@@ -117,4 +115,5 @@ def copy(key):
 with ThreadPoolExecutor(16) as pool:
     done = list(pool.map(copy, KEYS))
 print(f"s3: {done.count('ok')}/{len(KEYS)} objects copied {SRC} -> {DST}, {done.count('error')} errors")
+sys.exit(1 if "error" in done else 0)
 PY

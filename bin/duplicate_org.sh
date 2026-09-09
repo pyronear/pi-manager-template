@@ -2,6 +2,7 @@
 # Duplicate one organization from the prod alert API to the preprod one, as '<org>-preprod', with
 # its cameras (same names) and poses. Re-runnable: whatever already exists is skipped.
 # telegram_id / slack_hook are NOT copied so preprod never notifies the prod channels.
+# The org's S3 bucket is created too (the API only does it on its own POST /organizations).
 #
 # Usage: bin/duplicate_org.sh <org_name>
 ORG=${1:?usage: $0 <org_name>}
@@ -44,3 +45,14 @@ UNION ALL SELECT 'preprod: ' || count(*) || ' poses inserted, ' || (SELECT count
 COMMIT;
 SQL
 } | preprod_psql >&2
+
+PREPROD_ORG_ID=$(echo "SELECT id FROM organizations WHERE name = '$ORG-preprod'" | preprod_psql)
+cat <<PY | preprod_backend python - >&2
+from app.services.storage import s3_service
+bucket = s3_service.resolve_bucket_name(${PREPROD_ORG_ID})
+if bucket in {b["Name"] for b in s3_service._s3.list_buckets()["Buckets"]}:
+    print(f"s3: bucket {bucket} already there")
+else:
+    assert s3_service.create_bucket(bucket), f"cannot create bucket {bucket}"
+    print(f"s3: bucket {bucket} created")
+PY
