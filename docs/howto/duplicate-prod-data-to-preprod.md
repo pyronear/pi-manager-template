@@ -16,10 +16,10 @@ and sudo access on both servers (`ubuntu` is not in the docker group).
 ## `bin/duplicate_org.sh <org>`
 
 ```bash
-bin/duplicate_org.sh sdis-67
+bin/duplicate_org.sh sdis-07
 ```
 
-Creates the organization `sdis-67-preprod` on preprod with:
+Creates the organization `sdis-07-preprod` on preprod with:
 
 - the organization row, **without** `telegram_id` / `slack_hook` so preprod never notifies
   the prod channels;
@@ -29,12 +29,12 @@ Creates the organization `sdis-67-preprod` on preprod with:
 
 Re-runnable: rows already present are skipped. No user is created: use
 `init_script/create_user.py` against `https://alertapipreprod.pyronear.org` with
-`organization_name=sdis-67-preprod` to get a login on the platform.
+`organization_name=sdis-07-preprod` to get a login on the platform.
 
 ## `bin/duplicate_data.sh <org> <from> <to>`
 
 ```bash
-bin/duplicate_data.sh sdis-67 2026-09-01 2026-09-07
+bin/duplicate_data.sh sdis-07 2026-09-01 2026-09-07
 ```
 
 Runs `duplicate_org.sh` first, then copies, for UTC calendar days `from` to `to` inclusive:
@@ -58,7 +58,7 @@ database `src` in the same postgres acting as prod and a fake prod bucket on loc
 
 ```bash
 PROD_HOST=local PREPROD_HOST=local COMPOSE_PROJECT=pyronear PROD_DB=src \
-PROD_SERVER_NAME=fakeprod DOCKER=docker bin/duplicate_data.sh sdis-67 2026-09-07 2026-09-08
+PROD_SERVER_NAME=fakeprod DOCKER=docker bin/duplicate_data.sh sdis-07 2026-09-07 2026-09-08
 ```
 
 The local backend must run with a non-empty `SERVER_NAME`, it names the preprod bucket.
