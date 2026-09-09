@@ -146,6 +146,13 @@ value the engines use).
 
 See [How to configure a new raspberry](./docs/howto/how-to-configure-a-new-raspberry.md).
 
+## Duplicating prod data to preprod
+
+`bin/duplicate_org.sh <org>` and `bin/duplicate_data.sh <org> <from> <to>` copy an
+organization and a date range of its alerts from the prod alert API to preprod at the
+database level. See
+[Duplicate prod alert data to preprod](./docs/howto/duplicate-prod-data-to-preprod.md).
+
 ## Directory structure
 
 - **playbooks/** — playbooks per task (engine deploy, server deploy, checks).
