@@ -5,7 +5,7 @@
 	install-platform-react-server install-platform-react-preprod-server \
 	install-alert-api-server install-alert-api-preprod-server install-temporal-server \
 	install-temporal-preprod-server \
-	install-combined-server init-pi-zero sync-ssh-keys
+	install-combined-server init-pi-zero sync-ssh-keys build-push
 
 # Operational targets must run inside the pyro-ansible container, where the
 # sister repo's inventory/host_vars/group_vars are mounted. The Dockerfile sets
@@ -23,6 +23,8 @@ help:
 	@echo "  make ansible-up      build the image and open a shell in the container"
 	@echo "  make ansible-stop    stop the container"
 	@echo "  make dependencies    install host-side ansible + pre-commit hook"
+	@echo "  make build-push COMPONENT=<api|engine|platform> BRANCH=<branch>"
+	@echo "                       build a branch's docker image(s) and push to Docker Hub tagged with the branch name"
 	@echo ""
 	@echo "Container targets (run after 'make ansible-up'):"
 	@echo "  make ping / check-engines / up / down / sync-ssh-keys"
@@ -50,6 +52,19 @@ ansible-up:
 
 ansible-stop:
 	@docker compose down pyro-ansible
+
+# Host target: needs the docker daemon and a Docker Hub login with push
+# rights on the pyronear organization. COMPONENT/BRANCH are passed through
+# the environment, not interpolated into the recipe, so branch names with
+# shell metacharacters cannot inject commands.
+build-push: export BP_COMPONENT = $(COMPONENT)
+build-push: export BP_BRANCH = $(BRANCH)
+build-push:
+	@if [ -z "$$BP_COMPONENT" ] || [ -z "$$BP_BRANCH" ]; then \
+		echo "Usage: make build-push COMPONENT=<api|engine|platform> BRANCH=<branch>"; \
+		exit 1; \
+	fi
+	@bash bin/build-push-images.sh "$$BP_COMPONENT" "$$BP_BRANCH"
 
 ping: require-container
 	@ansible all -i inventory/hosts_prod -m ping
