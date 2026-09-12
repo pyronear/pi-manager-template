@@ -1,10 +1,18 @@
 ---
 # Tasks to deploy Docker Compose files
+# A first deploy has neither the directory nor a compose file, so the teardown
+# below has nothing to act on and errors out; skip it until one exists.
+- name: Check whether a previous deployment exists
+  ansible.builtin.stat:
+    path: /home/{{ app_name }}/docker-compose.yml
+  register: existing_compose
+
 - name: Stop all services
   community.docker.docker_compose_v2:
     project_src: /home/{{ app_name }}/
     state: absent
     remove_images: all
+  when: existing_compose.stat.exists
 
 - name: Create a directory if it does not exist
   ansible.builtin.file:
