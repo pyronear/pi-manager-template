@@ -142,7 +142,7 @@ fix, enables the service on boot, and **reboots** the VM. It requires
 `openvpn_client_password` in the combined host's `host_vars` vault (the same
 value the engines use).
 
-### Testing a branch on preprod
+### Deploy and test a branch on preprod
 
 To try a PR branch of a service before it is merged, build its docker image(s)
 from that branch and push them to Docker Hub tagged with the branch name, then
@@ -155,9 +155,11 @@ make build-push COMPONENT=platform BRANCH=<branch>   # new-pyro-platform -> pyro
 ```
 
 The tag is the branch name without its type prefix, sanitized for docker
-(`feat/my-fix` -> `my-fix`); the script prints it. Unlike the deploy targets,
-this runs **on the host**: it needs the docker daemon (with buildx) and a
-Docker Hub login with push rights on the `pyronear` organization.
+(`feat/my-fix` -> `my-fix`); the script prints it. Tags that could overwrite
+a release (`latest`, `main`, version numbers like `1.0.11`) are refused.
+Unlike the deploy targets, this runs **on the host**: it needs the docker
+daemon (with buildx) and a Docker Hub login with push rights on the
+`pyronear` organization.
 Cross-architecture builds need QEMU/binfmt (Docker Desktop ships it; on bare
 Linux install `qemu-user-static`).
 
@@ -166,14 +168,15 @@ To deploy it, set the image tag in the sister repo to the pushed tag:
 `inventory/group_vars/envpreprod/vars.yml`, `pyro_engine_docker_tag` in the
 engine's `host_vars` (host-level, `engine_servers` outranks `envpreprod`).
 
-#### Example: deploy a platform PR branch on preprod
+#### Example: deploy the platform branch `feat/my-specific-branch` on preprod
 
 ```bash
-# 1. On the host: build the branch and push it as pyronear/pyro-platform-react:<tag>
-make build-push COMPONENT=platform BRANCH=<pr-branch>
+# 1. On the host: pass the full branch name, as shown on GitHub.
+#    Pushes pyronear/pyro-platform-react:my-specific-branch
+make build-push COMPONENT=platform BRANCH=feat/my-specific-branch
 
-# 2. In the sister repo: set platform_react_docker_version to the pushed tag
-#    in inventory/group_vars/envpreprod/vars.yml
+# 2. In the sister repo, inventory/group_vars/envpreprod/vars.yml:
+#      platform_react_docker_version: my-specific-branch
 
 # 3. In the container: redeploy (compose pulls the tag and recreates)
 make install-platform-react-preprod-server
