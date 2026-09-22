@@ -31,6 +31,12 @@ BRANCH=$2
 TAG=$(printf '%s' "${BRANCH#*/}" | tr -c 'a-zA-Z0-9_.-' '-' | sed 's/^[.-]*//' | cut -c1-128)
 [ -n "$TAG" ] || { echo "ERROR: branch name '$BRANCH' yields an empty docker tag" >&2; exit 1; }
 
+# Refuse tags used for releases so a test branch can never overwrite them.
+if [[ "$TAG" =~ ^(latest|main|master|develop|stable|v?[0-9]+(\.[0-9]+)*)$ ]]; then
+    echo "ERROR: tag '$TAG' is reserved (latest or a version number); rename the branch" >&2
+    exit 1
+fi
+
 docker buildx version >/dev/null 2>&1 || { echo "ERROR: docker buildx is not available" >&2; exit 1; }
 
 case "$COMPONENT" in
