@@ -1,0 +1,6 @@
+---
+# Temporal validation sidecar (pyro_temporal_api, pyro-engine PR 415): when true the
+# engine only uploads alerts confirmed by the temporal smoke model. Needs
+# /home/engine/data/model_onnx.zip (set engine_temporal_model_url to fetch it).
+engine_temporal_validation: false
+engine_temporal_model_url: ""
