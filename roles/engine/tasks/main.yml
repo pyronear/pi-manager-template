@@ -5,13 +5,13 @@
   ansible.builtin.git:
     repo: 'https://github.com/pyronear/{{ project_name }}.git'
     dest: /home/{{ project_name }}
-    version: '{{ pyro_engine_git_ref }}'
+    version: '{{ engine_git_ref }}'
     accept_hostkey: true
 
 
 - name: Pull pyro-engine image from Docker Hub
   community.docker.docker_image:
-    name: "pyronear/pyro-engine:{{ pyro_engine_docker_tag }}"
+    name: "pyronear/pyro-engine:{{ engine_docker_version }}"
     source: pull
     force_source: true
   register: pull_pyro_engine
@@ -21,7 +21,7 @@
 
 - name: Pull pyro-camera-api image from Docker Hub
   community.docker.docker_image:
-    name: "pyronear/pyro-camera-api:{{ pyro_engine_docker_tag }}"
+    name: "pyronear/pyro-camera-api:{{ engine_docker_version }}"
     source: pull
     force_source: true
   register: pull_pyro_camera_api

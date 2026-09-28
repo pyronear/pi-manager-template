@@ -19,7 +19,7 @@
       - shelly_watchdog_setup_script.stat.exists
     fail_msg: >-
       watchdog/shelly not found in {{ shelly_watchdog_repo_dir }} —
-      pyro_engine_git_ref must be v1.0.12 or later.
+      engine_git_ref must be v1.0.12 or later.
 
 - name: Ensure Shelly watchdog work directory exists
   ansible.builtin.file:

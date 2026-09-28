@@ -1,0 +1,5 @@
+---
+# Pinned engine image version, shared by the pyro-engine and pyro-camera-api
+# containers. Environments that must track the newest build (preprod) override
+# engine_docker_version in the sister repo's group_vars.
+engine_docker_version: "1.0.13"
