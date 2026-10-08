@@ -18,12 +18,39 @@ services:
         timeout: 3s
         retries: 3
 
+{% if alert_api_rustfs %}
+  # On-prem S3. The API signs presigned URLs for alert_api_s3_url (the public
+  # s3 proxy name) and traefik forwards that host unchanged to this container,
+  # so the signature matches.
+  rustfs:
+    image: rustfs/rustfs:1.0.0
+    restart: always
+    expose:
+      - 9000
+    environment:
+      - RUSTFS_ACCESS_KEY=${S3_ACCESS_KEY}
+      - RUSTFS_SECRET_KEY=${S3_SECRET_KEY}
+    volumes:
+      - rustfs_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health/ready"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    networks:
+      - web
+
+{% endif %}
   backend:
     image: pyronear/alert-api:{{ alert_api_docker_version }}
     restart: always
     depends_on:
       db:
         condition: service_healthy
+{% if alert_api_rustfs %}
+      rustfs:
+        condition: service_healthy
+{% endif %}
     expose:
       - 5050
     environment:
@@ -71,6 +98,9 @@ services:
 
 volumes:
   postgres_data:
+{% if alert_api_rustfs %}
+  rustfs_data:
+{% endif %}
 
 networks:
   web:

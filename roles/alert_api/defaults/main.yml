@@ -18,6 +18,9 @@ alert_api_s3_access_key:
 alert_api_s3_secret_key:
 alert_api_s3_region:
 alert_api_s3_url:
+# Run RustFS next to the API instead of an external S3. Set alert_api_s3_url
+# to https://<alert_api_s3_proxy_url> so traefik serves it.
+alert_api_rustfs: false
 # Comma-separated list of frontend origins allowed to fetch bucket objects
 # cross-origin; the API applies it as the bucket CORS policy on bucket creation.
 # Set it per deployment in the sister inventory repo (group_vars/alert_server).

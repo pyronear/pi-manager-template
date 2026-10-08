@@ -20,7 +20,7 @@
             [http.services.assets.loadBalancer]
                 passHostHeader = true
                 [[http.services.assets.loadBalancer.servers]]
-                    url = "{{ alert_api_s3_url }}"
+                    url = "{{ 'http://rustfs:9000' if alert_api_rustfs else alert_api_s3_url }}"
     [http.middlewares]
       [http.middlewares.staticok.plugin.staticresponse]
         statusCode = 200
