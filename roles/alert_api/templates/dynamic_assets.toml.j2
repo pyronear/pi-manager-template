@@ -7,6 +7,7 @@
             [http.routers.assets.tls]
                 certResolver = "pyroresolver"
 
+{% if not alert_api_rustfs %}
         [http.routers.root]
             rule = "Host(`{{ alert_api_s3_proxy_url }}`) && Path(`/`)"
             service = "noop@internal"
@@ -14,6 +15,7 @@
             middlewares = ["staticok"]
             [http.routers.root.tls]
                 certResolver = "pyroresolver"
+{% endif %}
 
     [http.services]
         [http.services.assets]
