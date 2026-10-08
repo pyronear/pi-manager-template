@@ -18,6 +18,9 @@
   become: true
   roles:
     - engine
-    - engine_cron # needs to be laucnhed after the engine's installation
+    # needs to be launched after the engine's installation. Off on hosts that
+    # share the machine with servers: it adds a nightly reboot.
+    - role: engine_cron
+      when: engine_cron_enabled | default(true)
     - role: shelly_watchdog # provisions the Shelly relay (engine-side env/cron is done by engine_cron)
       when: watchdog_type == "shelly"
