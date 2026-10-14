@@ -73,3 +73,8 @@ for camera in cameras_csv.itertuples(index=False):
             pose_ids.append(pose_resp["id"])
         print(f"  -> {n_poses} poses created | pose_ids: {pose_ids} | patrol_ids: {list(range(n_poses))}")
         ptz_index += 1
+    elif "azimuth" in cameras_csv.columns:
+        # Static camera: the engine needs one pose, at the camera's own azimuth
+        pose_payload = {"camera_id": camera_id, "azimuth": float(camera.azimuth)}
+        pose_resp = api_request("post", f"{api_url}/api/v1/poses/", superuser_auth, pose_payload)
+        print(f"  -> static pose created | pose_ids: [{pose_resp['id']}]")

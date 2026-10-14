@@ -7,6 +7,7 @@
             [http.routers.assets.tls]
                 certResolver = "pyroresolver"
 
+{% if not alert_api_rustfs %}
         [http.routers.root]
             rule = "Host(`{{ alert_api_s3_proxy_url }}`) && Path(`/`)"
             service = "noop@internal"
@@ -14,13 +15,14 @@
             middlewares = ["staticok"]
             [http.routers.root.tls]
                 certResolver = "pyroresolver"
+{% endif %}
 
     [http.services]
         [http.services.assets]
             [http.services.assets.loadBalancer]
                 passHostHeader = true
                 [[http.services.assets.loadBalancer.servers]]
-                    url = "{{ alert_api_s3_url }}"
+                    url = "{{ 'http://rustfs:9000' if alert_api_rustfs else alert_api_s3_url }}"
     [http.middlewares]
       [http.middlewares.staticok.plugin.staticresponse]
         statusCode = 200
