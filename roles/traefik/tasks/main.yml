@@ -19,7 +19,7 @@
     content: |
       {{ traefik_working_dir }}/logs/*.log {
           daily
-          rotate 7
+          rotate 30
           compress
           delaycompress
           missingok
