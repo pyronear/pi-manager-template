@@ -13,6 +13,24 @@
     - "{{ traefik_dynamic_dir }}"
     - "{{ traefik_working_dir }}/logs"
 
+# copytruncate: traefik keeps the bind-mounted log file open
+- name: Rotate traefik logs
+  ansible.builtin.copy:
+    content: |
+      {{ traefik_working_dir }}/logs/*.log {
+          daily
+          rotate 7
+          compress
+          delaycompress
+          missingok
+          notifempty
+          copytruncate
+      }
+    dest: /etc/logrotate.d/traefik
+    owner: root
+    group: root
+    mode: '0644'
+
 - name: Inspect any existing traefik container
   community.docker.docker_container_info:
     name: traefik
