@@ -31,6 +31,24 @@
     - "{{ temporal_api_working_dir_traefik }}"
     - "{{ temporal_api_working_dir_traefik }}/logs"
 
+# copytruncate: traefik keeps the bind-mounted log file open
+- name: Rotate traefik logs
+  ansible.builtin.copy:
+    content: |
+      {{ temporal_api_working_dir_traefik }}/logs/*.log {
+          daily
+          rotate 7
+          compress
+          delaycompress
+          missingok
+          notifempty
+          copytruncate
+      }
+    dest: /etc/logrotate.d/traefik
+    owner: root
+    group: root
+    mode: "0644"
+
 - name: Stop all services
   community.docker.docker_compose_v2:
     project_src: "{{ temporal_api_working_dir }}"
