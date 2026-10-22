@@ -118,6 +118,28 @@
     remote_src: true
     mode: '0644'
 
+# Fake Reolink cameras (host var `fake_cameras`, see the README): a compose
+# override next to the upstream compose, removed when the host has none.
+- name: Pull fake-camera image from Docker Hub
+  community.docker.docker_image:
+    name: "pyronear/fake-camera:{{ fake_camera_docker_tag }}"
+    source: pull
+    force_source: true
+  when: fake_cameras is defined
+
+- name: Write the fake cameras compose override
+  ansible.builtin.template:
+    src: docker-compose.override.yml.j2
+    dest: /home/{{ app_name }}/docker-compose.override.yml
+    mode: '0644'
+  when: fake_cameras is defined
+
+- name: Remove the fake cameras compose override
+  ansible.builtin.file:
+    path: /home/{{ app_name }}/docker-compose.override.yml
+    state: absent
+  when: fake_cameras is not defined
+
 - name: Remove old engine container manually
   community.docker.docker_container:
     name: engine
@@ -136,3 +158,4 @@
 - name: Ensure Docker Compose containers are running
   community.docker.docker_compose_v2:
     project_src: /home/{{ app_name }}/
+    remove_orphans: true

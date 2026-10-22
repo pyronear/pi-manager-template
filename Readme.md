@@ -99,6 +99,36 @@ What the main targets actually do:
 The full walkthrough lives in
 [How to configure a new raspberry](./docs/howto/how-to-configure-a-new-raspberry.md).
 
+### Fake cameras on a test station
+
+A site can run fake Reolink cameras next to (or instead of) its real ones, to
+generate alerts from replayed smoke frames. The fake camera is the
+`pyronear/fake-camera` image from
+[pyro-envdev](https://github.com/pyronear/pyro-envdev) (`containers/fake_camera`);
+`pyro-camera-api` and the engine talk to it like to a real camera. In the site's
+`host_vars`, add the camera it impersonates to `config_json`, keyed by the port
+published on the Pi, and list the containers in `fake_cameras`:
+
+```yaml
+config_json: |
+  {
+      "127.0.0.1:8443": {
+          "name": "st-peray-01", "adapter": "reolink", "type": "static",
+          "id": "18", "pose_ids": [105], "poses": [], "bbox_mask_url": "", "token": ""
+      }
+  }
+fake_cameras:
+  - name: fakecam-1
+    port: 8443
+    scenario: smoke-then-clear   # embedded in the image
+    camera: croix-augas-01       # whose frames to play
+    loop: true                   # replay forever
+```
+
+`deploy-one-engine` then writes a `docker-compose.override.yml` next to the
+engine compose with one container per entry. Remove `fake_cameras` and deploy
+again to drop them.
+
 ### Server targets
 
 ```bash
