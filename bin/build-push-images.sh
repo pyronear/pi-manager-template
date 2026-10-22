@@ -76,8 +76,8 @@ case "$COMPONENT" in
         # needs. Run as the host user so node_modules/dist are not
         # root-owned (the cleanup trap must be able to delete them on
         # Linux hosts).
-        docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp \
-            -v "$SRC_DIR":/app -w /app node:24 \
+        docker run --rm --pull=always --user "$(id -u):$(id -g)" -e HOME=/tmp \
+            -v "$SRC_DIR":/app -w /app node:24.22.1 \
             sh -c "npx -y pnpm@9 install --frozen-lockfile && npx -y pnpm@9 build"
         docker buildx build --platform linux/amd64 \
             -t "pyronear/pyro-platform-react:${TAG}" --push .
