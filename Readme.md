@@ -128,8 +128,9 @@ fake_cameras:
 ```
 
 `deploy-one-engine` then writes a `docker-compose.override.yml` next to the
-engine compose with one container per entry. Remove `fake_cameras` and deploy
-again to drop them.
+engine compose with one container per entry. To drop cameras, remove them from
+`fake_cameras` and list their container names in `removed_fake_cameras`
+(`[fakecam-1, fakecam-2]`), then deploy again.
 
 ### Server targets
 

@@ -120,6 +120,7 @@
 
 # Fake Reolink cameras (host var `fake_cameras`, see the README): a compose
 # override next to the upstream compose, removed when the list is absent or empty.
+# To drop cameras, list their container names in removed_fake_cameras.
 - name: Pull fake-camera image from Docker Hub
   community.docker.docker_image:
     name: "pyronear/fake-camera:{{ fake_camera_docker_tag }}"
@@ -140,6 +141,15 @@
     state: absent
   when: fake_cameras | default([]) | length == 0
 
+# Containers of a previous fake_cameras list are not orphans compose would
+# prune (that would also prune profile services started by hand, such as
+# pyro-temporal-api), so they are named explicitly.
+- name: Remove fake camera containers no longer listed
+  community.docker.docker_container:
+    name: "{{ item }}"
+    state: absent
+  loop: "{{ removed_fake_cameras | default([]) }}"
+
 - name: Remove old engine container manually
   community.docker.docker_container:
     name: engine
@@ -158,4 +168,3 @@
 - name: Ensure Docker Compose containers are running
   community.docker.docker_compose_v2:
     project_src: /home/{{ app_name }}/
-    remove_orphans: true
