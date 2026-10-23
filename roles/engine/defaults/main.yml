@@ -1,0 +1,4 @@
+---
+# Image of the fake Reolink cameras (pyro-envdev, containers/fake_camera), used
+# when a host defines `fake_cameras`.
+fake_camera_docker_tag: "0.1.0"
