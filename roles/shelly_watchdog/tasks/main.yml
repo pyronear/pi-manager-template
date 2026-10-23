@@ -8,17 +8,20 @@
       Shelly hosts need static_ip_address in host_vars to build the
       health URL the Shelly polls.
 
-- name: Check that the pyro-engine checkout ships the Shelly watchdog
+# Only watchdog.js comes from the pyro-engine checkout. The setup and hardening
+# scripts moved out of pyro-engine in v1.0.19 (pyro-engine#450) and are vendored
+# in this role's files/.
+- name: Check that the pyro-engine checkout ships watchdog.js
   ansible.builtin.stat:
-    path: "{{ shelly_watchdog_device_dir }}/setup_shelly_watchdog.sh"
-  register: shelly_watchdog_setup_script
+    path: "{{ shelly_watchdog_device_dir }}/watchdog.js"
+  register: shelly_watchdog_js_stat
 
-- name: Assert the Shelly watchdog scripts are present
+- name: Assert watchdog.js is present
   ansible.builtin.assert:
     that:
-      - shelly_watchdog_setup_script.stat.exists
+      - shelly_watchdog_js_stat.stat.exists
     fail_msg: >-
-      watchdog/shelly not found in {{ shelly_watchdog_repo_dir }} —
+      watchdog/shelly/device/watchdog.js not found in {{ shelly_watchdog_repo_dir }} —
       pyro_engine_git_ref must be v1.0.12 or later.
 
 - name: Ensure Shelly watchdog work directory exists
@@ -54,8 +57,9 @@
   register: shelly_watchdog_js
 
 - name: Harden the Shelly device configuration
-  ansible.builtin.command:
-    cmd: bash {{ shelly_watchdog_device_dir }}/harden_shelly.sh
+  ansible.builtin.script:
+    cmd: harden_shelly.sh
+    executable: bash
     chdir: "{{ shelly_watchdog_work_dir }}"
   environment:
     SHELLY_IP: "{{ shelly_ip }}"
@@ -77,8 +81,9 @@
          | list | length > 0 }}
 
 - name: Install and start the Shelly watchdog script
-  ansible.builtin.command:
-    cmd: bash {{ shelly_watchdog_device_dir }}/setup_shelly_watchdog.sh
+  ansible.builtin.script:
+    cmd: setup_shelly_watchdog.sh
+    executable: bash
     chdir: "{{ shelly_watchdog_work_dir }}"
   environment:
     SHELLY_IP: "{{ shelly_ip }}"
