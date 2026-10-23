@@ -16,6 +16,16 @@ set -euo pipefail
 # WARNING: this deletes ALL webhooks and schedules on the device. Only run it
 # on a Shelly dedicated to the watchdog, not one shared with other automations.
 
+cd "$(dirname "$0")"
+
+# Site settings, see shelly_config.env.example.
+if [ -f shelly_config.env ]; then
+  set -a
+  # shellcheck disable=SC1091
+  . ./shelly_config.env
+  set +a
+fi
+
 SHELLY_IP="${SHELLY_IP:-192.168.1.97}"
 BASE="http://${SHELLY_IP}/rpc"
 OUT_DIR="${OUT_DIR:-.}"
@@ -109,8 +119,10 @@ rpc_post "Sys.SetConfig" '{"config":{"device":{"eco_mode":true}}}'
 echo "== Outputs ON by default at boot =="
 # Without this the outputs default to match_input and stay off after a Shelly
 # restart, leaving the Pi / cameras unpowered until manual intervention.
+# Also switch them on now: a factory-fresh Shelly boots with them off.
 for id in ${WATCHDOG_OUTPUTS}; do
   rpc_post "Switch.SetConfig" "{\"id\":${id},\"config\":{\"initial_state\":\"on\"}}"
+  rpc_post "Switch.Set" "{\"id\":${id},\"on\":true}"
 done
 
 echo "== Webhooks delete if any =="

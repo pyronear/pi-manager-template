@@ -9,8 +9,9 @@
       health URL the Shelly polls.
 
 # Only watchdog.js comes from the pyro-engine checkout. The setup and hardening
-# scripts moved out of pyro-engine in v1.0.19 (pyro-engine#450) and are vendored
-# in this role's files/.
+# scripts are missing from pyro-engine v1.0.19 (pyro-engine#450) and are vendored
+# in this role's files/ from pyro-sys-setup#37 (cc98b6b). Swap for a pinned
+# pyro-sys-setup checkout once that PR merges.
 - name: Check that the pyro-engine checkout ships watchdog.js
   ansible.builtin.stat:
     path: "{{ shelly_watchdog_device_dir }}/watchdog.js"

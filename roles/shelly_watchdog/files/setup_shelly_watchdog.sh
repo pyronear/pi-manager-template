@@ -1,9 +1,22 @@
 #!/bin/bash
 set -euo pipefail
 
+cd "$(dirname "$0")"
+
+# Site settings, see shelly_config.env.example.
+if [ -f shelly_config.env ]; then
+  set -a
+  # shellcheck disable=SC1091
+  . ./shelly_config.env
+  set +a
+fi
+
 SHELLY_IP="${SHELLY_IP:-192.168.1.97}"
 SCRIPT_NAME="${SCRIPT_NAME:-pi_watchdog}"
-SCRIPT_FILE="${SCRIPT_FILE:-watchdog.js}"
+# watchdog.js lives in pyro-engine, next to the Pi-side watchdog.
+PYRO_ENGINE_DIR="${PYRO_ENGINE_DIR:-../pyro-engine}"
+SCRIPT_FILE="${SCRIPT_FILE:-${PYRO_ENGINE_DIR}/watchdog/shelly/device/watchdog.js}"
+[ -f "$SCRIPT_FILE" ] || { echo "watchdog.js not found at ${SCRIPT_FILE}, set PYRO_ENGINE_DIR"; exit 1; }
 
 trap 'rm -f payload.json' EXIT
 
@@ -83,3 +96,13 @@ echo
 echo "Script status"
 curl -s "http://${SHELLY_IP}/rpc/Script.GetStatus?id=${SCRIPT_ID}"
 echo
+
+echo "Checking ${SCRIPT_NAME} is enabled and running"
+curl -fsS "http://${SHELLY_IP}/rpc/Script.List" | python3 -c '
+import json
+import sys
+
+name = sys.argv[1]
+scripts = json.load(sys.stdin).get("scripts", [])
+sys.exit(0 if any(s.get("name") == name and s.get("enable") and s.get("running") for s in scripts) else 1)
+' "$SCRIPT_NAME" || { echo "Script ${SCRIPT_NAME} is not enabled and running"; exit 1; }
