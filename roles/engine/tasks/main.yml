@@ -126,6 +126,10 @@
     name: "pyronear/fake-camera:{{ fake_camera_docker_tag }}"
     source: pull
     force_source: true
+  register: pull_fake_camera
+  until: pull_fake_camera is not failed
+  retries: 3
+  delay: 10
   when: fake_cameras | default([]) | length > 0
 
 - name: Write the fake cameras compose override
