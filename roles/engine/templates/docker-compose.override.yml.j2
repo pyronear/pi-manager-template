@@ -6,6 +6,9 @@ services:
   {{ cam.name }}:
     image: pyronear/fake-camera:{{ fake_camera_docker_tag }}
     container_name: {{ cam.name }}
+    # Lets the role find and remove the containers dropped from fake_cameras.
+    labels:
+      pyronear.fake-camera: "true"
     environment:
       CAMERA: {{ cam.camera | default('croix-augas-01') }}
       SCENARIO: {{ cam.scenario | default('smoke-then-clear') }}
