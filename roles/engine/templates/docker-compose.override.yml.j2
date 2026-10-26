@@ -26,9 +26,3 @@ services:
         max-size: "10m"
         max-file: "2"
 {% endfor %}
-  pyro-camera-api:
-    depends_on:
-{% for cam in fake_cameras %}
-      {{ cam.name }}:
-        condition: service_healthy
-{% endfor %}
