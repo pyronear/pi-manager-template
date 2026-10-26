@@ -118,6 +118,65 @@
     remote_src: true
     mode: '0644'
 
+# Fake Reolink cameras (host var `fake_cameras`, see the README): a compose
+# override next to the upstream compose, removed when the list is absent or empty.
+# Before anything is pulled or removed: a bad entry would only show up as a
+# fake camera restarting forever or failing to bind its port.
+- name: Check fake_cameras
+  ansible.builtin.assert:
+    that:
+      - fake_cameras | map(attribute='name') | unique | length == fake_cameras | length
+      - fake_cameras | map(attribute='port') | map('int') | unique | length == fake_cameras | length
+      - fake_cameras | map(attribute='port') | map('int') | intersect(fake_camera_reserved_ports) | length == 0
+      - fake_cameras | map(attribute='camera', default='croix-augas-01') | difference(fake_camera_embedded_cameras) | length == 0
+    fail_msg: >-
+      fake_cameras needs unique names and ports, no port in {{ fake_camera_reserved_ports }},
+      and cameras among {{ fake_camera_embedded_cameras }}
+  when: fake_cameras | default([]) | length > 0
+
+- name: Pull fake-camera image from Docker Hub
+  community.docker.docker_image:
+    name: "pyronear/fake-camera:{{ fake_camera_docker_tag }}"
+    source: pull
+    force_source: true
+  register: pull_fake_camera
+  until: pull_fake_camera is not failed
+  retries: 3
+  delay: 10
+  when: fake_cameras | default([]) | length > 0
+
+- name: Write the fake cameras compose override
+  ansible.builtin.template:
+    src: docker-compose.override.yml.j2
+    dest: /home/{{ app_name }}/docker-compose.override.yml
+    mode: '0644'
+  when: fake_cameras | default([]) | length > 0
+
+- name: Remove the fake cameras compose override
+  ansible.builtin.file:
+    path: /home/{{ app_name }}/docker-compose.override.yml
+    state: absent
+  when: fake_cameras | default([]) | length == 0
+
+# Not compose orphan pruning: it would also remove profile services started by
+# hand, such as pyro-temporal-api. The fake cameras carry their own label instead.
+- name: List fake camera containers
+  community.docker.docker_host_info:
+    containers: true
+    containers_all: true
+    containers_filters:
+      label: pyronear.fake-camera
+  register: fake_camera_containers
+
+- name: Remove fake camera containers no longer listed
+  community.docker.docker_container:
+    name: "{{ item }}"
+    state: absent
+  loop: >-
+    {{ fake_camera_containers.containers | map(attribute='Names') | map('first')
+       | map('regex_replace', '^/', '')
+       | difference(fake_cameras | default([]) | map(attribute='name')) }}
+
 - name: Remove old engine container manually
   community.docker.docker_container:
     name: engine

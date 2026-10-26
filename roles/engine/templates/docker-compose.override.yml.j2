@@ -1,0 +1,37 @@
+# Managed by Ansible (role engine). Fake Reolink cameras playing a scenario of
+# smoke frames, from pyro-envdev (containers/fake_camera). docker compose merges
+# this file with the upstream docker-compose.yml of pyro-engine.
+services:
+{% for cam in fake_cameras %}
+  {{ cam.name }}:
+    image: pyronear/fake-camera:{{ fake_camera_docker_tag }}
+    container_name: {{ cam.name }}
+    # Lets the role find and remove the containers dropped from fake_cameras.
+    labels:
+      pyronear.fake-camera: "true"
+    environment:
+      CAMERA: {{ cam.camera | default('croix-augas-01') }}
+      SCENARIO: smoke-then-clear  # the only scenario embedded in the image
+      LOOP: "{{ cam.loop | default(true) | lower }}"
+      CAM_USER: ${CAM_USER}
+      CAM_PWD: ${CAM_PWD}
+    ports:
+      - "127.0.0.1:{{ cam.port }}:443"
+    restart: always
+    healthcheck:
+      test: ["CMD", "python", "-c", "import ssl, urllib.request; urllib.request.urlopen('https://localhost/scenario', context=ssl._create_unverified_context())"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "2"
+{% endfor %}
+  pyro-camera-api:
+    depends_on:
+{% for cam in fake_cameras %}
+      {{ cam.name }}:
+        condition: service_healthy
+{% endfor %}
