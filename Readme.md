@@ -122,13 +122,14 @@ config_json: |
 fake_cameras:
   - name: fakecam-1
     port: 8443
-    scenario: smoke-then-clear   # embedded in the image
-    camera: croix-augas-01       # whose frames to play
+    camera: croix-augas-01       # whose frames to play: croix-augas-01 or nemours-02
     loop: true                   # replay forever
 ```
 
 `deploy-one-engine` then writes a `docker-compose.override.yml` next to the
-engine compose with one container per entry. To drop cameras, remove them from
+engine compose with one container per entry, playing `smoke-then-clear` (the
+scenario embedded in the image). Names and ports must be unique, and ports 8081
+and 8082 are taken by the engine stack. To drop cameras, remove them from
 `fake_cameras` and deploy again: the role removes the fake camera containers
 that are no longer listed.
 

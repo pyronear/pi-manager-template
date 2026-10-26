@@ -11,7 +11,7 @@ services:
       pyronear.fake-camera: "true"
     environment:
       CAMERA: {{ cam.camera | default('croix-augas-01') }}
-      SCENARIO: {{ cam.scenario | default('smoke-then-clear') }}
+      SCENARIO: smoke-then-clear  # the only scenario embedded in the image
       LOOP: "{{ cam.loop | default(true) | lower }}"
       CAM_USER: ${CAM_USER}
       CAM_PWD: ${CAM_PWD}

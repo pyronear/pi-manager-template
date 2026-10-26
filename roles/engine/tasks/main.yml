@@ -120,6 +120,20 @@
 
 # Fake Reolink cameras (host var `fake_cameras`, see the README): a compose
 # override next to the upstream compose, removed when the list is absent or empty.
+# Before anything is pulled or removed: a bad entry would only show up as a
+# fake camera restarting forever or failing to bind its port.
+- name: Check fake_cameras
+  ansible.builtin.assert:
+    that:
+      - fake_cameras | map(attribute='name') | unique | length == fake_cameras | length
+      - fake_cameras | map(attribute='port') | map('int') | unique | length == fake_cameras | length
+      - fake_cameras | map(attribute='port') | map('int') | intersect(fake_camera_reserved_ports) | length == 0
+      - fake_cameras | map(attribute='camera', default='croix-augas-01') | difference(fake_camera_embedded_cameras) | length == 0
+    fail_msg: >-
+      fake_cameras needs unique names and ports, no port in {{ fake_camera_reserved_ports }},
+      and cameras among {{ fake_camera_embedded_cameras }}
+  when: fake_cameras | default([]) | length > 0
+
 - name: Pull fake-camera image from Docker Hub
   community.docker.docker_image:
     name: "pyronear/fake-camera:{{ fake_camera_docker_tag }}"
