@@ -111,6 +111,33 @@
     dest: /home/{{ app_name }}/.env
     mode: '0644'
 
+# The engine never creates the frames folder itself, so an unplugged key cannot fill the SD card.
+# Create it here, only when the key is really mounted.
+- name: Check whether the USB key is mounted on /mnt/usb
+  ansible.builtin.command: findmnt -rn /mnt/usb
+  register: usb_mount
+  changed_when: false
+  failed_when: false
+  when: frames_storage | default('usb') == 'usb'
+
+- name: Create the frames folder on the USB key
+  ansible.builtin.file:
+    path: /mnt/usb/frames
+    state: directory
+    mode: '0755'
+  become: true
+  when:
+    - frames_storage | default('usb') == 'usb'
+    - usb_mount.rc == 0
+
+- name: Warn when frames are enabled but no USB key is mounted
+  ansible.builtin.debug:
+    msg: "save_captured_frames is on but /mnt/usb is not mounted: frames will not be saved until a key is set up."
+  when:
+    - save_captured_frames | default(false) | bool
+    - frames_storage | default('usb') == 'usb'
+    - usb_mount.rc != 0
+
 - name: Copy docker-compose file from upstream repo
   ansible.builtin.copy:
     src: /home/{{ project_name }}/docker-compose.yml
