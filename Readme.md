@@ -101,8 +101,9 @@ The full walkthrough lives in
 
 ### Fake cameras on a test station
 
-A site can run fake Reolink cameras next to its real ones, to generate alerts
-from replayed smoke frames. The fake camera is the `pyronear/fake-camera` image
+A test station can run fake Reolink cameras, to generate alerts from replayed
+smoke frames. Test stations only: `pyro-camera-api` waits for the fake cameras
+to be healthy, so a broken one also takes down the real cameras of the site. The fake camera is the `pyronear/fake-camera` image
 from [pyro-envdev](https://github.com/pyronear/pyro-envdev)
 (`containers/fake_camera`); `pyro-camera-api` and the engine talk to it like to
 a real camera. The alerts go to whichever camera the entry names, in any
@@ -128,10 +129,13 @@ fake_cameras:
 
 `deploy-one-engine` then writes a `docker-compose.override.yml` next to the
 engine compose with one container per entry, playing `smoke-then-clear` (the
-scenario embedded in the image). Names and ports must be unique, and ports 8081
-and 8082 are taken by the engine stack. To drop cameras, remove them from
-`fake_cameras` and deploy again: the role removes the fake camera containers
-that are no longer listed.
+scenario embedded in the image). Names and ports must be unique, names must
+differ from the engine services (`engine`, `pyro-camera-api`,
+`pyro-temporal-api`), and ports 8081 and 8082 are taken by the engine stack. To
+drop cameras, remove them from `fake_cameras` and deploy again: the role removes
+the fake camera containers that are no longer listed. The role owns
+`docker-compose.override.yml`: on a host without `fake_cameras` it deletes the
+file, so do not put anything else in it.
 
 ### Server targets
 
