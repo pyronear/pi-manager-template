@@ -49,7 +49,7 @@ We build a custom **Fleet API** (FastAPI + Postgres) with a small frontend and a
 | Security | Reachable through the VPN only, with authentication and an audit log of every action. |
 | Instances | **One instance per country** (France, Chile, ...). Anyone can also run one **locally** with the same `docker compose`. |
 | Execution | **Ansible stays.** The roles in this repo are embedded in the worker image. |
-| Update model | **Push** to decide, **local execution** on the Pi (`pyro-update`), plus an optional **auto mode** to catch up. |
+| Update model | **Push** to decide, **local execution** on the Pi (`pyro-update`), plus an optional **auto mode** to catch up. The Pi **reports the result back** to the Fleet API, with a local status file as fallback. |
 | Tooling | Custom. No Semaphore, AWX, Mender or Yocto for now. |
 
 Consequences:
@@ -154,6 +154,8 @@ erDiagram
         int deployment_id
         int device_id
         string status
+        string result_code
+        string reason
         int attempts
         datetime next_try_at
         datetime expires_at
@@ -185,13 +187,14 @@ sequenceDiagram
     Op->>F: deploy v1.4.0 to device 42
     F->>F: create deployment + job (pending)
     W->>F: pick job inside its window
-    W->>Pi: Ansible: check SSH host key, write target version
+    W->>Pi: Ansible: check SSH host key, write target version,<br/>job id, callback URL, device token
     W->>Pi: systemd-run pyro-update v1.4.0 (detached)
     W->>F: job = launched
     Note over Pi: pull, swap, health check<br/>rollback if unhealthy
-    Pi->>A: engine heartbeat (version = 1.4.0 or 1.3.2)
-    F->>A: read running version
-    F->>F: job = success / rolled_back
+    Pi->>Pi: write status.json
+    Pi->>F: POST /devices/42/update-report (job id, result code, reason)
+    F->>F: job = success / rolled_back / ...
+    Pi->>A: engine heartbeat (running version)
 ```
 
 ### 4.2 What `pyro-update` does on the Pi
@@ -201,19 +204,69 @@ Everything that is needed to roll back (image, compose file, config, scripts) is
 ```mermaid
 flowchart TD
     S([start: target version]) --> P["docker pull target image<br/>(engine still running)"]
-    P -- fails --> X1(["abort, engine untouched"])
+    P -- fails --> X1["pull_failed<br/>engine untouched"]
     P -- ok --> SNAP["snapshot current release:<br/>image tag, compose, config, scripts"]
     SNAP --> SW["swap: start engine on target version"]
     SW --> HC{"healthy for N min?<br/>container up, cameras grabbed,<br/>frames processed"}
-    HC -- yes --> OK(["success: keep new release,<br/>prune old images later"])
+    HC -- yes --> OK["success<br/>keep new release,<br/>prune old images later"]
     HC -- no --> RB["rollback: restore snapshot"]
-    RB --> BL["blacklist target tag locally"]
-    BL --> KO(["rolled back"])
+    RB --> HC2{"previous release<br/>healthy again?"}
+    HC2 -- yes --> BL["rolled_back<br/>blacklist target tag locally"]
+    HC2 -- no --> RF["rollback_failed<br/>engine down"]
+    X1 --> REP(["write status.json,<br/>then report to the Fleet API"])
+    OK --> REP
+    BL --> REP
+    RF --> REP
 ```
 
 The health check must not depend on the alert API alone. If the country API is down, that is not a reason to roll back an engine.
 
-### 4.3 Jobs: retries, windows, deadlines
+### 4.3 Reporting the result
+
+The engine heartbeat only tells **which version runs**, not **what happened**. If a Pi still runs v1.3.2 after we asked for v1.4.0, it may not have tried yet, it may have rolled back, or it may have crashed during the update. So `pyro-update` reports every attempt.
+
+```mermaid
+flowchart TD
+    END(["pyro-update finishes"]) --> FILE["1. write /var/lib/pyro-update/status.json<br/>(always, first)"]
+    FILE --> POST["2. POST /devices/{id}/update-report<br/>job id, result code, reason, versions, timestamps"]
+    POST -- "200" --> DONE(["Fleet API: job updated"])
+    POST -- "unreachable" --> OUT["keep the report in a local outbox"]
+    OUT --> RETRY["resend on next timer run<br/>or on boot"]
+    RETRY --> POST
+    LATE["Fleet API: no report<br/>after the expected delay"] --> NR["job = no_report"]
+    NR --> READ["worker reads status.json<br/>over SSH (fallback)"]
+```
+
+- **Callback URL and device token** are written by Ansible at push time, so the Pi reports to the instance that updated it (server or laptop). In auto mode it reports to the country's server instance.
+- **The job id is sent back** with the report, so a report received twice never creates a duplicate.
+- **The status file is the source of truth on the Pi.** The callback is the fast path. If it never arrives, the state is late, never wrong.
+
+| Result code | Meaning | Engine afterwards |
+|---|---|---|
+| `success` | New version running and healthy | new version |
+| `pull_failed` | Image not downloaded (network, disk full) | old version, never stopped |
+| `rolled_back` | Health check failed, rollback succeeded (+ reason) | old version |
+| `rollback_failed` | Health check failed **and** rollback failed | **down: immediate alert** |
+| `skipped` | Tag blacklisted, or already up to date | unchanged |
+
+`rollback_failed` is the only critical case: the station no longer detects anything. It must send a notification, not only show up in the frontend.
+
+Example `status.json`:
+
+```json
+{
+  "job_id": 1234,
+  "target": "v1.4.0",
+  "previous": "v1.3.2",
+  "result": "rolled_back",
+  "reason": "no frames from camera 2 after 10 min",
+  "trigger": "push",
+  "started_at": "2026-11-08T00:12:03Z",
+  "finished_at": "2026-11-08T00:24:41Z"
+}
+```
+
+### 4.4 Jobs: retries, windows, deadlines
 
 Offline Pis are a normal state. A job waits for its device instead of failing.
 
@@ -222,16 +275,22 @@ stateDiagram-v2
     [*] --> pending
     pending --> waiting_window: outside window
     waiting_window --> pending: window opens
-    pending --> running: device reachable
+    pending --> launched: device reachable
     pending --> retry: unreachable
     retry --> pending: backoff elapsed
     retry --> expired: past expires_at
-    running --> success: healthy
-    running --> rolled_back: unhealthy
-    running --> failed: invalid config or credentials (no retry)
+    pending --> failed: invalid config or credentials (no retry)
+    launched --> success: report
+    launched --> pull_failed: report
+    launched --> rolled_back: report
+    launched --> rollback_failed: report (alert)
+    launched --> no_report: no report in time
+    no_report --> launched: status.json read over SSH
     pending --> cancelled: operator
     success --> [*]
+    pull_failed --> [*]
     rolled_back --> [*]
+    rollback_failed --> [*]
     failed --> [*]
     expired --> [*]
     cancelled --> [*]
@@ -243,7 +302,7 @@ Rules:
 - **A late job never starts outside its window.** A job planned for midnight that is still pending at 6:00 waits for the next window, or expires.
 - **Errors that cannot be fixed by waiting** (bad config, bad credentials) are not retried.
 
-### 4.4 "Update all" means waves
+### 4.5 "Update all" means waves
 
 ```mermaid
 flowchart LR
@@ -277,6 +336,7 @@ flowchart TD
     AGE -- yes --> NEW{"newer than running<br/>and not blacklisted?"}
     NEW -- no --> E3(["do nothing"])
     NEW -- yes --> U["pyro-update vX.Y.Z<br/>(same flow as section 4.2)"]
+    U --> REP(["report to the country's server instance<br/>(section 4.3)"])
 ```
 
 Safeguards:
@@ -322,6 +382,7 @@ This needs a change in the current roles. `alert_api` and `platform_react` start
 ## 7. Prerequisites and known limits
 
 - **Device identity.** Ansible runs with `host_key_checking = False`. The Fleet API stores each device's SSH host key and generates `known_hosts` for every job, so a wrong IP can never update the wrong station.
+- **Pi to instance reachability.** Pis can reach a server instance on the VPN. For a laptop instance, the OpenVPN server must allow `client-to-client`, otherwise reports fall back to the status file read over SSH.
 - **Running version.** Check whether the engine heartbeat already sends its version to the alert API. If not, it is a small change in the engine and the alert API.
 - **Server roles.** Rewrite `alert_api` and `platform_react` so that an update never stops Postgres (section 6).
 - **Local instance.** Scheduled jobs only run while the machine is on. Production night windows must run on a server instance.
