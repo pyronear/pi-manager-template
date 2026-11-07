@@ -126,11 +126,13 @@
   ansible.builtin.assert:
     that:
       - fake_cameras | map(attribute='name') | unique | length == fake_cameras | length
+      - fake_cameras | map(attribute='name') | intersect(fake_camera_reserved_names) | length == 0
       - fake_cameras | map(attribute='port') | map('int') | unique | length == fake_cameras | length
       - fake_cameras | map(attribute='port') | map('int') | intersect(fake_camera_reserved_ports) | length == 0
-      - fake_cameras | map(attribute='camera', default='croix-augas-01') | difference(fake_camera_embedded_cameras) | length == 0
+      - fake_cameras | map(attribute='camera', default=fake_camera_default_camera) | difference(fake_camera_embedded_cameras) | length == 0
     fail_msg: >-
-      fake_cameras needs unique names and ports, no port in {{ fake_camera_reserved_ports }},
+      fake_cameras needs unique names and ports, no name in {{ fake_camera_reserved_names }},
+      no port in {{ fake_camera_reserved_ports }},
       and cameras among {{ fake_camera_embedded_cameras }}
   when: fake_cameras | default([]) | length > 0
 

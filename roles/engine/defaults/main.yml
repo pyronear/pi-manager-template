@@ -4,5 +4,10 @@
 fake_camera_docker_tag: "0.1.0"
 # Cameras whose frames the image embeds (scenario smoke-then-clear, the only one).
 fake_camera_embedded_cameras: [croix-augas-01, nemours-02]
+# Camera played by an entry without `camera`.
+fake_camera_default_camera: croix-augas-01
 # Host ports of the engine stack (pyro-camera-api, pyro-temporal-api), all in host network.
 fake_camera_reserved_ports: [8081, 8082]
+# Services of the engine compose: a fake camera with one of these names would
+# merge into the real service instead of adding a container.
+fake_camera_reserved_names: [engine, pyro-camera-api, pyro-temporal-api]
