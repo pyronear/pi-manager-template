@@ -77,7 +77,7 @@ We build a custom **Fleet API** (FastAPI + Postgres) with a small frontend and a
 
 | Topic | Decision |
 |---|---|
-| Source of truth | Read as much as possible from the **alert API** (cameras, poses, engine heartbeat). The Fleet API stores only what the alert API does not have (section 3.1). |
+| Source of truth | Read as much as possible from the **alert API** (cameras, poses, last seen). The Fleet API stores only what the alert API does not have (section 3.1). The running version is reported by the Pi to the Fleet API, not through the alert API heartbeat. |
 | Secrets | Stored **encrypted in the database**, with a key per instance (env var). Never returned in clear by the API or the frontend. |
 | Security | Reachable through the VPN only, with authentication and an audit log of every action. |
 | Instances | **One instance per country** (France, Chile, ...). Anyone can also run one **locally** with the same `docker compose`. A Pi has **one owner instance** at a time (section 4.2). |
@@ -123,24 +123,25 @@ flowchart TB
     end
 
     OP --> FRONT
-    FAPI -- "reads cameras, poses,<br/>running versions" --> AAPI
+    FAPI -- "reads cameras, poses,<br/>last seen" --> AAPI
     WK -- "push over VPN<br/>(strict SSH host key check)" --> UPD
-    UPD -- "update report" --> FAPI
+    UPD -- "attempt reports +<br/>running state" --> FAPI
     WK -- "night window" --> SRV
-    ENG -- "heartbeat + version" --> AAPI
+    ENG -- "heartbeat (last seen)" --> AAPI
 ```
 
 Two key points:
 
 - **Decisions go down by push** (worker → Ansible → Pi), and the Pi reports what happened.
-- **What actually runs comes back up through the engine heartbeat** to the alert API. A deployment that "succeeded" is never used as proof of the running version.
+- **What actually runs is reported by `pyro-update`** to the Fleet API (running bundle and image digests), at boot, after each attempt and once a day. A deployment that "succeeded" is never used as proof of the running version. The engine heartbeat to the alert API stays as it is and only tells whether the Pi is alive.
 
 ### 3.1 Who owns which field
 
 | Data | Owner | Notes |
 |---|---|---|
 | Organizations, cameras, poses | alert API | The Fleet API reads them, never keeps an editable copy. |
-| Last seen, running version | alert API (heartbeat) | Shown with its observation time. Missing data is shown as **unknown**. |
+| Last seen | alert API (heartbeat) | Unchanged. Shown with its observation time. |
+| Running bundle and image digests | Fleet API (reported by `pyro-update`) | Section 4.5. Shown with its observation time. Missing data is shown as **unknown**. |
 | Host identity: name, VPN IP, SSH host key | Fleet API | The SSH key is enrolled at station setup (section 7). |
 | Camera binding: alert API camera id ↔ host, camera LAN IP, adapter, camera type | Fleet API | This is the hardware side that the alert API does not know. |
 | Camera and API credentials | Fleet API (encrypted) | |
@@ -178,6 +179,9 @@ erDiagram
         string mode_requested "pinned | auto"
         string mode_acknowledged
         string desired_version
+        string running_bundle
+        json running_digests
+        datetime running_observed_at
         json params
     }
     CAMERA_BINDING {
@@ -289,8 +293,7 @@ sequenceDiagram
     Note over Pi: precheck, activate, health check,<br/>rollback if unhealthy
     Pi->>Pi: write status.json
     Pi->>F: POST /attempts/{uuid}/report
-    F->>F: job = result code
-    Pi->>A: engine heartbeat (running version)
+    F->>F: job = result code, running bundle updated
 ```
 
 ### 4.4 What `pyro-update` does on the Pi
@@ -337,9 +340,20 @@ flowchart LR
 
 **Disk full.** The precheck requires enough free space and inodes for the new images and the status file. If `status.json` cannot be written, the report is still sent and says so.
 
-### 4.5 Reporting the result
+### 4.5 Reporting to the Fleet API
 
-The engine heartbeat only tells **which version runs**, not **what happened**. So `pyro-update` reports every attempt.
+`pyro-update` sends two kinds of reports, through the same outbox:
+
+| Report | When | Content |
+|---|---|---|
+| **Running state** | at boot, after each attempt, once a day | running bundle id, image digests actually running, `pyro-update` version |
+| **Attempt result** | at the end of each attempt | result code, reason, bundle, timestamps |
+
+The running version does not go through the alert API heartbeat: sending it every minute is useless, and the alert API does not need it. With these reports, the Fleet API knows the running version without any change to the engine or the alert API.
+
+The daily running state report also catches **manual changes**: if the image digests actually running differ from the bundle `pyro-update` activated (someone ran `docker compose` by hand), the Pi is flagged as **drifted** in the frontend.
+
+The rest of this section is about attempt results.
 
 ```mermaid
 flowchart TD
@@ -553,7 +567,7 @@ This needs a **dedicated app-update path**, not the current playbooks:
 - **No secrets in logs.** Before any writable job: secret-bearing Ansible tasks use `no_log`, rendered files with secrets are `0600` (today the engine `.env` is `0644` and `check_vars` logs some secrets), and job logs and reports are redacted.
 - **Credentials are separated.** Operator accounts can deploy. Report tokens can only report for their own Pi. Workers use scoped alert API accounts, not superadmin.
 - **Pi to instance reachability.** Pis can reach a server instance on the VPN. For a laptop instance, the OpenVPN server must allow `client-to-client`, otherwise reports fall back to the attempt file read over SSH.
-- **Running version.** Check whether the engine heartbeat already sends its version to the alert API. If not, it is a small change in the engine and the alert API. Until then, the running version is shown as **unknown**.
+- **Running version.** Reported by `pyro-update` (section 4.5), so no change is needed in the engine or the alert API. Before `pyro-update` is installed on a Pi, the worker reads the running image digests over SSH (`docker inspect`).
 - **No image tag from a branch name or `:latest`** in any deployment.
 - **Detection never depends on the Fleet API.** If it is down, engines keep running.
 
@@ -576,7 +590,7 @@ flowchart LR
     S5b --> S7
 ```
 
-1. **Read-only inventory, one country first.** Import a country repo checkout into Postgres, with its source commit and the conflicts found (duplicate VPN IPs, cameras missing in the alert API). Create the camera bindings. Show declared pins next to observed versions, with **unknown** when there is no data. The country repo stays the operational source during this step. Re-importing creates no duplicates.
+1. **Read-only inventory, one country first.** Import a country repo checkout into Postgres, with its source commit and the conflicts found (duplicate VPN IPs, cameras missing in the alert API). Create the camera bindings. Show declared pins next to observed versions (read over SSH with `docker inspect`, since `pyro-update` does not exist yet), with **unknown** when a Pi cannot be reached. The country repo stays the operational source during this step. Re-importing creates no duplicates.
 2. **`pyro-update` on a lab Pi.** Bundle, activation, health check against a baseline, rollback, recovery at boot, attempt files. Test a power cut after each phase, including during rollback.
 3. **Deploy one Pi from the Fleet API.** Ownership and lock, strict host key check, durable jobs, reports, secret handling.
 4. **Campaigns.** Explicit lists of hosts, manual approval of the canary, night waves, stop on failure or unknown.
