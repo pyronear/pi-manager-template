@@ -65,6 +65,13 @@ services:
       interval: 10s
       timeout: 3s
       retries: 3
+    # json-file only rotates by size: 5 x 500m is ~30 days at ~85M/day
+    logging:
+      driver: json-file
+      options:
+        max-size: "500m"
+        max-file: "5"
+        compress: "true"
     networks:
       - default
       - web
