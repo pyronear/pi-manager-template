@@ -62,7 +62,7 @@ flowchart LR
 
 - Nobody can tell which version runs on which station.
 - Deployments are slow and manual.
-- During fire season, server updates must not cut the service during the day.
+- **No way to schedule a deployment at night.** During fire season, an update must not cut the stations, the API or the platform during the day. Today the only way is for someone to connect at 22:00-23:00 and run the update by hand, every time.
 
 ### 1.4 What we want
 
@@ -70,6 +70,7 @@ flowchart LR
 - **Every deployment recorded**: who, what, when, on which device, with which result.
 - **One deployment at a time per device**, whoever launches it.
 - **The running version of each device** visible to everyone.
+- **Deployments scheduled at night**, without anyone having to be connected.
 
 ## 2. Decision
 
