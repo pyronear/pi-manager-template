@@ -302,18 +302,34 @@ Rules:
 - **A late job never starts outside its window.** A job planned for midnight that is still pending at 6:00 waits for the next window, or expires.
 - **Errors that cannot be fixed by waiting** (bad config, bad credentials) are not retried.
 
-### 4.5 "Update all" means waves
+### 4.5 "Update all" means waves, one night each
+
+Devices update at night, but a night-time health check only proves that the engine starts and grabs frames. Detection on daylight images, alerts, load and slow memory leaks only show up during the next day. So each wave is deployed at night and observed for a full day before the next one.
+
+| When | What |
+|---|---|
+| Night 1 | Canary: 1 to 2 devices |
+| Day 1 | Observation: heartbeat OK, no rollback, the engine processes frames and sends alerts normally |
+| Night 2 | Wave of ~10% of the devices, or all the rest if the fleet is small |
+| Day 2 | Observation |
+| Night 3 | Rest of the fleet |
 
 ```mermaid
 flowchart LR
-    C["Canary<br/>1-2 devices"] --> G1{"all healthy?"}
-    G1 -- no --> STOP(["pause campaign"])
-    G1 -- yes --> B1["Batch<br/>~10%"] --> G2{"failures under<br/>threshold?"}
-    G2 -- no --> STOP
-    G2 -- yes --> B2["Rest of the fleet<br/>(bounded concurrency)"]
+    N1["Night 1<br/>canary<br/>1-2 devices"] --> D1{"Day 1<br/>healthy all day?"}
+    D1 -- no --> STOP(["pause campaign<br/>+ notify"])
+    D1 -- yes --> N2["Night 2<br/>~10% of devices"] --> D2{"Day 2<br/>healthy all day?"}
+    D2 -- no --> STOP
+    D2 -- yes --> N3["Night 3<br/>rest of the fleet"]
+    FORCE["operator:<br/>force next wave"] -.-> N2
+    FORCE -.-> N3
 ```
 
-The operator can pause or cancel a campaign at any time.
+- A campaign is a list of waves. Each wave has its deployment night and a gate: "the previous wave was healthy for at least X hours".
+- **The next wave starts automatically** when the gate passes. Otherwise the campaign pauses and the operator is notified.
+- **The operator can force the next wave** (urgent fix) or pause / cancel the campaign at any time. Cancelling stops waves that have not started; an update already running on a Pi finishes or rolls back.
+- **Small fleets** (Chile, local instances) can skip the 10% wave and go from canary straight to the rest.
+- **Night-time health check.** Cameras may switch to infrared and the engine may process fewer frames at night. The `pyro-update` health check must account for this, so it does not roll back a healthy engine.
 
 ## 5. Auto mode
 
@@ -377,11 +393,12 @@ sequenceDiagram
     end
 ```
 
-This needs a change in the current roles. `alert_api` and `platform_react` start with `state: absent` and `remove_images: all`, which also stops Postgres. Restarting an old image does not undo a schema migration either, so migrations must stay backward compatible.
+This needs a change in the current roles. `alert_api` and `platform_react` start with `state: absent` and `remove_images: all`. For `alert_api` this also stops Postgres, which lives in the same compose project (the platform has no database). Restarting an old image does not undo a schema migration either, so migrations must stay backward compatible.
 
 ## 7. Prerequisites and known limits
 
 - **Device identity.** Ansible runs with `host_key_checking = False`. The Fleet API stores each device's SSH host key and generates `known_hosts` for every job, so a wrong IP can never update the wrong station.
+- **Nightly reboot.** Pis without a watchdog reboot at 00:00 (`roles/engine_cron`). The update window must not overlap this reboot, and `pyro-update` must resume or roll back an interrupted update at boot.
 - **Pi to instance reachability.** Pis can reach a server instance on the VPN. For a laptop instance, the OpenVPN server must allow `client-to-client`, otherwise reports fall back to the status file read over SSH.
 - **Running version.** Check whether the engine heartbeat already sends its version to the alert API. If not, it is a small change in the engine and the alert API.
 - **Server roles.** Rewrite `alert_api` and `platform_react` so that an update never stops Postgres (section 6).
