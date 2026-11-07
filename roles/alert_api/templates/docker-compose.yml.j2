@@ -18,12 +18,61 @@ services:
         timeout: 3s
         retries: 3
 
+{% if alert_api_rustfs %}
+  # On-prem S3. The API signs presigned URLs for alert_api_s3_url (the public
+  # s3 proxy name) and traefik forwards that host unchanged to this container,
+  # so the signature matches.
+  rustfs:
+    image: rustfs/rustfs:1.0.0
+    restart: always
+    expose:
+      - 9000
+    environment:
+      - RUSTFS_ACCESS_KEY=${S3_ACCESS_KEY}
+      - RUSTFS_SECRET_KEY=${S3_SECRET_KEY}
+    volumes:
+      - rustfs_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/health/ready"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    networks:
+      - web
+
+{% endif %}
+{% if alert_api_temporal_local %}
+  # Temporal model next to the API, internal only: the backend calls it on
+  # http://temporal-api:8000. It reads frames from the same S3 as the API.
+  temporal-api:
+    image: pyronear/temporal-model-api:{{ alert_api_temporal_docker_version }}
+    restart: always
+    expose:
+      - 8000
+    environment:
+      - TEMPORAL_API_S3_ENDPOINT_URL=${S3_ENDPOINT_URL}
+      - TEMPORAL_API_S3_REGION=${S3_REGION:-us-east-1}
+      - AWS_ACCESS_KEY_ID=${S3_ACCESS_KEY}
+      - AWS_SECRET_ACCESS_KEY=${S3_SECRET_KEY}
+      - TEMPORAL_API_TOKEN=${TEMPORAL_API_TOKEN}
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,json,sys; sys.exit(0 if json.load(urllib.request.urlopen('http://localhost:8000/health')).get('model_loaded') else 1)\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
+{% endif %}
   backend:
     image: pyronear/alert-api:{{ alert_api_docker_version }}
     restart: always
     depends_on:
       db:
         condition: service_healthy
+{% if alert_api_rustfs %}
+      rustfs:
+        condition: service_healthy
+{% endif %}
     expose:
       - 5050
     environment:
@@ -71,6 +120,9 @@ services:
 
 volumes:
   postgres_data:
+{% if alert_api_rustfs %}
+  rustfs_data:
+{% endif %}
 
 networks:
   web:
