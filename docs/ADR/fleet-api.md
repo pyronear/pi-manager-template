@@ -109,25 +109,22 @@ flowchart TB
         WK <--> DB
     end
 
-    subgraph alert["Country alert API (already exists)"]
-        AAPI["alert API<br/>cameras, poses, heartbeats"]
-    end
-
     subgraph pis["Stations (Raspberry Pi, via VPN)"]
         UPD["pyro-update<br/>(local script)"]
         ENG["pyro-engine<br/>+ pyro-camera-api"]
         UPD --> ENG
     end
 
-    subgraph vms["Server VMs"]
-        SRV["alert API, platform,<br/>temporal API, mediamtx, traefik"]
+    subgraph vms["Country server VMs (already exist)"]
+        AAPI["alert API<br/>cameras, poses, heartbeats"]
+        SRV["platform, temporal API,<br/>mediamtx, traefik"]
     end
 
     OP --> FRONT
     FAPI -- "reads cameras, poses,<br/>last seen" --> AAPI
     WK -- "push over VPN<br/>(strict SSH host key check)" --> UPD
     UPD -- "attempt reports +<br/>running state" --> FAPI
-    WK -- "night window" --> SRV
+    WK -- "night window<br/>(updates)" --> vms
     ENG -- "heartbeat (last seen)" --> AAPI
 ```
 
