@@ -63,7 +63,7 @@ services:
         retries: 3
 
   backend:
-    image: pyronear/annotation-api:latest
+    image: pyronear/annotation-api:{{ annotation_docker_version }}
     container_name: annotation-api
     depends_on:
       db:
@@ -107,7 +107,7 @@ services:
   # schedule_auto_annotate task never runs, so classified smoke lanes never
   # get their auto reference layer and never reach the localization queue.
   worker:
-    image: pyronear/annotation-api:latest
+    image: pyronear/annotation-api:{{ annotation_docker_version }}
     container_name: annotation-worker
     depends_on:
       db:
@@ -128,7 +128,7 @@ services:
       disable: true
 
   frontend:
-    image: pyronear/annotation-app:latest
+    image: pyronear/annotation-app:{{ annotation_docker_version }}
     depends_on:
       backend:
         condition: service_healthy

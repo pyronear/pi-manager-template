@@ -1,0 +1,4 @@
+---
+# Docker image tag for the annotation stack (annotation-api, annotation-worker, annotation-app).
+# Override per deployment (e.g. in group_vars) to pin a specific version.
+annotation_docker_version: latest
