@@ -29,6 +29,13 @@
     - item.value is none or item.value | length == 0
   no_log: false
 
+- name: Check frames_storage (host_var, optional)
+  ansible.builtin.fail:
+    msg: "frames_storage must be 'usb' or 'local', got '{{ frames_storage }}'."
+  when:
+    - inventory_hostname in groups["engine_servers"]
+    - frames_storage | default('usb') not in ['usb', 'local']
+
 - name: Check API variables. no_log=true
   ansible.builtin.fail:
     msg: "Variable '{{ item.name }}' is empty or None."
