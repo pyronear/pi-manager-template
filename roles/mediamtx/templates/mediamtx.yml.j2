@@ -7,6 +7,9 @@ webrtcAdditionalHosts: [{{ mediamtx_webrtc_additional_hosts | map('to_json') | j
 {% if mediamtx_webrtc_tcp_address %}
 webrtcLocalTCPAddress: "{{ mediamtx_webrtc_tcp_address }}"
 {% endif %}
+{% if mediamtx_srt_address %}
+srtAddress: "{{ mediamtx_srt_address }}"
+{% endif %}
 
 paths:
 {% for path in mediamtx_paths %}
