@@ -14,5 +14,9 @@ mediamtx_livestream_hostname: ''
 # to also serve WebRTC media over TCP (useful when only a TCP port is opened).
 mediamtx_webrtc_additional_hosts: []
 mediamtx_webrtc_tcp_address: ''
+# SRT ingest listen address (mediamtx default ':8890', all interfaces). Set to
+# '127.0.0.1:8890' when the only publisher is an engine on this same host, so
+# nobody else can publish to the stream paths.
+mediamtx_srt_address: ''
 # Must match the traefik role defaults (shared reverse proxy)
 traefik_dynamic_dir: "{{ traefik_working_dir | default('/home/traefik') }}/dynamic"
