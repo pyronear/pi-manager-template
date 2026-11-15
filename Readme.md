@@ -154,6 +154,14 @@ make build-push COMPONENT=engine   BRANCH=<branch>   # pyro-engine       -> pyro
 make build-push COMPONENT=platform BRANCH=<branch>   # new-pyro-platform -> pyronear/pyro-platform-react:<tag> (amd64)
 ```
 
+Add `PLATFORMS=` to build for other platforms than the default above, for
+example an engine running on an x86 server instead of a Raspberry Pi:
+
+```bash
+make build-push COMPONENT=engine BRANCH=<branch> PLATFORMS=linux/amd64
+make build-push COMPONENT=engine BRANCH=<branch> PLATFORMS=linux/amd64,linux/arm64   # both
+```
+
 The tag is the branch name without its type prefix, sanitized for docker
 (`feat/my-fix` -> `my-fix`); the script prints it. Tags that could overwrite
 a release (`latest`, `main`, version numbers like `1.0.11`) are refused.
