@@ -13,6 +13,9 @@
 # the pyronear organization. Each image has a default platform; when the target
 # differs from the host architecture, cross-building needs QEMU/binfmt
 # (Docker Desktop ships it; on bare Linux install qemu-user-static).
+# Building several platforms at once (the engine default) is not supported by
+# the classic "docker" builder driver without the containerd image store: run
+# `docker buildx create --use` once, or turn on the containerd image store.
 set -euo pipefail
 
 usage() {

@@ -171,6 +171,10 @@ daemon (with buildx) and a Docker Hub login with push rights on the
 `pyronear` organization.
 Cross-architecture builds need QEMU/binfmt (Docker Desktop ships it; on bare
 Linux install `qemu-user-static`).
+Building several platforms at once (the engine default) fails with the classic
+`docker` builder driver unless the containerd image store is on ("Multi-platform
+build is not supported for the docker driver"). Run `docker buildx create --use`
+once, or turn on the containerd image store.
 
 To deploy it, set the image tag in the sister repo to the pushed tag:
 `platform_react_docker_version` / `alert_api_docker_version` in
