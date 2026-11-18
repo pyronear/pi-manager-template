@@ -5,29 +5,33 @@
     admin_login: '{{ lookup("env", "SUPERADMIN_LOGIN") }}'
     admin_pwd: '{{ lookup("env", "SUPERADMIN_PWD") }}'
     admin_org: '{{ lookup("env", "SUPERADMIN_ORG") }}'
+  no_log: true  # -v prints the facts, admin_pwd included
 
+# Loop over names only: Ansible prints every loop item, so putting the values
+# in the items would show the secrets in the deploy output.
 - name: Check Engine variables
   ansible.builtin.fail:
-    msg: "Variable '{{ item.name }}' is empty or None."
+    msg: "Variable '{{ item }}' is empty or None."
   loop:
-    - { name: "api_dns",          value: "{{ api_dns }}" }             # group_var/all
-    - { name: "pyro_engine_git_ref",    value: "{{ pyro_engine_git_ref }}" }    # group_var/engine_servers
-    - { name: "pyro_engine_docker_tag", value: "{{ pyro_engine_docker_tag }}" } # group_var/engine_servers
-    - { name: "CAM_USER",         value: "{{ CAM_USER }}" }            # group_var/all
-    - { name: "CAM_PWD",          value: "{{ CAM_PWD }}" }             # group_var/all
-    - { name: "config_json",      value: "{{ config_json }}" }         # host_var
-    - { name: "ansible_password", value: "{{ ansible_password }}" }    # host_var
-    - { name: "admin_login",      value: "{{ admin_login }}" }         # .env
-    - { name: "admin_pwd",        value: "{{ admin_pwd }}" }           # .env
-    - { name: "S3_ENDPOINT_URL",  value: "{{ S3_ENDPOINT_URL }}" }     # inventory vars
-    - { name: "S3_ACCESS_KEY",    value: "{{ S3_ACCESS_KEY }}" }       # inventory vars
-    - { name: "S3_SECRET_KEY",    value: "{{ S3_SECRET_KEY }}" }       # inventory vars
-    - { name: "S3_REGION",        value: "{{ S3_REGION }}" }           # inventory vars
-    - { name: "alloy_config",     value: "{{ alloy_config }}" }        # group_var/engine
+    - api_dns                 # group_var/all
+    - pyro_engine_git_ref     # group_var/engine_servers
+    - pyro_engine_docker_tag  # group_var/engine_servers
+    - CAM_USER                # group_var/all
+    - CAM_PWD                 # group_var/all
+    - config_json             # host_var
+    - ansible_password        # host_var
+    - admin_login             # .env
+    - admin_pwd               # .env
+    - S3_ENDPOINT_URL         # inventory vars
+    - S3_ACCESS_KEY           # inventory vars
+    - S3_SECRET_KEY           # inventory vars
+    - S3_REGION               # inventory vars
+    - alloy_config            # group_var/engine
+  vars:
+    checked_value: "{{ lookup('ansible.builtin.vars', item, default='') }}"
   when:
     - inventory_hostname in groups["engine_servers"]
-    - item.value is none or item.value | length == 0
-  no_log: false
+    - checked_value is none or checked_value | length == 0
 
 - name: Check API variables. no_log=true
   ansible.builtin.fail:
