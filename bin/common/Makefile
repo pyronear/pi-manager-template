@@ -23,9 +23,9 @@ help:
 	@echo "  make ansible-up      build the image and open a shell in the container"
 	@echo "  make ansible-stop    stop the container"
 	@echo "  make dependencies    install host-side ansible + pre-commit hook"
-	@echo "  make build-push COMPONENT=<api|engine|platform> BRANCH=<branch> [PLATFORMS=linux/amd64]"
+	@echo "  make build-push COMPONENT=<api|engine|platform> BRANCH=<branch> [PLATFORMS=linux/arm64]"
 	@echo "                       build a branch's docker image(s) and push to Docker Hub tagged with the branch name"
-	@echo "                       (PLATFORMS overrides the default: arm64 for engine, amd64 for api/platform)"
+	@echo "                       (PLATFORMS overrides the default: amd64+arm64 for engine, amd64 for api/platform)"
 	@echo ""
 	@echo "Container targets (run after 'make ansible-up'):"
 	@echo "  make ping / check-engines / up / down / sync-ssh-keys"
@@ -63,7 +63,7 @@ build-push: export BP_BRANCH = $(BRANCH)
 build-push: export PLATFORMS := $(PLATFORMS)
 build-push:
 	@if [ -z "$$BP_COMPONENT" ] || [ -z "$$BP_BRANCH" ]; then \
-		echo "Usage: make build-push COMPONENT=<api|engine|platform> BRANCH=<branch> [PLATFORMS=linux/amd64]"; \
+		echo "Usage: make build-push COMPONENT=<api|engine|platform> BRANCH=<branch> [PLATFORMS=linux/arm64]"; \
 		exit 1; \
 	fi
 	@bash bin/build-push-images.sh "$$BP_COMPONENT" "$$BP_BRANCH"

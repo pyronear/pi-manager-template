@@ -150,16 +150,17 @@ point the target host at that tag and redeploy:
 
 ```bash
 make build-push COMPONENT=api      BRANCH=<branch>   # pyro-api          -> pyronear/alert-api:<tag> (amd64)
-make build-push COMPONENT=engine   BRANCH=<branch>   # pyro-engine       -> pyro-engine + pyro-camera-api :<tag> (arm64)
+make build-push COMPONENT=engine   BRANCH=<branch>   # pyro-engine       -> pyro-engine + pyro-camera-api :<tag> (amd64+arm64)
 make build-push COMPONENT=platform BRANCH=<branch>   # new-pyro-platform -> pyronear/pyro-platform-react:<tag> (amd64)
 ```
 
-Add `PLATFORMS=` to build for other platforms than the default above, for
-example an engine running on an x86 server instead of a Raspberry Pi:
+The engine is built for both Raspberry Pis (arm64) and x86 servers (amd64),
+like the pyro-engine CI: one tag holds both images and docker pulls the one
+matching the host. Add `PLATFORMS=` to build for other platforms than the
+default above, for example arm64 only for a faster build when only Pis need it:
 
 ```bash
-make build-push COMPONENT=engine BRANCH=<branch> PLATFORMS=linux/amd64
-make build-push COMPONENT=engine BRANCH=<branch> PLATFORMS=linux/amd64,linux/arm64   # both
+make build-push COMPONENT=engine BRANCH=<branch> PLATFORMS=linux/arm64
 ```
 
 The tag is the branch name without its type prefix, sanitized for docker

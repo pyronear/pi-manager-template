@@ -6,8 +6,8 @@
 #
 # Usage: [PLATFORMS=<platform>[,<platform>]] bin/build-push-images.sh <api|engine|platform> <branch>
 #
-# PLATFORMS overrides the target platform(s), e.g. PLATFORMS=linux/amd64 for
-# an engine on an x86 server instead of a Raspberry Pi.
+# PLATFORMS overrides the target platform(s), e.g. PLATFORMS=linux/arm64 for a
+# faster engine build when only Raspberry Pis need it.
 #
 # Requires docker (with buildx) and a Docker Hub login with push rights on
 # the pyronear organization. Each image has a default platform; when the target
@@ -18,9 +18,9 @@ set -euo pipefail
 usage() {
     echo "Usage: [PLATFORMS=<platform>[,<platform>]] $0 <api|engine|platform> <branch>" >&2
     echo "  api       pyronear/pyro-api          -> pyronear/alert-api:<branch> (linux/amd64)" >&2
-    echo "  engine    pyronear/pyro-engine       -> pyronear/pyro-engine:<branch> + pyronear/pyro-camera-api:<branch> (linux/arm64)" >&2
+    echo "  engine    pyronear/pyro-engine       -> pyronear/pyro-engine:<branch> + pyronear/pyro-camera-api:<branch> (linux/amd64,linux/arm64)" >&2
     echo "  platform  pyronear/new-pyro-platform -> pyronear/pyro-platform-react:<branch> (linux/amd64)" >&2
-    echo "  PLATFORMS overrides the platform(s) above, e.g. PLATFORMS=linux/amd64 or linux/amd64,linux/arm64" >&2
+    echo "  PLATFORMS overrides the platform(s) above, e.g. PLATFORMS=linux/arm64" >&2
     exit 1
 }
 
@@ -45,8 +45,9 @@ docker buildx version >/dev/null 2>&1 || { echo "ERROR: docker buildx is not ava
 
 case "$COMPONENT" in
     api)      GITHUB_REPO=pyro-api;          DEFAULT_PLATFORMS=linux/amd64 ;;
-    # arm64 by default because engines run on the Raspberry Pis
-    engine)   GITHUB_REPO=pyro-engine;       DEFAULT_PLATFORMS=linux/arm64 ;;
+    # Both by default, like the pyro-engine CI: engines run on Raspberry Pis (arm64)
+    # and on x86 servers; docker pulls the image matching the host from one tag.
+    engine)   GITHUB_REPO=pyro-engine;       DEFAULT_PLATFORMS=linux/amd64,linux/arm64 ;;
     platform) GITHUB_REPO=new-pyro-platform; DEFAULT_PLATFORMS=linux/amd64 ;;
     *) usage ;;
 esac
