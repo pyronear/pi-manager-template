@@ -2,7 +2,8 @@ name: alert-api
 
 services:
   db:
-    image: postgres:15-alpine
+    image: postgres:15.20-alpine
+    pull_policy: always
     restart: always
     expose:
       - 5432
