@@ -7,6 +7,11 @@
 	install-temporal-preprod-server \
 	install-combined-server init-pi-zero sync-ssh-keys build-push
 
+# The mediamtx config is fully regenerated from groups['engine_servers'], so
+# targets that rewrite it must also load the preprod inventory (when the sister
+# repo has one); otherwise preprod engines lose their stream path.
+PREPROD_INV := $(if $(wildcard inventory/hosts_preprod),-i inventory/hosts_preprod)
+
 # Operational targets must run inside the pyro-ansible container, where the
 # sister repo's inventory/host_vars/group_vars are mounted. The Dockerfile sets
 # IN_PYRO_ANSIBLE_CONTAINER=1; on the host this guard fails fast instead of
@@ -73,7 +78,7 @@ check-engines: require-container
 	ansible-playbook playbooks/check-engine.yml -i inventory/hosts_prod -l engine_servers
 
 init-one-engine: require-container
-	ansible-playbook playbooks/rpi-init.yml -i inventory/hosts_prod -l $(SITE),mediamtx_server
+	ansible-playbook playbooks/rpi-init.yml -i inventory/hosts_prod $(PREPROD_INV) -l $(SITE),mediamtx_server
 
 deploy-one-engine: require-container
 	ansible-playbook playbooks/deploy-engines.yml -i inventory/hosts_prod -l $(SITE)
@@ -99,7 +104,7 @@ install-mediamtx: require-container
 	ansible-playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l mediamtx_server
 
 update-mediamtx-conf: require-container
-	ansible-playbook playbooks/update-mediamtx.yml -i inventory/hosts_prod -l mediamtx_server
+	ansible-playbook playbooks/update-mediamtx.yml -i inventory/hosts_prod $(PREPROD_INV) -l mediamtx_server
 
 update-reverse-ssh: require-container
 	ansible-playbook playbooks/update-reverse-ssh.yml -i inventory/hosts_prod -l $(or $(LIMIT_HOSTS),engine_servers)
