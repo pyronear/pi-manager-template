@@ -153,7 +153,7 @@ point the target host at that tag and redeploy:
 
 ```bash
 make build-push COMPONENT=api      BRANCH=<branch>   # pyro-api          -> pyronear/alert-api:<tag> (amd64)
-make build-push COMPONENT=engine   BRANCH=<branch>   # pyro-engine       -> pyro-engine + pyro-camera-api :<tag> (arm64)
+make build-push COMPONENT=engine   BRANCH=<branch>   # pyro-engine       -> pyro-engine + pyro-camera-api + pyro-temporal-api :<tag> (arm64)
 make build-push COMPONENT=platform BRANCH=<branch>   # new-pyro-platform -> pyronear/pyro-platform-react:<tag> (amd64)
 ```
 
