@@ -153,8 +153,17 @@ point the target host at that tag and redeploy:
 
 ```bash
 make build-push COMPONENT=api      BRANCH=<branch>   # pyro-api          -> pyronear/alert-api:<tag> (amd64)
-make build-push COMPONENT=engine   BRANCH=<branch>   # pyro-engine       -> pyro-engine + pyro-camera-api + pyro-temporal-api :<tag> (arm64)
+make build-push COMPONENT=engine   BRANCH=<branch>   # pyro-engine       -> pyro-engine + pyro-camera-api + pyro-temporal-api :<tag> (amd64+arm64)
 make build-push COMPONENT=platform BRANCH=<branch>   # new-pyro-platform -> pyronear/pyro-platform-react:<tag> (amd64)
+```
+
+The engine is built for both Raspberry Pis (arm64) and x86 servers (amd64),
+like the pyro-engine CI: one tag holds both images and docker pulls the one
+matching the host. Add `PLATFORMS=` to build for other platforms than the
+default above, for example arm64 only for a faster build when only Pis need it:
+
+```bash
+make build-push COMPONENT=engine BRANCH=<branch> PLATFORMS=linux/arm64
 ```
 
 The tag is the branch name without its type prefix, sanitized for docker
@@ -165,6 +174,10 @@ daemon (with buildx) and a Docker Hub login with push rights on the
 `pyronear` organization.
 Cross-architecture builds need QEMU/binfmt (Docker Desktop ships it; on bare
 Linux install `qemu-user-static`).
+Building several platforms at once (the engine default) fails with the classic
+`docker` builder driver unless the containerd image store is on ("Multi-platform
+build is not supported for the docker driver"). Run `docker buildx create --use`
+once, or turn on the containerd image store.
 
 To deploy it, set the image tag in the sister repo to the pushed tag:
 `platform_react_docker_version` / `alert_api_docker_version` in
