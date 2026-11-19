@@ -81,6 +81,9 @@ What the main targets actually do:
   fresh API token per camera, writes `credentials.json` and `.env`, then
   restarts the docker-compose stack. Also installs the daily-reboot and
   watchdog cron jobs. Run it again to ship an engine update.
+  Temporal validation of alerts runs on the device by default (third image
+  `pyro-temporal-api`, needs pyro-engine 1.0.24 or later); set
+  `temporal_enabled: false` in the sister repo for engines on an older version.
 - **`check-engines`** — verifies the engine containers are up and healthy on
   every engine; use it after a deploy or when a site looks silent.
 - **`init-pi-zero`** — sets up a Pi Zero (wifi, static IP, watchdog scripts).
@@ -150,7 +153,7 @@ point the target host at that tag and redeploy:
 
 ```bash
 make build-push COMPONENT=api      BRANCH=<branch>   # pyro-api          -> pyronear/alert-api:<tag> (amd64)
-make build-push COMPONENT=engine   BRANCH=<branch>   # pyro-engine       -> pyro-engine + pyro-camera-api :<tag> (amd64+arm64)
+make build-push COMPONENT=engine   BRANCH=<branch>   # pyro-engine       -> pyro-engine + pyro-camera-api + pyro-temporal-api :<tag> (amd64+arm64)
 make build-push COMPONENT=platform BRANCH=<branch>   # new-pyro-platform -> pyronear/pyro-platform-react:<tag> (amd64)
 ```
 
