@@ -15,7 +15,7 @@ set -euo pipefail
 usage() {
     echo "Usage: $0 <api|engine|platform> <branch>" >&2
     echo "  api       pyronear/pyro-api          -> pyronear/alert-api:<branch> (linux/amd64)" >&2
-    echo "  engine    pyronear/pyro-engine       -> pyronear/pyro-engine:<branch> + pyronear/pyro-camera-api:<branch> (linux/arm64)" >&2
+    echo "  engine    pyronear/pyro-engine       -> pyronear/pyro-engine:<branch> + pyronear/pyro-camera-api:<branch> + pyronear/pyro-temporal-api:<branch> (linux/arm64)" >&2
     echo "  platform  pyronear/new-pyro-platform -> pyronear/pyro-platform-react:<branch> (linux/amd64)" >&2
     exit 1
 }
@@ -67,6 +67,8 @@ case "$COMPONENT" in
             -t "pyronear/pyro-engine:${TAG}" --push .
         docker buildx build --platform linux/arm64 -f pyro_camera_api/Dockerfile \
             -t "pyronear/pyro-camera-api:${TAG}" --push pyro_camera_api
+        docker buildx build --platform linux/arm64 -f pyro_temporal_api/Dockerfile \
+            -t "pyronear/pyro-temporal-api:${TAG}" --push pyro_temporal_api
         ;;
     platform)
         # CI builds the app outside docker; the Dockerfile only copies dist/
