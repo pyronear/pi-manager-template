@@ -1,0 +1,6 @@
+---
+# Temporal validation of alerts on the device: also starts pyro-temporal-api,
+# which downloads its model on first start (engine releases after 1.0.23).
+# Set to false for engines pinned to an older version: they have no
+# pyro-temporal-api image (before 1.0.22) or no model download (1.0.22, 1.0.23).
+temporal_enabled: true

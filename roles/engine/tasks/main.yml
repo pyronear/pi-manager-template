@@ -29,6 +29,17 @@
   retries: 3
   delay: 10
 
+- name: Pull pyro-temporal-api image from Docker Hub
+  community.docker.docker_image:
+    name: "pyronear/pyro-temporal-api:{{ pyro_engine_docker_tag }}"
+    source: pull
+    force_source: true
+  register: pull_pyro_temporal_api
+  until: pull_pyro_temporal_api is not failed
+  retries: 3
+  delay: 10
+  when: temporal_enabled | bool
+
 - name: Create a directory if it does not exist
   ansible.builtin.file:
     path: /home/{{ app_name }}/data
@@ -131,6 +142,13 @@
 - name: Remove old pyro-camera-api container manually
   community.docker.docker_container:
     name: pyro-camera-api
+    state: absent
+
+# Compose leaves a container of a profile that is no longer active running,
+# so this also stops the service when temporal_enabled is switched off.
+- name: Remove old pyro-temporal-api container manually
+  community.docker.docker_container:
+    name: pyro-temporal-api
     state: absent
 
 - name: Ensure Docker Compose containers are running
