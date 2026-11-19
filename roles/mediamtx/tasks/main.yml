@@ -10,6 +10,7 @@
     src: mediamtx.yml.j2
     dest: "{{ mediamtx_config_file }}"
     mode: '0644'
+  notify: Restart MediaMTX container
 
 - name: Run MediaMTX Docker container
   community.docker.docker_container:
