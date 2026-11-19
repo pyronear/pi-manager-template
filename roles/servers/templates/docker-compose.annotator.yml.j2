@@ -40,7 +40,8 @@ services:
         - backend
 
   db:
-    image: postgres:15-alpine
+    image: postgres:15.20-alpine
+    pull_policy: always
     container_name: postgres
     restart: always
     # The API runs UVICORN_WORKERS processes and the queue worker one more,
