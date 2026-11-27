@@ -16,6 +16,7 @@ trap 'rm -rf "$tmp"' EXIT
 s3() {
   docker run --rm -v "$tmp:/backup" \
     -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY \
+    -e AWS_REQUEST_CHECKSUM_CALCULATION -e AWS_RESPONSE_CHECKSUM_VALIDATION \
     amazon/aws-cli --endpoint-url "$S3_ENDPOINT_URL" --region "$S3_REGION" "$@"
 }
 

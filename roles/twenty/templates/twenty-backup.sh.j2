@@ -25,6 +25,7 @@ tar cf - -C "$tmp" db.sql.gz storage.tar.gz |
 
 docker run --rm -v "$tmp:/backup:ro" \
   -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY \
+    -e AWS_REQUEST_CHECKSUM_CALCULATION -e AWS_RESPONSE_CHECKSUM_VALIDATION \
   amazon/aws-cli --endpoint-url "$S3_ENDPOINT_URL" --region "$S3_REGION" \
   s3 cp "/backup/$name" "s3://$S3_BUCKET/$name"
 
