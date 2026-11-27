@@ -1,0 +1,14 @@
+---
+# Twenty CRM (role twenty). Put the secrets in the host's vars.vault.yml in the sister repo.
+twenty_host: crm.pyronear.org
+twenty_s3_bucket: pyronear-crm-backups
+
+# Vault:
+# twenty_pg_password:         # openssl rand -hex 32
+# twenty_encryption_key:      # keep the original one across reinstalls and restores
+# twenty_app_secret:          # openssl rand -hex 32
+# twenty_backup_passphrase:   # openssl rand -hex 32, keep a copy outside the server
+# twenty_s3_access_key:
+# twenty_s3_secret_key:
+# twenty_google_client_id:    # optional, enables "Sign in with Google"
+# twenty_google_client_secret:
