@@ -5,7 +5,7 @@
 set -euo pipefail
 
 key=${1:?usage: twenty-restore.sh <latest|backup file name>}
-TWENTY_DIR=${TWENTY_DIR:-/home/twenty}
+TWENTY_DIR=${TWENTY_DIR:-{{ twenty_working_dir }}}
 # shellcheck source=/dev/null
 source "$TWENTY_DIR/backup.env"
 cd "$TWENTY_DIR"
@@ -25,8 +25,13 @@ if [ "$key" = latest ]; then
   [ -n "$key" ] || { echo "no backup found in s3://$S3_BUCKET" >&2; exit 1; }
 fi
 
-workspaces=$(docker compose exec -T db psql -U postgres -d default -tAc 'select count(*) from core.workspace' 2>/dev/null || echo 0)
-if [ "${workspaces:-0}" != 0 ] && [ "${FORCE:-0}" != 1 ]; then
+psql_value() { docker compose exec -T db psql -U postgres -d default -tAc "$1"; }
+# Any query failure aborts (set -e): only a missing table counts as an empty install
+workspaces=0
+if [ "$(psql_value "select to_regclass('core.workspace') is not null")" = t ]; then
+  workspaces=$(psql_value 'select count(*) from core.workspace')
+fi
+if [ "$workspaces" != 0 ] && [ "${FORCE:-0}" != 1 ]; then
   echo "refusing: the database already holds $workspaces workspace(s); rerun with FORCE=1 to overwrite" >&2
   exit 1
 fi

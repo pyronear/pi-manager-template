@@ -5,7 +5,7 @@
 # bucket from another instance): TWENTY_DIR=/path/to/compose/dir twenty-backup.sh
 set -euo pipefail
 
-TWENTY_DIR=${TWENTY_DIR:-/home/twenty}
+TWENTY_DIR=${TWENTY_DIR:-{{ twenty_working_dir }}}
 # shellcheck source=/dev/null
 source "$TWENTY_DIR/backup.env"
 cd "$TWENTY_DIR"
