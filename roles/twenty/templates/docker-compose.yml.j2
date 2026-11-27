@@ -19,6 +19,8 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
+      # first boot runs ~600 migration steps, which takes minutes on a small VM
+      start_period: 300s
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.twenty.rule=Host(`{{ twenty_host }}`)"
