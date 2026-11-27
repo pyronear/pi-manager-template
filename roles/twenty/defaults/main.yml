@@ -27,3 +27,11 @@ twenty_backup_minute: 15
 # Optional: API key used by the Monday weekly report (posted as a note in Twenty)
 twenty_api_key:
 twenty_weekly_hour: 7
+
+# Optional outgoing mail (invitations, password resets); without a user Twenty only logs mails
+twenty_smtp_host: smtp.gmail.com
+twenty_smtp_port: 587
+twenty_smtp_user:
+twenty_smtp_password:
+twenty_email_from_address: "{{ twenty_smtp_user }}"
+twenty_email_from_name: Pyronear CRM

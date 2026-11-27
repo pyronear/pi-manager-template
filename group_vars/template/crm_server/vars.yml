@@ -13,3 +13,5 @@ twenty_s3_bucket: pyronear-crm-backups
 # twenty_api_key:             # optional, enables the Monday weekly report
 # twenty_google_client_id:    # optional, enables "Sign in with Google"
 # twenty_google_client_secret:
+# twenty_smtp_user:           # optional, sends invitations and password resets (Gmail app password)
+# twenty_smtp_password:
