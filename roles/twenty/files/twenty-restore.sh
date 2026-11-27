@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# Restore a Twenty backup made by twenty-backup.sh from S3.
+# Usage: twenty-restore.sh <latest|twenty-YYYYmmddTHHMMSSZ.tar.gpg>
+# Refuses to overwrite a database that already holds a workspace unless FORCE=1.
+set -euo pipefail
+
+key=${1:?usage: twenty-restore.sh <latest|backup file name>}
+TWENTY_DIR=${TWENTY_DIR:-/home/twenty}
+# shellcheck source=/dev/null
+source "$TWENTY_DIR/backup.env"
+cd "$TWENTY_DIR"
+
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+
+s3() {
+  docker run --rm -v "$tmp:/backup" \
+    -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY \
+    amazon/aws-cli --endpoint-url "$S3_ENDPOINT_URL" --region "$S3_REGION" "$@"
+}
+
+if [ "$key" = latest ]; then
+  # names embed a UTC timestamp, so lexical order is chronological
+  key=$(s3 s3 ls "s3://$S3_BUCKET/" | awk '{print $4}' | grep '^twenty-.*\.tar\.gpg$' | sort | tail -n 1)
+  [ -n "$key" ] || { echo "no backup found in s3://$S3_BUCKET" >&2; exit 1; }
+fi
+
+workspaces=$(docker compose exec -T db psql -U postgres -d default -tAc 'select count(*) from core.workspace' 2>/dev/null || echo 0)
+if [ "${workspaces:-0}" != 0 ] && [ "${FORCE:-0}" != 1 ]; then
+  echo "refusing: the database already holds $workspaces workspace(s); rerun with FORCE=1 to overwrite" >&2
+  exit 1
+fi
+
+echo "restoring $key"
+s3 s3 cp "s3://$S3_BUCKET/$key" "/backup/$key"
+gpg --batch --pinentry-mode loopback --passphrase-fd 3 -d "$tmp/$key" 3<<<"$BACKUP_PASSPHRASE" | tar xf - -C "$tmp"
+
+docker compose stop server worker
+docker compose exec -T db psql -U postgres -d postgres -v ON_ERROR_STOP=1 \
+  -c 'DROP DATABASE IF EXISTS "default" WITH (FORCE)' -c 'CREATE DATABASE "default"'
+gunzip -c "$tmp/db.sql.gz" | docker compose exec -T db psql -U postgres -d default -v ON_ERROR_STOP=1 -q
+docker run --rm -v twenty_server-local-data:/data -v "$tmp:/backup:ro" alpine:3.20 \
+  sh -c 'find /data -mindepth 1 -delete && tar xzf /backup/storage.tar.gz -C /data'
+docker compose up -d --wait
+
+echo "restored $key"

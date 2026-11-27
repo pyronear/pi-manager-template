@@ -1,0 +1,25 @@
+---
+twenty_working_dir: /home/twenty
+# Pinned: a backup only restores into the Twenty version that produced it
+twenty_version: v2.56.1
+twenty_host: crm.pyronear.org
+
+# Secrets, set in the sister repo vault
+twenty_pg_password:
+# Must stay the same across reinstalls/restores, or stored tokens become unreadable
+twenty_encryption_key:
+twenty_app_secret:
+
+# Optional "Sign in with Google" (and later Gmail/Calendar sync)
+twenty_google_client_id:
+twenty_google_client_secret:
+
+# Nightly encrypted backups to S3
+twenty_backup_passphrase:
+twenty_s3_endpoint_url: https://s3.gra.io.cloud.ovh.net
+twenty_s3_region: gra
+twenty_s3_bucket:
+twenty_s3_access_key:
+twenty_s3_secret_key:
+twenty_backup_hour: 3
+twenty_backup_minute: 15
