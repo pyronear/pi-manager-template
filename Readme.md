@@ -84,6 +84,8 @@ What the main targets actually do:
   Temporal validation of alerts runs on the device by default (third image
   `pyro-temporal-api`, needs pyro-engine 1.0.24 or later); set
   `temporal_enabled: false` in the sister repo for engines on an older version.
+  Set `crop_refine: true` for a station to re-detect small boxes on a native
+  crop of the camera frame (needs a pyro-engine version with `CROP_REFINE`).
 - **`check-engines`** — verifies the engine containers are up and healthy on
   every engine; use it after a deploy or when a site looks silent.
 - **`init-pi-zero`** — sets up a Pi Zero (wifi, static IP, watchdog scripts).

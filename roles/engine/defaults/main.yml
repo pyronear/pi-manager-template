@@ -4,3 +4,8 @@
 # Set to false for engines pinned to an older version: they have no
 # pyro-temporal-api image (before 1.0.22) or no model download (1.0.22, 1.0.23).
 temporal_enabled: true
+
+# Re-detect small boxes on a native crop of the camera frame (pyro-engine
+# PR 491). Off by default. `pyro_engine_git_ref` must point to a version whose
+# docker-compose.yml passes CROP_REFINE to the engine, older ones ignore it.
+crop_refine: false
