@@ -4,7 +4,7 @@
 	install-openvpn install-mediamtx update-mediamtx-conf update-reverse-ssh install-annotation-server \
 	install-platform-react-server install-platform-react-preprod-server \
 	install-alert-api-server install-alert-api-preprod-server install-temporal-server \
-	install-temporal-preprod-server \
+	install-temporal-preprod-server install-crm-server backup-crm-server restore-crm-server \
 	install-combined-server init-pi-zero sync-ssh-keys build-push
 
 # Operational targets must run inside the pyro-ansible container, where the
@@ -36,6 +36,7 @@ help:
 	@echo "  make install-alert-api-server | install-temporal-server"
 	@echo "  make install-platform-react-preprod-server | install-alert-api-preprod-server | install-temporal-preprod-server"
 	@echo "                                 (same plays as prod, against inventory/hosts_preprod)"
+	@echo "  make install-crm-server | backup-crm-server | restore-crm-server [BACKUP=latest] [FORCE=1]"
 	@echo "  make install-combined-server   (traefik + mediamtx + platform + alert API on one VM)"
 	@echo "  make update-combined-api | update-combined-platform | update-combined-mediamtx | update-combined-traefik"
 	@echo "                                 (redeploy a single service on the combined server)"
@@ -127,6 +128,17 @@ install-temporal-server: require-container
 
 install-temporal-preprod-server: require-container
 	ansible-playbook playbooks/deploy-servers.yml -i inventory/hosts_preprod -l temporal_server
+
+install-crm-server: require-container
+	ansible-playbook playbooks/deploy-servers.yml -i inventory/hosts_prod -l crm_server
+
+backup-crm-server: require-container
+	ansible crm_server -i inventory/hosts_prod -b -m command -a /usr/local/bin/twenty-backup.sh
+
+# BACKUP=latest or a backup file name; FORCE=1 overwrites an existing workspace
+restore-crm-server: require-container
+	ansible crm_server -i inventory/hosts_prod -b -m shell \
+		-a "FORCE=$(or $(FORCE),0) /usr/local/bin/twenty-restore.sh $(or $(BACKUP),latest)"
 
 install-combined-server: require-container
 	ansible-playbook playbooks/deploy-combined.yml -i inventory/hosts_prod -l combined_server

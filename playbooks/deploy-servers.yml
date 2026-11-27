@@ -16,14 +16,14 @@
     - check_vars
 
 - name: Upgrade, install git and docker
-  hosts: alert_server:platform_react_server:openvpn:mediamtx_server:temporal_server
+  hosts: alert_server:platform_react_server:openvpn:mediamtx_server:temporal_server:crm_server
   become: true
   roles:
     - common
     - docker
 
 - name: Sync authorized SSH keys
-  hosts: alert_server:platform_react_server
+  hosts: alert_server:platform_react_server:crm_server
   become: true
   roles:
     - authorized_keys
@@ -104,5 +104,17 @@
   become: true
   roles:
     - role: temporal_api
+      tags:
+        - app
+
+- name: Deploy Twenty CRM
+  hosts: crm_server
+  become: true
+  roles:
+    # tagged 'app' too: an app-only deploy must never end up without the proxy
+    - role: traefik
+      tags:
+        - app
+    - role: twenty
       tags:
         - app

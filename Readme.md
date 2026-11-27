@@ -30,6 +30,7 @@ The services this repo deploys, and where their code lives:
 |---|---|---|
 | **Temporal API** | Serves the temporal smoke-detection model (docker image `pyronear/temporal-model-api`), used to confirm detections over time. | [temporal-model](https://github.com/pyronear/temporal-model) |
 | **Annotation** | Annotation API + web app to label detection sequences and build training datasets. | [pyro-annotator](https://github.com/pyronear/pyro-annotator) |
+| **CRM** | Twenty CRM for partners, deals and grants, with nightly encrypted backups to S3. | [twentyhq/twenty](https://github.com/twentyhq/twenty) |
 
 ## How it works
 
@@ -144,6 +145,28 @@ This installs the client (cert generated on the OpenVPN server), routes the
 fix, enables the service on boot, and **reboots** the VM. It requires
 `openvpn_client_password` in the combined host's `host_vars` vault (the same
 value the engines use).
+
+### CRM (Twenty)
+
+```bash
+make install-crm-server                       # traefik + Twenty on the crm_server host
+make backup-crm-server                        # run a backup now (also runs nightly via cron)
+make restore-crm-server BACKUP=latest         # restore from S3 (or BACKUP=<file name>)
+```
+
+The `twenty` role deploys Twenty (server, worker, Postgres, Redis) behind the
+shared traefik, writes the secrets from the vault (see
+`group_vars/template/crm_server/vars.yml`), installs the last-contact trigger and
+schedules `/usr/local/bin/twenty-backup.sh`. Each backup is one gpg-encrypted
+archive (database dump + uploaded files) in the S3 bucket; set the retention as
+a lifecycle rule on the bucket. The DNS record must be "DNS only" in Cloudflare
+(traefik gets its certificate through the TLS challenge).
+
+The restore refuses to overwrite a database that already holds a workspace
+unless `FORCE=1`. Restores only work into the Twenty version that made the
+backup (`twenty_version`), and `twenty_encryption_key` must be the original one.
+To move to a new VM: deploy it with `install-crm-server`, then
+`restore-crm-server BACKUP=latest`.
 
 ### Deploy and test a branch on preprod
 

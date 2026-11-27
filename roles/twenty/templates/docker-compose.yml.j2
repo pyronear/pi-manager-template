@@ -1,0 +1,82 @@
+# Based on twentyhq/twenty packages/twenty-docker/docker-compose.yml,
+# served through the shared traefik (network "web") instead of a published port.
+name: twenty
+
+services:
+  server:
+    image: twentycrm/twenty:{{ twenty_version }}
+    stop_grace_period: 120s
+    env_file: .env
+    volumes:
+      - server-local-data:/app/packages/twenty-server/.local-storage
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: curl --fail http://localhost:3000/healthz
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      # first boot runs ~600 migration steps, which takes minutes on a small VM
+      start_period: 300s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.twenty.rule=Host(`{{ twenty_host }}`)"
+      - "traefik.http.routers.twenty.entrypoints=websecure"
+      - "traefik.http.routers.twenty.tls.certresolver=pyroresolver"
+      - "traefik.http.services.twenty.loadbalancer.server.port=3000"
+    restart: always
+    networks:
+      - default
+      - web
+
+  worker:
+    image: twentycrm/twenty:{{ twenty_version }}
+    command: ["yarn", "worker:prod"]
+    env_file: .env
+    environment:
+      DISABLE_DB_MIGRATIONS: "true"  # the server runs them
+      DISABLE_CRON_JOBS_REGISTRATION: "true"
+    volumes:
+      - server-local-data:/app/packages/twenty-server/.local-storage
+    depends_on:
+      db:
+        condition: service_healthy
+      server:
+        condition: service_healthy
+    restart: always
+
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: default
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${PG_DATABASE_PASSWORD}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -U postgres -h localhost -d postgres
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: always
+
+  redis:
+    image: redis:7
+    command: ["--maxmemory-policy", "noeviction"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: always
+
+volumes:
+  db-data:
+  server-local-data:
+
+networks:
+  web:
+    external: true
