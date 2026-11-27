@@ -23,3 +23,7 @@ twenty_s3_access_key:
 twenty_s3_secret_key:
 twenty_backup_hour: 3
 twenty_backup_minute: 15
+
+# Optional: API key used by the Monday weekly report (posted as a note in Twenty)
+twenty_api_key:
+twenty_weekly_hour: 7

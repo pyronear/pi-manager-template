@@ -93,3 +93,29 @@
     hour: "{{ twenty_backup_hour }}"
     minute: "{{ twenty_backup_minute }}"
     job: /usr/local/bin/twenty-backup.sh 2>&1 | logger -t twenty-backup
+
+- name: Install the Monday weekly report
+  when: twenty_api_key | default('', true) | length > 0
+  block:
+    - name: Copy the weekly report script
+      ansible.builtin.copy:
+        src: twenty-weekly.py
+        dest: /usr/local/bin/twenty-weekly.py
+        mode: "0755"
+
+    - name: Copy the weekly report config
+      ansible.builtin.template:
+        src: weekly.env.j2
+        dest: "{{ twenty_working_dir }}/weekly.env"
+        mode: "0600"
+      no_log: true
+
+    - name: Schedule the weekly report on Monday morning
+      ansible.builtin.cron:
+        name: twenty weekly
+        weekday: "1"
+        hour: "{{ twenty_weekly_hour }}"
+        minute: "0"
+        job: >-
+          /bin/sh -c 'set -a; . {{ twenty_working_dir }}/weekly.env;
+          exec python3 /usr/local/bin/twenty-weekly.py' 2>&1 | logger -t twenty-weekly
