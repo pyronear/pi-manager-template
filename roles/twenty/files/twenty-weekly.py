@@ -12,6 +12,8 @@ if os.environ.get("TWENTY_API_KEY"):
 else:
     cfg = dict(l.split("=", 1) for l in (HERE / ".twenty-login").read_text().split() if "=" in l)
 HORIZON = 14  # days ahead for deadlines / milestones
+RELANCE_AFTER = 60  # days without contact before a "Relancer <SDIS>" task is created
+DEFAULT_OWNER = lambda members: next(iter(members))  # owner when the leader is not a workspace member
 # days without contact before an organisation shows up as "à relancer", per CRM status (missing = never listed)
 STALE_AFTER = {"A_CONTACTER": 14, "A_RELANCER": 14, "O_1ER_CONTACT": 30, "O_1ER_RDV": 30, "EN_DISCUSSION": 30,
                "RECHERCHE_POINTS_HAUTS": 30, "CONTRACTUALISATION": 21, "EN_TEST": 30, "DEPLOIEMENT": 30, "MIS_EN_PLACE": 90}
@@ -79,7 +81,8 @@ L.append("")
 # --- Relances CRM
 crm = labels("company", "crmStatus")
 stale, never = [], []
-for c in records("companies"):
+companies = records("companies")
+for c in companies:
     limit = STALE_AFTER.get(c.get("crmStatus"))
     if not c.get("isCrm") or limit is None:
         continue
@@ -111,9 +114,35 @@ if not deals:
 
 L.append("")
 
-# --- Tâches
+# --- Relances automatiques : une tâche par SDIS en cours sans contact depuis RELANCE_AFTER jours
 members = {m["id"]: f"{m['name']['firstName']} {m['name']['lastName']}".strip() for m in records("workspaceMembers")}
+by_name = {v.lower(): k for k, v in members.items()}
 tasks = records("tasks")
+open_titles = {t.get("title") for t in tasks if t.get("status") != "DONE"}
+created = []
+for c in companies:
+    last = d(c.get("lastContactAt"))
+    if (c.get("isCrm") and c.get("orgType") == "SDIS" and c.get("crmStatus") not in (None, "NOGO", "MIS_EN_PLACE")
+            and last and (today - last).days > RELANCE_AFTER):
+        title = f"Relancer {c['name'].strip()}"
+        if title in open_titles:
+            continue
+        owner = by_name.get((c.get("leader") or "").split(",")[0].strip().lower(), DEFAULT_OWNER(members))
+        created.append((title, members.get(owner, "?")))
+        if "--dry-run" in sys.argv:
+            continue
+        t = call("tasks", {"title": title, "status": "TODO", "dueAt": today.isoformat() + "T08:00:00.000Z", "assigneeId": owner,
+                           "bodyV2": {"markdown": f"Pas de contact depuis le {fr(last)} ({(today - last).days} jours)."}})
+        tid = next(iter(t["data"].values()))["id"]
+        call("taskTargets", {"taskId": tid, "targetCompanyId": c["id"]})
+if created:
+    L.append("## 🔔 Relances créées automatiquement")
+    L += [f"- {title} ({who})" for title, who in created]
+    L.append("")
+    tasks = records("tasks")
+
+# --- Tâches
+tasks = tasks
 who = lambda t: members.get(t.get("assigneeId"), "non assignée")
 late = [t for t in tasks if t.get("status") != "DONE" and d(t.get("dueAt")) and d(t.get("dueAt")) < today]
 soon = [t for t in tasks if t.get("status") != "DONE" and d(t.get("dueAt")) and today <= d(t.get("dueAt")) <= today + timedelta(days=7)]
